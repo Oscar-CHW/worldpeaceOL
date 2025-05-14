@@ -31,7 +31,191 @@ const isAuthenticated = (req, res, next) => {
   }
 };
 
+// Admin middleware
+const isAdmin = async (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.session.userId }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Admin is defined as a user with rank >= 10
+    if (user.rank < 10) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    res.status(500).json({ error: 'Server error checking admin status' });
+  }
+};
+
 // ===== API Routes =====
+
+// ===== Admin API Routes =====
+
+// Get all users (admin only)
+app.get('/api/admin/users', isAdmin, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        rank: true,
+        createdAt: true,
+        updatedAt: true
+        // password is intentionally excluded for security
+      },
+      orderBy: {
+        id: 'asc'
+      }
+    });
+    
+    res.json(users);
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ error: 'Failed to retrieve users' });
+  }
+});
+
+// Get single user by ID (admin only)
+app.get('/api/admin/users/:id', isAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        rank: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Failed to retrieve user' });
+  }
+});
+
+// Update user (admin only)
+app.put('/api/admin/users/:id', isAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    
+    const { username, rank } = req.body;
+    
+    // Validate input
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+    
+    if (typeof rank !== 'undefined' && (isNaN(rank) || rank < 0)) {
+      return res.status(400).json({ error: 'Rank must be a non-negative number' });
+    }
+    
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if username is already taken by another user
+    if (username !== existingUser.username) {
+      const userWithSameUsername = await prisma.user.findUnique({
+        where: { username }
+      });
+      
+      if (userWithSameUsername) {
+        return res.status(400).json({ error: 'Username already taken' });
+      }
+    }
+    
+    // Update user
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        username,
+        rank: typeof rank !== 'undefined' ? parseInt(rank) : existingUser.rank
+      },
+      select: {
+        id: true,
+        username: true,
+        rank: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// Delete user (admin only)
+app.delete('/api/admin/users/:id', isAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Prevent deleting self
+    if (userId === req.session.userId) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+    
+    // Delete user
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+    
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// ===== Regular User API Routes =====
 
 // Signup endpoint
 app.post('/api/signup', async (req, res) => {
@@ -52,6 +236,9 @@ app.post('/api/signup', async (req, res) => {
       return res.status(400).json({ error: '用户名已存在' });
     }
     
+    // Count total users to determine if this is the first user
+    const userCount = await prisma.user.count();
+    
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
     
@@ -60,9 +247,12 @@ app.post('/api/signup', async (req, res) => {
       data: {
         username,
         password: hashedPassword,
-        rank: 1 // Default rank
+        rank: userCount === 0 ? 10 : 1 // First user gets admin rank (10), others get regular rank (1)
       }
     });
+    
+    // Set session to log in the user automatically
+    req.session.userId = newUser.id;
     
     res.status(201).json({
       id: newUser.id,
@@ -164,4 +354,4 @@ async function startServer() {
   }
 }
 
-startServer(); 
+startServer();

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>注册 - 天下太平</title>
+    <title data-i18n="signup">注册 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .auth-form {
@@ -70,32 +70,59 @@
             background-color: #55efc4;
             color: #333;
         }
+        
+        #language-selector {
+            text-align: right;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body>
+    <div id="language-selector"></div>
     <div class="auth-form">
-        <h2>注册</h2>
+        <h2 data-i18n="signup">注册</h2>
         <div id="message" class="message"></div>
         <form id="signup-form">
             <div class="form-group">
-                <label for="username">用户名</label>
-                <input type="text" id="username" name="username" required>
+                <label for="username" data-i18n="username">用户名</label>
+                <input type="text" id="username" name="username" data-i18n-placeholder="username" required>
             </div>
             <div class="form-group">
-                <label for="password">密码</label>
-                <input type="password" id="password" name="password" required>
+                <label for="password" data-i18n="password">密码</label>
+                <input type="password" id="password" name="password" data-i18n-placeholder="password" required>
             </div>
             <div class="form-group">
-                <label for="confirm-password">确认密码</label>
-                <input type="password" id="confirm-password" name="confirm-password" required>
+                <label for="confirm-password" data-i18n="confirm_password">确认密码</label>
+                <input type="password" id="confirm-password" name="confirm-password" data-i18n-placeholder="confirm_password" required>
             </div>
-            <button type="submit">注册</button>
+            <button type="submit" data-i18n="signup">注册</button>
         </form>
         <div class="form-footer">
-            <p>已有账号? <a href="/login.html">登录</a></p>
-            <p><a href="/">返回首页</a></p>
+            <p><span data-i18n="have_account">已有账号?</span> <a href="/login.html" data-i18n="login">登录</a></p>
+            <p><a href="/" data-i18n="back_to_home">返回首页</a></p>
         </div>
     </div>
+
+    <script type="module">
+        import i18n from './js/i18n.js';
+        import { createLanguageSelector } from './js/language-selector.js';
+        
+        // Initialize translations
+        document.addEventListener('DOMContentLoaded', () => {
+            i18n.init();
+            createLanguageSelector('language-selector');
+        });
+        
+        // Add translation for title
+        const titleKey = 'signup';
+        document.title = `${i18n.translate(titleKey)} - ${i18n.translate('title')}`;
+        
+        // Listen for language changes to update title
+        document.addEventListener('languageChanged', () => {
+            document.documentElement.lang = i18n.getCurrentLanguage();
+            document.title = `${i18n.translate(titleKey)} - ${i18n.translate('title')}`;
+        });
+    </script>
 
     <script>
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
@@ -106,7 +133,7 @@
             const confirmPassword = document.getElementById('confirm-password').value;
             
             if (password !== confirmPassword) {
-                showMessage('两次输入的密码不匹配', 'error');
+                showMessage(i18n.translate('passwords_mismatch'), 'error');
                 return;
             }
             
@@ -123,16 +150,16 @@
                 
                 if (response.ok) {
                     // Signup successful
-                    showMessage('注册成功！正在跳转到登录页面...', 'success');
+                    showMessage(i18n.translate('signup_success'), 'success');
                     setTimeout(() => {
-                        window.location.href = '/login.html';
+                        window.location.href = '/';
                     }, 1000);
                 } else {
                     // Signup failed
-                    showMessage(data.error || '注册失败', 'error');
+                    showMessage(data.error || i18n.translate('system_error'), 'error');
                 }
             } catch (error) {
-                showMessage('发生错误，请稍后再试', 'error');
+                showMessage(i18n.translate('system_error'), 'error');
                 console.error(error);
             }
         });

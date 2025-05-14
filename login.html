@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - 天下太平</title>
+    <title data-i18n="login">登录 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .auth-form {
@@ -70,28 +70,55 @@
             background-color: #55efc4;
             color: #333;
         }
+        
+        #language-selector {
+            text-align: right;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body>
+    <div id="language-selector"></div>
     <div class="auth-form">
-        <h2>登录</h2>
+        <h2 data-i18n="login">登录</h2>
         <div id="message" class="message"></div>
         <form id="login-form">
             <div class="form-group">
-                <label for="username">用户名</label>
-                <input type="text" id="username" name="username" required>
+                <label for="username" data-i18n="username">用户名</label>
+                <input type="text" id="username" name="username" data-i18n-placeholder="username" required>
             </div>
             <div class="form-group">
-                <label for="password">密码</label>
-                <input type="password" id="password" name="password" required>
+                <label for="password" data-i18n="password">密码</label>
+                <input type="password" id="password" name="password" data-i18n-placeholder="password" required>
             </div>
-            <button type="submit">登录</button>
+            <button type="submit" data-i18n="login">登录</button>
         </form>
         <div class="form-footer">
-            <p>还没有账号? <a href="/signup.html">注册</a></p>
-            <p><a href="/">返回首页</a></p>
+            <p><span data-i18n="no_account">还没有账号?</span> <a href="/signup.html" data-i18n="signup">注册</a></p>
+            <p><a href="/" data-i18n="back_to_home">返回首页</a></p>
         </div>
     </div>
+
+    <script type="module">
+        import i18n from './js/i18n.js';
+        import { createLanguageSelector } from './js/language-selector.js';
+        
+        // Initialize translations
+        document.addEventListener('DOMContentLoaded', () => {
+            i18n.init();
+            createLanguageSelector('language-selector');
+        });
+        
+        // Add translation for title
+        const titleKey = 'login';
+        document.title = `${i18n.translate(titleKey)} - ${i18n.translate('title')}`;
+        
+        // Listen for language changes to update title
+        document.addEventListener('languageChanged', () => {
+            document.documentElement.lang = i18n.getCurrentLanguage();
+            document.title = `${i18n.translate(titleKey)} - ${i18n.translate('title')}`;
+        });
+    </script>
 
     <script>
         document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -113,16 +140,16 @@
                 
                 if (response.ok) {
                     // Login successful
-                    showMessage('登录成功！正在跳转...', 'success');
+                    showMessage(i18n.translate('login_success'), 'success');
                     setTimeout(() => {
-                        window.location.href = '/dashboard.html';
+                        window.location.href = '/';
                     }, 1000);
                 } else {
                     // Login failed
-                    showMessage(data.error || '登录失败', 'error');
+                    showMessage(data.error || i18n.translate('login_error'), 'error');
                 }
             } catch (error) {
-                showMessage('发生错误，请稍后再试', 'error');
+                showMessage(i18n.translate('system_error'), 'error');
                 console.error(error);
             }
         });

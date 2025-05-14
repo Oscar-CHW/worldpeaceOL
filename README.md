@@ -1,4 +1,4 @@
-# 天下太平 (Tianxia Taiping) Online
+# 天下太平 Online
 
 A web application that displays the title "天下太平" (Peace Under Heaven) with a user account system.
 
