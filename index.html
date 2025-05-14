@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天下太平</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .header {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 1rem;
+        }
+        
+        .auth-links a {
+            display: inline-block;
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-links a:hover {
+            background-color: #4a69bd;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="auth-links" id="auth-links">
+            <a href="/login.html">登录</a>
+            <a href="/signup.html">注册</a>
+        </div>
+    </div>
+
+    <div class="title-container">
+        <h1>天下太平</h1>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Check if user is logged in
+                const response = await fetch('/api/user/me');
+                
+                if (response.status !== 401) {
+                    // User is logged in, update the auth links
+                    const data = await response.json();
+                    const authLinks = document.getElementById('auth-links');
+                    authLinks.innerHTML = `
+                        <a href="/dashboard.html">你好，${data.username}</a>
+                        <a href="#" id="logout-link">退出</a>
+                    `;
+                    
+                    // Add logout functionality
+                    document.getElementById('logout-link').addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        
+                        try {
+                            await fetch('/api/logout', {
+                                method: 'POST'
+                            });
+                            window.location.reload();
+                        } catch (error) {
+                            console.error('Logout failed', error);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking auth status', error);
+            }
+        });
+    </script>
+</body>
+</html> 
