@@ -51,6 +51,20 @@
         // Initialize socket.io
         const socket = io();
         
+        // Wait for socket connection before proceeding
+        socket.on('connect', () => {
+            console.log('Socket connected');
+            
+            // Join or create the room after socket connection is established
+            if (usernameFromUrl) {
+                // Room creator
+                socket.emit('createRoom', { roomId, username: usernameFromUrl });
+            } else {
+                // Joining user
+                socket.emit('joinRoom', { roomId });
+            }
+        });
+        
         document.addEventListener('DOMContentLoaded', async () => {
             // Initialize language system
             i18n.init();
@@ -75,15 +89,6 @@
                 
                 // Get user data
                 currentUser = await response.json();
-                
-                // Join or create the room after authentication and socket connection
-                if (usernameFromUrl) {
-                    // Room creator
-                    socket.emit('createRoom', { roomId, username: currentUser.username });
-                } else {
-                    // Joining user
-                    socket.emit('joinRoom', { roomId, username: currentUser.username });
-                }
                 
                 // Update auth links
                 const authLinks = document.getElementById('auth-links');
