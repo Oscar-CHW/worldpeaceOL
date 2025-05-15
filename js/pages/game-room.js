@@ -169,6 +169,26 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
         
+        // Handle synchronized gold updates
+        socket.on('goldSyncUpdate', (data) => {
+            // Update both players' gold displays
+            data.players.forEach(playerData => {
+                if (playerData.playerId === socket.id) {
+                    // This is our gold
+                    gameState.gold = playerData.gold;
+                }
+                
+                // Update the display for this player
+                const isCurrentPlayer = playerData.playerId === socket.id;
+                const playerSide = (isCurrentPlayer === gameState.isLeftPlayer) ? 'left' : 'right';
+                
+                const goldElement = document.querySelector(`.player-info.${playerSide} .gold-amount`);
+                if (goldElement) {
+                    goldElement.textContent = playerData.gold;
+                }
+            });
+        });
+        
         // Handle unit spawned
         socket.on('unitSpawned', (data) => {
             // Add the unit to the game
@@ -184,10 +204,32 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // Find which player we are (left or right)
             const players = initialState.players;
-            gameState.isLeftPlayer = players[0].id === socket.id;
+            gameState.isLeftPlayer = players[0].id === socket.id || players[0].socketId === socket.id;
+            
+            // Find our player object and get initial gold
+            const ourPlayer = players.find(p => p.id === socket.id || p.socketId === socket.id);
+            if (ourPlayer) {
+                gameState.gold = ourPlayer.gold;
+            }
             
             // Initialize game state
             setupGame();
+            
+            // Update both players' gold displays
+            const leftPlayer = gameState.isLeftPlayer ? ourPlayer : players.find(p => p.id !== socket.id && p.socketId !== socket.id);
+            const rightPlayer = gameState.isLeftPlayer ? players.find(p => p.id !== socket.id && p.socketId !== socket.id) : ourPlayer;
+            
+            // Set gold displays
+            const leftGoldElement = document.querySelector('.player-info.left .gold-amount');
+            const rightGoldElement = document.querySelector('.player-info.right .gold-amount');
+            
+            if (leftGoldElement && leftPlayer) {
+                leftGoldElement.textContent = leftPlayer.gold;
+            }
+            
+            if (rightGoldElement && rightPlayer) {
+                rightGoldElement.textContent = rightPlayer.gold;
+            }
         });
         
         // Handle host change
@@ -229,9 +271,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         function updateGoldDisplay() {
-            const goldElement = document.querySelector(`.player-info.${gameState.isLeftPlayer ? 'left' : 'right'} .gold-amount`);
-            if (goldElement) {
-                goldElement.textContent = gameState.gold;
+            // This function is now only used for initial display setup
+            // Real-time updates come through goldSyncUpdate event
+            const leftGoldElement = document.querySelector('.player-info.left .gold-amount');
+            const rightGoldElement = document.querySelector('.player-info.right .gold-amount');
+            
+            if (gameState.isLeftPlayer) {
+                // We are the left player
+                leftGoldElement.textContent = gameState.gold;
+            } else {
+                // We are the right player
+                rightGoldElement.textContent = gameState.gold;
             }
         }
         

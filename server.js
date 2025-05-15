@@ -411,6 +411,40 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('gameStarted', room.gameState);
     });
 
+    // Handle mineral collection
+    socket.on('collectMineral', (data) => {
+        const { position, value } = data;
+        
+        // Get the room from userRooms map
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
+        const room = rooms.get(roomId);
+        
+        // Only process if room exists, game has started, and game state is initialized
+        if (!room || !room.gameState || !room.gameState.started) return;
+        
+        const player = room.gameState.players.find(p => p.id === socket.id || p.socketId === socket.id);
+        if (!player) return;
+        
+        // Add gold to player (fixed value of 75)
+        player.gold += value || 75;
+        
+        // Get both players' gold amounts
+        const playersGold = room.gameState.players.map(p => ({
+            playerId: p.id || p.socketId,
+            gold: p.gold
+        }));
+        
+        // Notify all players with complete gold information
+        io.to(roomId).emit('goldSyncUpdate', {
+            players: playersGold
+        });
+    });
+
     // Handle unit spawn
     socket.on('spawnUnit', (data) => {
         const { unitId, unitType, x, y, isLeftPlayer } = data;
@@ -466,39 +500,15 @@ io.on('connection', (socket) => {
         // Emit to all clients in the room
         io.to(roomId).emit('unitSpawned', unitData);
         
-        // Send gold update to the player
-        socket.emit('goldUpdate', {
-            playerId: socket.id,
-            gold: player.gold
-        });
-    });
-
-    // Handle mineral collection
-    socket.on('collectMineral', (data) => {
-        const { position, value } = data;
+        // Get both players' gold amounts
+        const playersGold = room.gameState.players.map(p => ({
+            playerId: p.id || p.socketId,
+            gold: p.gold
+        }));
         
-        // Get the room from userRooms map
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) {
-            socket.emit('error', { message: 'not_in_room' });
-            return;
-        }
-        
-        const room = rooms.get(roomId);
-        
-        // Only process if room exists, game has started, and game state is initialized
-        if (!room || !room.gameState || !room.gameState.started) return;
-        
-        const player = room.gameState.players.find(p => p.socketId === socket.id);
-        if (!player) return;
-        
-        // Add gold to player (fixed value of 75)
-        player.gold += value || 75;
-        
-        // Notify all players
-        io.to(roomId).emit('goldUpdate', {
-            playerId: socket.id,
-            gold: player.gold
+        // Send gold update to all players
+        io.to(roomId).emit('goldSyncUpdate', {
+            players: playersGold
         });
     });
 });
