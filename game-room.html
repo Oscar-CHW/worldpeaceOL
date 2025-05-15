@@ -104,6 +104,7 @@
             console.log('Received player list:', data);
             const playersList = document.getElementById('players');
             const playerCount = document.getElementById('player-count');
+            const startButton = document.getElementById('start-game-btn');
             
             // Update player count
             playerCount.textContent = data.players.length;
@@ -112,6 +113,18 @@
             playersList.innerHTML = data.players.map(player => 
                 `<li>${player.username} ${player.isHost ? `(${i18n.translate('room_owner')})` : ''}</li>`
             ).join('');
+
+            // Find current user in the player list
+            const currentPlayer = data.players.find(p => p.username === currentUser.username);
+            
+            // Show start button only if:
+            // 1. Current user is the host
+            // 2. There are exactly 2 players
+            if (currentPlayer?.isHost && data.players.length === 2) {
+                startButton.style.display = 'block';
+            } else {
+                startButton.style.display = 'none';
+            }
         });
         
         // Wait for socket connection before proceeding
@@ -159,11 +172,10 @@
                 window.location.href = '/';
             });
             
-            // Set up start game button (disabled for now)
+            // Set up start game button
             const startButton = document.getElementById('start-game-btn');
             startButton.addEventListener('click', () => {
-                // Will be implemented later
-                console.log('Start game clicked');
+                socket.emit('startGame', { roomId });
             });
             
             // Handle errors

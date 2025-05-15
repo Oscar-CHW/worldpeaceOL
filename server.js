@@ -129,42 +129,65 @@ io.on('connection', (socket) => {
     });
 
     // Handle room joining
-    socket.on('joinRoom', async (data) => {
-        try {
-            const { roomId, username } = data;
-            const room = rooms.get(roomId);
-            
-            if (!room) {
-                socket.emit('error', { message: 'Room not found' });
-                return;
-            }
-            
-            if (room.players.length >= 2) {
-                socket.emit('error', { message: 'Room is full' });
-                return;
-            }
-            
-            // Join the room
-            socket.join(roomId);
-            
-            // Add player to room with username
-            room.players.push({
-                id: socket.id,
-                username: username || 'Player 2',
-                isHost: false
-            });
-            
-            // Update player list for all clients in the room
-            io.to(roomId).emit('playerList', {
-                players: room.players
-            });
-            
-            console.log(`User ${username} joined room ${roomId}`);
-            console.log('Updated room data:', room);
-        } catch (error) {
-            console.error('Error joining room:', error);
-            socket.emit('error', { message: 'Failed to join room' });
+    socket.on('joinRoom', (data) => {
+        const { roomId, username } = data;
+        console.log(`User ${username} attempting to join room ${roomId}`);
+        
+        if (!rooms.has(roomId)) {
+            socket.emit('error', { message: 'Room not found' });
+            return;
         }
+        
+        const room = rooms.get(roomId);
+        
+        // Check if room is full (2 players)
+        if (room.players.length >= 2) {
+            socket.emit('error', { message: 'Room is full' });
+            return;
+        }
+        
+        // Check if username is already taken in this room
+        if (room.players.some(p => p.username === username)) {
+            socket.emit('error', { message: 'Username already taken in this room' });
+            return;
+        }
+        
+        // Join the room
+        socket.join(roomId);
+        room.players.push({ username, isHost: false });
+        
+        console.log(`User ${username} joined room ${roomId}`);
+        console.log('Updated room data:', room);
+        
+        // Send updated player list to all clients in the room
+        io.to(roomId).emit('playerList', { players: room.players });
+    });
+
+    // Handle start game
+    socket.on('startGame', (data) => {
+        const { roomId } = data;
+        const room = rooms.get(roomId);
+        
+        if (!room) {
+            socket.emit('error', { message: 'Room not found' });
+            return;
+        }
+        
+        // Verify that the sender is the host
+        const player = room.players.find(p => p.socketId === socket.id);
+        if (!player || !player.isHost) {
+            socket.emit('error', { message: 'Only the host can start the game' });
+            return;
+        }
+        
+        // Verify that there are exactly 2 players
+        if (room.players.length !== 2) {
+            socket.emit('error', { message: 'Need exactly 2 players to start' });
+            return;
+        }
+        
+        // Emit game start event to all players in the room
+        io.to(roomId).emit('gameStarted', { roomId });
     });
 
     // Handle leaving room
