@@ -110,10 +110,27 @@ document.addEventListener('DOMContentLoaded', async function() {
             window.location.href = '/';
         });
 
-        // Join the room
-        socket.emit('joinRoom', {
-            roomId,
-            username: currentUser.username
+        // First, check if the room exists
+        socket.on('connect', () => {
+            // We'll emit a custom event to check if the room exists
+            socket.emit('checkRoom', { roomId });
+        });
+        
+        // Handle room check response
+        socket.on('roomCheckResult', (data) => {
+            if (data.exists) {
+                // Room exists, join it
+                socket.emit('joinRoom', {
+                    roomId,
+                    username: currentUser.username
+                });
+            } else {
+                // Room doesn't exist, create it
+                socket.emit('createRoom', {
+                    roomId,
+                    username: currentUser.username
+                });
+            }
         });
         
         // Handle player list updates

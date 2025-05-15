@@ -99,6 +99,20 @@ const isAdmin = async (req, res, next) => {
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
+    // Handle room check
+    socket.on('checkRoom', (data) => {
+        const { roomId } = data;
+        const roomExists = rooms.has(roomId);
+        
+        console.log(`Checking if room ${roomId} exists: ${roomExists}`);
+        
+        // Respond with existence status
+        socket.emit('roomCheckResult', { 
+            exists: roomExists,
+            roomId
+        });
+    });
+
     // Handle room creation
     socket.on('createRoom', async (data) => {
         try {
