@@ -605,6 +605,42 @@ io.on('connection', (socket) => {
             players: playersGold
         });
     });
+
+    // Handle rock-paper-scissors round start
+    socket.on('rpsRoundStart', () => {
+        // Get the room from userRooms map
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
+        const room = rooms.get(roomId);
+        if (!room || !room.gameState || !room.gameState.started) {
+            return;
+        }
+        
+        // Broadcast round start to all players in the room
+        io.to(roomId).emit('rpsRoundStart');
+    });
+
+    // Handle rock-paper-scissors round end
+    socket.on('rpsRoundEnd', () => {
+        // Get the room from userRooms map
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
+        const room = rooms.get(roomId);
+        if (!room || !room.gameState || !room.gameState.started) {
+            return;
+        }
+        
+        // Broadcast round end to all players in the room
+        io.to(roomId).emit('rpsRoundEnd');
+    });
 });
 
 // ===== API Routes =====

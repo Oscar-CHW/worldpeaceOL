@@ -301,8 +301,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Setup unit selection
             setupUnitSelection();
             
-            // Start the first RPS round
-            startRPSRound();
+            // Emit event to start first RPS round
+            socket.emit('rpsRoundStart');
         }
         
         function updateGoldDisplay() {
@@ -439,8 +439,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
             
             // Listen for RPS round end event
-            socket.on('rpsRoundEnd', (data) => {
-                endRPSRound(data);
+            socket.on('rpsRoundEnd', () => {
+                // Only reset UI elements here, game state is reset in startRPSRound
+                document.getElementById('rps-message').textContent = "Preparing next round...";
+                document.getElementById('rps-timer').style.display = 'none';
+                
+                if (gameState.rps.countdownTimer) {
+                    clearInterval(gameState.rps.countdownTimer);
+                    gameState.rps.countdownTimer = null;
+                }
+                
+                gameState.rps.roundActive = false;
             });
         }
         
@@ -535,24 +544,28 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             
             // End the current round
-            endRPSRound({ result });
+            endRPSRound(socket);
         }
         
         // End the current RPS round
-        function endRPSRound(data) {
+        function endRPSRound(socket) {
             gameState.rps.roundActive = false;
             
             // Clear any timers
             if (gameState.rps.countdownTimer) {
                 clearInterval(gameState.rps.countdownTimer);
+                gameState.rps.countdownTimer = null;
             }
             
             // Hide the timer
             document.getElementById('rps-timer').style.display = 'none';
             
+            // Broadcast end of round to all players
+            socket.emit('rpsRoundEnd');
+            
             // Start a new round after 3 seconds
             setTimeout(() => {
-                startRPSRound();
+                socket.emit('rpsRoundStart');
             }, 3000);
         }
         
