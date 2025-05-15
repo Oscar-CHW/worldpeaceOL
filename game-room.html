@@ -22,6 +22,8 @@
         
         <div class="room-info">
             <p><span data-i18n="player_count">玩家数量</span>: <span id="player-count">1</span></p>
+            <p><span data-i18n="room_id">房间号</span>: <span id="room-id"></span></p>
+            <button id="copy-room-link" class="action-button copy" data-i18n="copy_room_link">复制房间链接</button>
         </div>
         
         <div class="player-list">
@@ -165,6 +167,17 @@
             // Check authentication
             const isAuthenticated = await checkAuth();
             if (!isAuthenticated) return;
+            
+            // Set up copy room link button
+            document.getElementById('copy-room-link').addEventListener('click', () => {
+                const roomLink = `${window.location.origin}/game-room.html?roomId=${roomId}`;
+                navigator.clipboard.writeText(roomLink).then(() => {
+                    alert(i18n.translate('room_link_copied'));
+                }).catch(err => {
+                    console.error('Failed to copy room link:', err);
+                    alert(i18n.translate('copy_failed'));
+                });
+            });
             
             // Set up leave room button
             document.getElementById('leave-room-btn').addEventListener('click', () => {

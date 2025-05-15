@@ -54,7 +54,10 @@ const translations = {
     'loading': '加载中...',
     'admin_panel': '管理面板',
     'one_v_one': '1v1',
-    'admin_panel': '管理面板'
+    'admin_panel': '管理面板',
+    'copy_room_link': '复制房间链接',
+    'room_link_copied': '房间链接已复制到剪贴板',
+    'copy_failed': '复制失败，请手动复制链接'
   },
   
   // Chinese translations (Traditional)
@@ -92,7 +95,10 @@ const translations = {
     'start_game': '開始遊戲',
     'leave_room': '離開房間',
     'loading': '載入中...',
-    'admin_panel': '管理面板'
+    'admin_panel': '管理面板',
+    'copy_room_link': '複製房間連結',
+    'room_link_copied': '房間連結已複製到剪貼簿',
+    'copy_failed': '複製失敗，請手動複製連結'
   },
   
   // English translations
@@ -130,7 +136,10 @@ const translations = {
     'start_game': 'Start Game',
     'leave_room': 'Leave Room',
     'loading': 'Loading...',
-    'admin_panel': 'Admin Panel'
+    'admin_panel': 'Admin Panel',
+    'copy_room_link': 'Copy Room Link',
+    'room_link_copied': 'Room link copied to clipboard',
+    'copy_failed': 'Copy failed, please copy the link manually'
   },
   
   // Japanese translations
@@ -168,7 +177,10 @@ const translations = {
     'start_game': 'ゲーム開始',
     'leave_room': 'ルームを退出',
     'loading': '読み込み中...',
-    'admin_panel': '管理パネル'
+    'admin_panel': '管理パネル',
+    'copy_room_link': 'ルームリンクをコピー',
+    'room_link_copied': 'ルームリンクをクリップボードにコピーしました',
+    'copy_failed': 'コピーに失敗しました。リンクを手動でコピーしてください'
   },
   
   // Korean translations
@@ -206,7 +218,10 @@ const translations = {
     'start_game': '게임 시작',
     'leave_room': '방 나가기',
     'loading': '로딩 중...',
-    'admin_panel': '관리자 패널'
+    'admin_panel': '관리자 패널',
+    'copy_room_link': '방 링크 복사',
+    'room_link_copied': '방 링크가 클립보드에 복사되었습니다',
+    'copy_failed': '복사 실패, 링크를 수동으로 복사해주세요'
   }
 };
 

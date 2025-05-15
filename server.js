@@ -105,7 +105,7 @@ io.on('connection', (socket) => {
             // Initialize room data with username
             const roomData = {
                 players: [{
-                    id: socket.id,
+                    socketId: socket.id,
                     username: data.username || 'Player 1',
                     isHost: true
                 }]
@@ -154,7 +154,11 @@ io.on('connection', (socket) => {
         
         // Join the room
         socket.join(roomId);
-        room.players.push({ username, isHost: false });
+        room.players.push({ 
+            socketId: socket.id,
+            username, 
+            isHost: false 
+        });
         
         console.log(`User ${username} joined room ${roomId}`);
         console.log('Updated room data:', room);
@@ -198,7 +202,7 @@ io.on('connection', (socket) => {
             
             if (room) {
                 // Remove player from room
-                room.players = room.players.filter(p => p.id !== socket.id);
+                room.players = room.players.filter(p => p.socketId !== socket.id);
                 
                 // If room is empty, delete it
                 if (room.players.length === 0) {
@@ -225,7 +229,7 @@ io.on('connection', (socket) => {
         
         // Find and remove player from all rooms
         for (const [roomId, room] of rooms.entries()) {
-            const playerIndex = room.players.findIndex(p => p.id === socket.id);
+            const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
             if (playerIndex !== -1) {
                 room.players.splice(playerIndex, 1);
                 
