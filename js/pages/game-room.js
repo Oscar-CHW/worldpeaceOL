@@ -366,7 +366,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         function setupBarrier(unitData, unitElement) {
-            // No animation needed, just a static barrier
+            // Overlay the barrier image on the tower
+            const towerSelector = unitData.isLeftPlayer ? '.tower.left .barrier-image' : '.tower.right .barrier-image';
+            const barrierImg = document.querySelector(towerSelector);
+            if (barrierImg) {
+                barrierImg.style.display = 'block';
+            }
+            // Remove the floating barrier unit from the field (if any)
+            if (unitElement && unitElement.parentNode) {
+                unitElement.parentNode.removeChild(unitElement);
+            }
         }
         
         // Placeholder functions for unit behaviors

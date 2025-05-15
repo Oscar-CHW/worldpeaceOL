@@ -793,7 +793,8 @@ button:hover {
 }
 
 .tower {
-    position: absolute;
+    position: relative;
+    display: inline-block;
     top: 50%;
     transform: translateY(-50%);
     width: 120px;
@@ -809,9 +810,21 @@ button:hover {
 }
 
 .tower-image {
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.barrier-image {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
 }
 
 /* Static mineral styles */

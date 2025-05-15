@@ -45,6 +45,40 @@ try {
   process.exit(1);
 }
 
+// Check if Prisma is initialized (dev.db and migrations exist)
+const prismaDir = path.join(__dirname, 'prisma');
+const devDbPath = path.join(prismaDir, 'dev.db');
+const migrationsDir = path.join(prismaDir, 'migrations');
+const schemaPath = path.join(prismaDir, 'schema.prisma');
+
+function runPrismaGenerate() {
+  const { spawnSync } = require('child_process');
+  const result = spawnSync('npx', ['prisma', 'generate'], { stdio: 'inherit', shell: true });
+  if (result.status !== 0) {
+    console.error(colors.red + 'ERROR: Failed to generate Prisma client.' + colors.reset);
+    process.exit(1);
+  }
+}
+
+function runPrismaMigrate() {
+  const { spawnSync } = require('child_process');
+  const result = spawnSync('npx', ['prisma', 'migrate', 'deploy'], { stdio: 'inherit', shell: true });
+  if (result.status !== 0) {
+    console.error(colors.red + 'ERROR: Failed to run Prisma migrations.' + colors.reset);
+    process.exit(1);
+  }
+}
+
+// Initialize Prisma if needed before starting the server
+if (!fs.existsSync(devDbPath) || !fs.existsSync(migrationsDir) || !fs.existsSync(schemaPath)) {
+  console.log(colors.yellow + 'Prisma database or migrations not found. Initializing Prisma...' + colors.reset);
+  runPrismaMigrate();
+  runPrismaGenerate();
+  console.log(colors.green + '✓ Prisma database and client initialized.' + colors.reset);
+} else {
+  console.log(colors.green + '✓ Prisma database and migrations found.' + colors.reset);
+}
+
 console.log(colors.green + '✓ Dependencies check passed' + colors.reset);
 console.log(colors.green + '✓ Server file found' + colors.reset);
 console.log('\n' + colors.yellow + 'Starting server...' + colors.reset + '\n');
@@ -101,4 +135,4 @@ process.on('SIGTERM', () => {
     serverProcess.kill('SIGTERM');
   }
   process.exit(0);
-}); 
+});

@@ -77,11 +77,13 @@
                 </div>
             </div>
             <div class="game-field">
-                <div class="tower left">
+                <div class="tower left" style="z-index:2; position:absolute; left:0; top:50%; transform:translateY(-50%);">
                     <img src="images/tower.png" alt="Left Tower" class="tower-image">
+                    <img src="images/barrier.png" alt="Barrier" class="barrier-image" style="display:none;">
                 </div>
-                <div class="tower right">
+                <div class="tower right" style="z-index:1; position:absolute; right:0; top:50%; transform:translateY(-50%);">
                     <img src="images/tower.png" alt="Right Tower" class="tower-image">
+                    <img src="images/barrier.png" alt="Barrier" class="barrier-image" style="display:none;">
                 </div>
                 <!-- Static minerals -->
                 <div class="mineral left">
