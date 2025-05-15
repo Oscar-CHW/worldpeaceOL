@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="title">天下太平 - Game Room</title>
+    <title data-i18n="title">天下太平 - <span data-i18n="one_v_one">1v1</span></title>
     <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -17,7 +17,7 @@
     </div>
 
     <div class="game-room-container">
-        <h2><span data-i18n="game_room">游戏房间</span> <span id="room-id"></span></h2>
+        <h2><span data-i18n="one_v_one">1v1</span></h2>
         
         <div class="room-info">
             <p><span data-i18n="player_count">玩家数量</span>: <span id="player-count">1</span></p>
@@ -88,7 +88,7 @@
                 // Update auth links
                 const authLinks = document.getElementById('auth-links');
                 authLinks.innerHTML = `
-                    <a href="/dashboard.html" id="welcome-user"></a>
+                    <a href="/dashboard.html" id="welcome-user" data-i18n="my_profile"></a>
                     <a href="#" id="logout-link" data-i18n="logout"></a>
                 `;
                 

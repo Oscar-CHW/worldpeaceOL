@@ -52,6 +52,8 @@ const translations = {
     'start_game': '开始游戏',
     'leave_room': '离开房间',
     'loading': '加载中...',
+    'admin_panel': '管理面板',
+    'one_v_one': '1v1',
     'admin_panel': '管理面板'
   },
   

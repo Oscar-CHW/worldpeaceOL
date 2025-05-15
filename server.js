@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const prisma = require('./prisma/client');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const SQLiteStore = require('connect-sqlite3')(session);
 
 const app = express();
 const httpServer = createServer(app);
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
+  store: new SQLiteStore({ db: 'sessions.sqlite', dir: './db' }),
   secret: 'tianxia-taiping-secret-key',
   resave: false,
   saveUninitialized: false,
