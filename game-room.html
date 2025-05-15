@@ -98,6 +98,21 @@
         // Initialize socket.io
         const socket = io();
         
+        // Handle player list updates
+        socket.on('playerList', (data) => {
+            console.log('Received player list:', data);
+            const playersList = document.getElementById('players');
+            const playerCount = document.getElementById('player-count');
+            
+            // Update player count
+            playerCount.textContent = data.players.length;
+            
+            // Update player list
+            playersList.innerHTML = data.players.map(player => 
+                `<li>${player.username} ${player.isHost ? `(${i18n.translate('room_owner')})` : ''}</li>`
+            ).join('');
+        });
+        
         // Wait for socket connection before proceeding
         socket.on('connect', async () => {
             console.log('Socket connected');
@@ -109,13 +124,15 @@
             // Join or create the room after socket connection is established
             if (usernameFromUrl) {
                 // Room creator
+                console.log('Creating room with username:', currentUser.username);
                 socket.emit('createRoom', { roomId, username: currentUser.username });
             } else {
                 // Joining user
+                console.log('Joining room with username:', currentUser.username);
                 socket.emit('joinRoom', { roomId, username: currentUser.username });
             }
         });
-        
+
         // Handle room creation confirmation
         socket.on('roomCreated', (data) => {
             console.log('Room created:', data.roomId);
@@ -134,21 +151,6 @@
             // Check authentication
             const isAuthenticated = await checkAuth();
             if (!isAuthenticated) return;
-            
-            // Handle player list updates
-            socket.on('playerList', (data) => {
-                console.log('Received player list:', data);
-                const playersList = document.getElementById('players');
-                const playerCount = document.getElementById('player-count');
-                
-                // Update player count
-                playerCount.textContent = data.players.length;
-                
-                // Update player list
-                playersList.innerHTML = data.players.map(player => 
-                    `<li>${player.username} ${player.isHost ? `(${i18n.translate('room_owner')})` : ''}</li>`
-                ).join('');
-            });
             
             // Set up leave room button
             document.getElementById('leave-room-btn').addEventListener('click', () => {

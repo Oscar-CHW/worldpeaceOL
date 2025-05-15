@@ -160,6 +160,7 @@ io.on('connection', (socket) => {
             });
             
             console.log(`User ${username} joined room ${roomId}`);
+            console.log('Updated room data:', room);
         } catch (error) {
             console.error('Error joining room:', error);
             socket.emit('error', { message: 'Failed to join room' });
