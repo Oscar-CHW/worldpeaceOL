@@ -724,4 +724,26 @@ button:hover {
     background-color: #0984e3;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Game container styles */
+#game-container {
+    width: 100%;
+    height: 600px;
+    margin-top: 2rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide room info and player list when game starts */
+.game-started .room-info,
+.game-started .player-list,
+.game-started .room-actions {
+    display: none;
+}
+
+/* Show game container when game starts */
+.game-started #game-container {
+    display: block;
 } 
