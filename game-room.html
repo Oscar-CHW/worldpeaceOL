@@ -88,6 +88,11 @@
             }
         });
         
+        // Handle room creation confirmation
+        socket.on('roomCreated', (data) => {
+            console.log('Room created:', data.roomId);
+        });
+        
         document.addEventListener('DOMContentLoaded', async () => {
             // Initialize language system
             i18n.init();
@@ -131,6 +136,7 @@
             
             // Handle player list updates
             socket.on('playerList', (data) => {
+                console.log('Received player list:', data);
                 const playersList = document.getElementById('players');
                 const playerCount = document.getElementById('player-count');
                 

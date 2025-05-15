@@ -121,6 +121,7 @@ io.on('connection', (socket) => {
             });
             
             console.log(`Room created: ${roomId} by user: ${data.username}`);
+            console.log('Current room data:', roomData);
         } catch (error) {
             console.error('Error creating room:', error);
             socket.emit('error', { message: 'Failed to create room' });
