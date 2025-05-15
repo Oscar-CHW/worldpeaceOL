@@ -264,8 +264,36 @@ document.addEventListener('DOMContentLoaded', async function() {
         function setupGame() {
             // Set player names
             const playerInfoElements = document.querySelectorAll('.player-info');
-            playerInfoElements[gameState.isLeftPlayer ? 0 : 1].querySelector('.player-name').textContent = currentUser.username;
-            playerInfoElements[gameState.isLeftPlayer ? 1 : 0].querySelector('.player-name').textContent = "Opponent";
+            const leftInfoElement = playerInfoElements[0];
+            const rightInfoElement = playerInfoElements[1];
+            
+            if (gameState.isLeftPlayer) {
+                leftInfoElement.querySelector('.player-name').textContent = currentUser.username;
+                rightInfoElement.querySelector('.player-name').textContent = "Opponent";
+                
+                // Show controls on left side (player's side)
+                leftInfoElement.classList.add('player-side');
+                rightInfoElement.classList.add('opponent-side');
+            } else {
+                rightInfoElement.querySelector('.player-name').textContent = currentUser.username;
+                leftInfoElement.querySelector('.player-name').textContent = "Opponent";
+                
+                // Show controls on right side (player's side)
+                rightInfoElement.classList.add('player-side');
+                leftInfoElement.classList.add('opponent-side');
+                
+                // Move player controls to the right side
+                const playerControls = document.getElementById('player-controls');
+                if (playerControls) {
+                    const rightPlayerInfo = document.querySelector('.player-info.right');
+                    if (rightPlayerInfo) {
+                        const rightControls = rightPlayerInfo.querySelector('.opponent-controls');
+                        if (rightControls) {
+                            rightControls.appendChild(playerControls);
+                        }
+                    }
+                }
+            }
             
             // Initialize gold display
             updateGoldDisplay();
@@ -401,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 
                 // If both players have made a choice, determine the winner
                 if (gameState.rps.playerChoice && gameState.rps.opponentChoice) {
-                    determineRPSWinner();
+                    determineRPSWinner(socket);
                 }
             });
             
@@ -461,7 +489,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         // Determine the winner of the RPS round
-        function determineRPSWinner() {
+        function determineRPSWinner(socket) {
             const playerChoice = gameState.rps.playerChoice;
             const opponentChoice = gameState.rps.opponentChoice;
             
@@ -477,8 +505,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 result = 'win';
                 document.getElementById('rps-message').textContent = "You win! +100 gold";
                 
-                // Highlight the winning choice
-                document.querySelector(`.rps-btn[data-choice="${playerChoice}"]`).classList.add('winner');
+                // Find the button in the player's side
+                const playerSide = document.querySelector('.player-side');
+                if (playerSide) {
+                    const winningBtn = playerSide.querySelector(`.rps-btn[data-choice="${playerChoice}"]`);
+                    if (winningBtn) {
+                        winningBtn.classList.add('winner');
+                    }
+                }
                 
                 // Add gold for winning
                 gameState.gold += RPS_REWARD;
@@ -490,8 +524,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 result = 'lose';
                 document.getElementById('rps-message').textContent = "You lose!";
                 
-                // Highlight the losing choice
-                document.querySelector(`.rps-btn[data-choice="${playerChoice}"]`).classList.add('loser');
+                // Find the button in the player's side
+                const playerSide = document.querySelector('.player-side');
+                if (playerSide) {
+                    const losingBtn = playerSide.querySelector(`.rps-btn[data-choice="${playerChoice}"]`);
+                    if (losingBtn) {
+                        losingBtn.classList.add('loser');
+                    }
+                }
             }
             
             // End the current round

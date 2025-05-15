@@ -44,12 +44,14 @@
                     <div class="hp-bar">
                         <div class="hp-fill"></div>
                     </div>
-                    <div class="rps-controls">
-                        <button class="rps-btn" data-choice="rock">✊</button>
-                        <button class="rps-btn" data-choice="paper">✋</button>
-                        <button class="rps-btn" data-choice="scissors">✌️</button>
+                    <div class="player-controls">
+                        <div class="rps-controls" id="player-controls">
+                            <button class="rps-btn" data-choice="rock">✊</button>
+                            <button class="rps-btn" data-choice="paper">✋</button>
+                            <button class="rps-btn" data-choice="scissors">✌️</button>
+                        </div>
+                        <div class="rps-result" id="player-choice"></div>
                     </div>
-                    <div class="rps-result" id="player-choice"></div>
                     <div class="gold-display">
                         <img src="images/coin.png" alt="Gold" class="gold-icon">
                         <span class="gold-amount">0</span>
@@ -64,7 +66,9 @@
                     <div class="hp-bar">
                         <div class="hp-fill"></div>
                     </div>
-                    <div class="rps-result" id="opponent-choice"></div>
+                    <div class="opponent-controls">
+                        <div class="rps-result" id="opponent-choice"></div>
+                    </div>
                     <div class="gold-display">
                         <img src="images/coin.png" alt="Gold" class="gold-icon">
                         <span class="gold-amount">0</span>

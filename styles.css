@@ -1031,12 +1031,29 @@ button:hover {
     color: #3498db;
 }
 
+/* Player and opponent controls */
+.player-controls, .opponent-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px 0;
+}
+
+/* Only show controls on the player's side */
+.player-info.right .player-controls {
+    display: none;
+}
+
+.player-info.left .opponent-controls {
+    display: none;
+}
+
 /* Rock Paper Scissors Game Styles */
 .rps-controls {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin: 10px 0;
+    margin: 5px 0;
 }
 
 .rps-btn {
@@ -1129,4 +1146,21 @@ button:hover {
     .rps-status {
         padding: 5px 10px;
     }
+}
+
+/* Player and opponent sides */
+.player-side .player-controls {
+    display: flex;
+}
+
+.player-side .opponent-controls {
+    display: none;
+}
+
+.opponent-side .player-controls {
+    display: none;
+}
+
+.opponent-side .opponent-controls {
+    display: flex;
 } 
