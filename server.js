@@ -205,36 +205,11 @@ io.on('connection', (socket) => {
                 gold: 500,
                 hp: 100
             })),
-            units: [],
-            minerals: []
+            units: []
         };
-        
-        // Create static minerals (like the towers)
-        const leftMineral = {
-            id: Date.now(),
-            x: 15, // Left side position (15%)
-            y: 50, // Middle height
-            value: 75 // Fixed value
-        };
-        
-        const rightMineral = {
-            id: Date.now() + 1, // Ensure unique ID
-            x: 85, // Right side position (85%)
-            y: 50, // Middle height
-            value: 75 // Fixed value
-        };
-        
-        // Add both minerals to game state
-        room.gameState.minerals.push(leftMineral, rightMineral);
-        
-        console.log(`Spawned static minerals in room ${roomId}`);
         
         // Send initial game state to all players
         io.to(roomId).emit('gameStarted', room.gameState);
-        
-        // Send mineral information separately to ensure they're displayed
-        io.to(roomId).emit('mineralSpawned', leftMineral);
-        io.to(roomId).emit('mineralSpawned', rightMineral);
     });
 
     // Handle unit spawn
@@ -242,9 +217,10 @@ io.on('connection', (socket) => {
         const { roomId, unitType, x, y, isLeftPlayer } = data;
         const room = rooms.get(roomId);
         
-        if (!room || !room.gameState) return;
+        // Only process if room exists, game has started, and game state is initialized
+        if (!room || !room.gameState || !room.gameState.started) return;
         
-        const player = room.gameState.players.find(p => p.socketId === socket.id);
+        const player = room.gameState.players.find(p => p.id === socket.id);
         if (!player) return;
         
         const cost = unitType === 'miner' ? 100 : 200;
@@ -261,6 +237,9 @@ io.on('connection', (socket) => {
             y,
             isLeftPlayer
         };
+        
+        // Check if units array exists in player
+        if (!player.units) player.units = [];
         player.units.push(unit);
         
         // Notify all players
@@ -271,46 +250,21 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Handle mineral spawn (only used for manual spawning if needed)
-    socket.on('spawnMineral', (data) => {
-        const { roomId, x, y } = data;
+    // Handle mineral collection
+    socket.on('collectMineral', (data) => {
+        const { roomId, position, value } = data;
         const room = rooms.get(roomId);
         
         // Only process if room exists, game has started, and game state is initialized
         if (!room || !room.gameState || !room.gameState.started) return;
         
-        const mineral = {
-            id: Date.now(),
-            x,
-            y,
-            value: 75 // Fixed value
-        };
-        
-        room.gameState.minerals.push(mineral);
-        io.to(roomId).emit('mineralSpawned', mineral);
-    });
-
-    // Handle mineral collection
-    socket.on('collectMineral', (data) => {
-        const { roomId, mineralId } = data;
-        const room = rooms.get(roomId);
-        
-        if (!room || !room.gameState) return;
-        
-        const mineral = room.gameState.minerals.find(m => m.id === mineralId);
-        if (!mineral) return;
-        
-        const player = room.gameState.players.find(p => p.socketId === socket.id);
+        const player = room.gameState.players.find(p => p.id === socket.id);
         if (!player) return;
         
-        // Add gold to player
-        player.gold += 50;
-        
-        // Remove mineral
-        room.gameState.minerals = room.gameState.minerals.filter(m => m.id !== mineralId);
+        // Add gold to player (fixed value of 75)
+        player.gold += value || 75;
         
         // Notify all players
-        io.to(roomId).emit('mineralCollected', { mineralId });
         io.to(roomId).emit('goldUpdate', {
             playerId: socket.id,
             gold: player.gold

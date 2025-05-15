@@ -798,6 +798,54 @@ button:hover {
     object-fit: contain;
 }
 
+/* Static mineral styles */
+.mineral {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mineral.left {
+    left: 25%;
+}
+
+.mineral.right {
+    right: 25%;
+}
+
+.mineral-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Mineral collection effect */
+.mineral.collected {
+    animation: collect-pulse 0.5s ease;
+}
+
+@keyframes collect-pulse {
+    0% {
+        transform: translateY(-50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(-50%) scale(1.2);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateY(-50%) scale(1);
+        opacity: 1;
+    }
+}
+
 /* Hide room elements when game starts */
 .game-started .room-info,
 .game-started .player-list,

@@ -67,6 +67,13 @@
                 <div class="tower right">
                     <img src="images/tower.png" alt="Right Tower" class="tower-image">
                 </div>
+                <!-- Static minerals -->
+                <div class="mineral left">
+                    <img src="images/mineral.png" alt="Left Mineral" class="mineral-image">
+                </div>
+                <div class="mineral right">
+                    <img src="images/mineral.png" alt="Right Mineral" class="mineral-image">
+                </div>
             </div>
             <div class="unit-selection-bar">
                 <div class="unit-option" data-unit="miner">
@@ -88,7 +95,6 @@
         // Game state
         let gameState = {
             gold: 500,
-            minerals: [],
             units: [],
             isLeftPlayer: false
         };
@@ -98,6 +104,9 @@
             miner: 100,
             soldier: 200
         };
+
+        // Mineral value
+        const MINERAL_VALUE = 75;
 
         // Get room ID and username from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -196,14 +205,13 @@
             gameState.gold = gameState.players.find(p => p.id === socket.id).gold;
             updateGoldDisplay();
             
-            // Clear existing minerals and units
-            gameState.minerals = [];
-            gameState.units = [];
+            // Initialize minerals for collection
+            setupMinerals();
             
             // Setup unit selection
             setupUnitSelection();
             
-            console.log('Game started, waiting for server-spawned minerals...');
+            console.log('Game started, minerals are ready for collection');
         });
         
         // Handle HP updates
@@ -266,50 +274,30 @@
         
         // Handle gold updates
         socket.on('goldUpdate', (data) => {
-            gameState.gold = data.gold;
-            updateGoldDisplay();
-        });
-
-        // Handle unit spawn
-        socket.on('unitSpawned', (data) => {
-            spawnUnit(data.unitType, data.x, data.y, data.isLeftPlayer);
-        });
-
-        // Handle mineral spawn
-        socket.on('mineralSpawned', (mineral) => {
-            gameState.minerals.push(mineral);
-            spawnMineral(mineral);
-        });
-
-        // Handle mineral collected
-        socket.on('mineralCollected', (data) => {
-            collectMineral(data.mineralId);
-        });
-
-        function spawnMineral(mineral) {
-            const mineralElement = document.createElement('div');
-            mineralElement.className = 'mineral';
-            mineralElement.id = `mineral-${mineral.id}`;
-            mineralElement.style.left = `${mineral.x}%`;
-            mineralElement.style.top = `${mineral.y}%`;
-            document.getElementById('game-field').appendChild(mineralElement);
-            console.log(`Displaying mineral at x:${mineral.x}%, y:${mineral.y}%`);
-        }
-
-        function collectMineral(mineralId) {
-            const mineral = gameState.minerals.find(m => m.id === mineralId);
-            if (mineral) {
-                socket.emit('collectMineral', {
-                    roomId: roomId,
-                    mineralId: mineralId,
-                    value: mineral.value
-                });
-                gameState.minerals = gameState.minerals.filter(m => m.id !== mineralId);
-                const mineralElement = document.getElementById(`mineral-${mineralId}`);
-                if (mineralElement) {
-                    mineralElement.remove();
-                }
+            if (data.playerId === socket.id) {
+                gameState.gold = data.gold;
+                updateGoldDisplay();
             }
+        });
+
+        function setupMinerals() {
+            // Add click listeners to both minerals for manual collection
+            document.querySelectorAll('.mineral').forEach(mineral => {
+                mineral.addEventListener('click', () => {
+                    // Collect the mineral
+                    socket.emit('collectMineral', {
+                        roomId: roomId,
+                        position: mineral.classList.contains('left') ? 'left' : 'right',
+                        value: MINERAL_VALUE
+                    });
+                    
+                    // Create collection effect
+                    mineral.classList.add('collected');
+                    setTimeout(() => {
+                        mineral.classList.remove('collected');
+                    }, 500);
+                });
+            });
         }
 
         function spawnUnit(type, x, y, isLeftPlayer) {
@@ -328,11 +316,13 @@
             document.querySelector('.game-field').appendChild(unit);
             
             if (type === 'miner') {
-                // Find nearest mineral and move towards it
-                const minerals = document.querySelectorAll('.mineral');
-                if (minerals.length > 0) {
-                    const nearestMineral = findNearestMineral(unit, minerals);
-                    moveUnitTowards(unit, nearestMineral.x, nearestMineral.y);
+                // For miners, move towards the closest mineral based on player side
+                const mineralTarget = isLeftPlayer ? document.querySelector('.mineral.left') : document.querySelector('.mineral.right');
+                if (mineralTarget) {
+                    // Get mineral position
+                    const mineralRect = mineralTarget.getBoundingClientRect();
+                    // Move the unit toward the mineral
+                    moveUnitTowards(unit, mineralRect.left + mineralRect.width/2, mineralRect.top + mineralRect.height/2);
                 }
             } else if (type === 'soldier') {
                 // Position soldier in front of tower
