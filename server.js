@@ -29,7 +29,9 @@ const userRooms = new Map();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(session({
+
+// Create session middleware
+const sessionMiddleware = session({
     store: new SQLiteStore({ 
         db: 'sessions.sqlite',
         dir: dbDir,
@@ -44,7 +46,15 @@ app.use(session({
         httpOnly: true,
         sameSite: 'lax'
     }
-}));
+});
+
+// Apply session middleware to Express
+app.use(sessionMiddleware);
+
+// Share session with Socket.IO
+io.use((socket, next) => {
+    sessionMiddleware(socket.request, socket.request.res || {}, next);
+});
 
 // Serve static files from the current directory
 app.use(express.static(__dirname));
@@ -127,7 +137,7 @@ io.on('connection', (socket) => {
             userRooms.set(socket.id, roomId);
             
             // Save the room ID to the user's database record if they're logged in
-            if (socket.request.session.userId) {
+            if (socket.request && socket.request.session && socket.request.session.userId) {
                 try {
                     await prisma.user.update({
                         where: { id: socket.request.session.userId },
@@ -215,7 +225,7 @@ io.on('connection', (socket) => {
         userRooms.set(socket.id, roomId);
         
         // Save the room ID to the user's database record if they're logged in
-        if (socket.request.session.userId) {
+        if (socket.request && socket.request.session && socket.request.session.userId) {
             try {
                 await prisma.user.update({
                     where: { id: socket.request.session.userId },
@@ -271,7 +281,7 @@ io.on('connection', (socket) => {
                 console.log(`Room ${roomId} deleted because it's empty`);
                 
                 // If the user is logged in, clear their lastRoom since the room no longer exists
-                if (socket.request.session.userId) {
+                if (socket.request && socket.request.session && socket.request.session.userId) {
                     try {
                         await prisma.user.update({
                             where: { id: socket.request.session.userId },
