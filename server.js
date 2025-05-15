@@ -210,9 +210,15 @@ io.on('connection', (socket) => {
     }
 
     // Handle leaving room
-    socket.on('leaveRoom', (data) => {
+    socket.on('leaveRoom', () => {
         try {
-            const { roomId } = data;
+            // Get the room from userRooms map
+            const roomId = userRooms.get(socket.id);
+            if (!roomId) {
+                socket.emit('error', { message: 'not_in_room' });
+                return;
+            }
+            
             leaveRoom(socket, roomId);
         } catch (error) {
             console.error('Error leaving room:', error);
@@ -292,9 +298,15 @@ io.on('connection', (socket) => {
     }
 
     // Handle start game
-    socket.on('startGame', (roomId) => {
-        const room = rooms.get(roomId);
+    socket.on('startGame', () => {
+        // Get the room from userRooms map
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
         
+        const room = rooms.get(roomId);
         if (!room) {
             socket.emit('error', { message: 'room_not_found' });
             return;
@@ -338,7 +350,15 @@ io.on('connection', (socket) => {
 
     // Handle unit spawn
     socket.on('spawnUnit', (data) => {
-        const { roomId, unitId, unitType, x, y, isLeftPlayer } = data;
+        const { unitId, unitType, x, y, isLeftPlayer } = data;
+        
+        // Get the room from userRooms map
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
         const room = rooms.get(roomId);
         
         // Only process if room exists, game has started, and game state is initialized
@@ -392,7 +412,15 @@ io.on('connection', (socket) => {
 
     // Handle mineral collection
     socket.on('collectMineral', (data) => {
-        const { roomId, position, value } = data;
+        const { position, value } = data;
+        
+        // Get the room from userRooms map
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
         const room = rooms.get(roomId);
         
         // Only process if room exists, game has started, and game state is initialized

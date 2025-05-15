@@ -315,23 +315,7 @@
         });
 
         function setupMinerals() {
-            // Add click listeners to both minerals for manual collection
-            document.querySelectorAll('.mineral').forEach(mineral => {
-                mineral.addEventListener('click', () => {
-                    // Collect the mineral
-                    socket.emit('collectMineral', {
-                        roomId: roomId,
-                        position: mineral.classList.contains('left') ? 'left' : 'right',
-                        value: MINERAL_VALUE
-                    });
-                    
-                    // Create collection effect
-                    mineral.classList.add('collected');
-                    setTimeout(() => {
-                        mineral.classList.remove('collected');
-                    }, 500);
-                });
-            });
+            
         }
 
         function setupUnitSelection() {
@@ -354,7 +338,6 @@
                         
                         // Send unit spawn event to server
                         socket.emit('spawnUnit', {
-                            roomId,
                             unitId,
                             unitType,
                             x,
@@ -448,7 +431,6 @@
             
             // Tell the server we collected from this mineral
             socket.emit('collectMineral', {
-                roomId,
                 position,
                 value: MINERAL_VALUE
             });
@@ -488,14 +470,14 @@
             
             // Set up leave room button
             document.getElementById('leave-room-btn').addEventListener('click', () => {
-                socket.emit('leaveRoom', { roomId });
+                socket.emit('leaveRoom');
                 window.location.href = '/';
             });
             
             // Set up start game button
             const startButton = document.getElementById('start-game-btn');
             startButton.addEventListener('click', () => {
-                socket.emit('startGame', roomId);
+                socket.emit('startGame');
             });
         });
     </script>
