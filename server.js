@@ -207,8 +207,8 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Function to handle the actual room joining logic
-    async function processRoomJoin(socket, roomId, username) {
+    // Handle joining an existing room
+    function processRoomJoin(socket, roomId, username) {
         if (!rooms.has(roomId)) {
             socket.emit('error', { message: 'room_not_found' });
             return;
@@ -216,31 +216,69 @@ io.on('connection', (socket) => {
         
         const room = rooms.get(roomId);
         
-        // Check if room is full (2 players)
-        if (room.players.length >= 2) {
-            socket.emit('error', { message: 'room_full' });
-            return;
-        }
-        
         // Check if game already started
         if (room.Started) {
-            socket.emit('error', { message: 'game_already_started' });
-            return;
-        }
-        
-        // Check if username is already taken in this room
-        if (room.players.some(p => p.username === username)) {
-            socket.emit('error', { message: 'username_taken' });
-            return;
+            // If the game has started, check if this player was previously in the room
+            // This would allow players to reconnect if they lost connection
+            const isReconnect = room.gameState && room.gameState.players.some(p => p.username === username);
+            
+            if (!isReconnect) {
+                socket.emit('error', { message: 'game_already_started' });
+                return;
+            }
+            
+            // If this is a reconnect, let them join
+            console.log(`Player ${username} is rejoining a started game in room ${roomId}`);
+        } else {
+            // For games that haven't started yet
+            
+            // Check if room is full (2 players)
+            if (room.players.length >= 2) {
+                socket.emit('error', { message: 'room_full' });
+                return;
+            }
+            
+            // Check if username is already taken in this room
+            if (room.players.some(p => p.username === username)) {
+                socket.emit('error', { message: 'username_taken' });
+                return;
+            }
         }
         
         // Join the room
         socket.join(roomId);
-        room.players.push({ 
-            socketId: socket.id,
-            username, 
-            isHost: false 
-        });
+        
+        // If game already started, update the player's socket ID in the game state
+        if (room.Started && room.gameState) {
+            // Find player in game state and update their socket ID
+            const playerInGame = room.gameState.players.find(p => p.username === username);
+            if (playerInGame) {
+                playerInGame.id = socket.id;
+            }
+            
+            // Add player to the room.players array if they're not there
+            const playerInRoom = room.players.find(p => p.username === username);
+            if (!playerInRoom) {
+                room.players.push({ 
+                    socketId: socket.id,
+                    username, 
+                    isHost: false 
+                });
+            } else {
+                // Update existing player's socket ID
+                playerInRoom.socketId = socket.id;
+            }
+            
+            // Send game state to the reconnected player
+            socket.emit('gameStarted', room.gameState);
+        } else {
+            // Regular join for a game that hasn't started
+            room.players.push({ 
+                socketId: socket.id,
+                username, 
+                isHost: false 
+            });
+        }
         
         // Associate this socket with the room
         userRooms.set(socket.id, roomId);
@@ -248,11 +286,14 @@ io.on('connection', (socket) => {
         // Save the room ID to the user's database record if they're logged in
         if (socket.request && socket.request.session && socket.request.session.userId) {
             try {
-                await prisma.user.update({
+                prisma.user.update({
                     where: { id: socket.request.session.userId },
                     data: { lastRoom: roomId }
+                }).then(() => {
+                    console.log(`Saved lastRoom=${roomId} for user ID ${socket.request.session.userId}`);
+                }).catch(dbError => {
+                    console.error('Error saving lastRoom to database:', dbError);
                 });
-                console.log(`Saved lastRoom=${roomId} for user ID ${socket.request.session.userId}`);
             } catch (dbError) {
                 console.error('Error saving lastRoom to database:', dbError);
             }
@@ -406,6 +447,7 @@ io.on('connection', (socket) => {
             started: true,
             players: room.players.map(p => ({
                 id: p.socketId,
+                username: p.username,
                 gold: 500,
                 hp: 100
             })),
