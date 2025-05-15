@@ -38,28 +38,19 @@
         import i18n from './js/i18n.js';
         import { createLanguageSelector } from './js/language-selector.js';
         
-        // Get room ID from URL
+        // Get room ID and username from URL
         const urlParams = new URLSearchParams(window.location.search);
         const roomId = urlParams.get('roomId');
-        const username = urlParams.get('username');
+        const usernameFromUrl = urlParams.get('username');
         
         if (!roomId) {
-            window.location.href = '/index.html';
-            return;
+            window.location.href = '/';
+            throw new Error('No room ID provided');
         }
         
         // Initialize socket.io
         const socket = io();
         
-        // If username is provided, this is the room creator
-        if (username) {
-            socket.emit('createRoom', { roomId, username });
-        } else {
-            // Otherwise, this is a player joining the room
-            socket.emit('joinRoom', { roomId });
-        }
-        
-        // Initialize the i18n system
         document.addEventListener('DOMContentLoaded', async () => {
             // Initialize language system
             i18n.init();
@@ -84,6 +75,15 @@
                 
                 // Get user data
                 currentUser = await response.json();
+                
+                // Join or create the room after authentication and socket connection
+                if (usernameFromUrl) {
+                    // Room creator
+                    socket.emit('createRoom', { roomId, username: currentUser.username });
+                } else {
+                    // Joining user
+                    socket.emit('joinRoom', { roomId, username: currentUser.username });
+                }
                 
                 // Update auth links
                 const authLinks = document.getElementById('auth-links');
