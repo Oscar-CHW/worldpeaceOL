@@ -129,7 +129,7 @@
                     const data = await response.json();
                     const authLinks = document.getElementById('auth-links');
                     authLinks.innerHTML = `
-                        <a href="/dashboard.html" id="welcome-user"></a>
+                        <a href="/dashboard.html" id="welcome-user" data-i18n="user_profile"></a>
                         <a href="#" id="logout-link" data-i18n="logout"></a>
                     `;
                     
