@@ -59,6 +59,34 @@
                     return false;
                 }
                 currentUser = await response.json();
+                
+                // Update auth links immediately after successful authentication
+                const authLinks = document.getElementById('auth-links');
+                authLinks.innerHTML = `
+                    <a href="/dashboard.html" id="welcome-user" data-i18n="my_profile"></a>
+                    <a href="#" id="logout-link" data-i18n="logout"></a>
+                `;
+                
+                // Update welcome text
+                document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${currentUser.username}`;
+                
+                // Apply translations to newly created elements
+                i18n.applyTranslations();
+                
+                // Add logout functionality
+                document.getElementById('logout-link').addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    
+                    try {
+                        await fetch('/api/logout', {
+                            method: 'POST'
+                        });
+                        window.location.href = '/';
+                    } catch (error) {
+                        console.error('Logout failed', error);
+                    }
+                });
+                
                 return true;
             } catch (error) {
                 console.error('Error checking auth status:', error);
@@ -106,33 +134,6 @@
             // Check authentication
             const isAuthenticated = await checkAuth();
             if (!isAuthenticated) return;
-            
-            // Update auth links
-            const authLinks = document.getElementById('auth-links');
-            authLinks.innerHTML = `
-                <a href="/dashboard.html" id="welcome-user" data-i18n="my_profile"></a>
-                <a href="#" id="logout-link" data-i18n="logout"></a>
-            `;
-            
-            // Update welcome text
-            document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${currentUser.username}`;
-            
-            // Apply translations to newly created elements
-            i18n.applyTranslations();
-            
-            // Add logout functionality
-            document.getElementById('logout-link').addEventListener('click', async (e) => {
-                e.preventDefault();
-                
-                try {
-                    await fetch('/api/logout', {
-                        method: 'POST'
-                    });
-                    window.location.href = '/';
-                } catch (error) {
-                    console.error('Logout failed', error);
-                }
-            });
             
             // Handle player list updates
             socket.on('playerList', (data) => {
