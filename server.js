@@ -12,6 +12,9 @@ const httpServer = createServer(app);
 const io = new Server(httpServer);
 const PORT = 3000;
 
+// Store room data globally
+const rooms = new Map();
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -65,9 +68,6 @@ const isAdmin = async (req, res, next) => {
 // Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
-
-    // Store room data
-    const rooms = new Map();
 
     // Handle room creation
     socket.on('createRoom', async (data) => {
