@@ -173,8 +173,6 @@ io.on('connection', (socket) => {
             });
             
             console.log(`Room created: ${roomId} by user: ${data.username} (${socket.id})`);
-            console.log('Current room data:', roomData);
-            logUserRoomMap();
         } catch (error) {
             console.error('Error creating room:', error);
             socket.emit('error', { message: 'Failed to create room' });
@@ -437,19 +435,27 @@ io.on('connection', (socket) => {
         room.Started = true;
         
         // Initialize game state
+        // Place two minerals: one for each side (static positions for now)
         room.gameState = {
             started: true,
             players: room.players.map(p => ({
                 id: p.socketId,
                 username: p.username,
-                gold: 0,
+                gold: 500,
                 hp: 100
             })),
-            units: []
+            units: [],
+            minerals: [
+                { id: 1, x: 100, y: 300 }, // left mineral
+                { id: 2, x: 900, y: 300 }  // right mineral
+            ]
         };
         
         // Send initial game state to all players
         io.to(roomId).emit('gameStarted', room.gameState);
+
+        // Start mining interval for this room when the game starts
+        startMiningInterval(roomId);
     });
 
     // Handle mineral collection
@@ -535,8 +541,12 @@ io.on('connection', (socket) => {
             x,
             y,
             isLeftPlayer,
-            playerId: socket.id
+            playerId: socket.id // Track owner
         };
+        
+        // Add to server-side unit list for this room
+        if (!room.gameState.units) room.gameState.units = [];
+        room.gameState.units.push(unitData);
         
         // Emit to all clients in the room
         io.to(roomId).emit('unitSpawned', unitData);
@@ -553,93 +563,163 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Handle rock-paper-scissors choice
-    socket.on('rpsChoice', (data) => {
-        const { choice } = data;
-        
-        // Get the room from userRooms map
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) {
-            socket.emit('error', { message: 'not_in_room' });
-            return;
-        }
-        
+    // --- Server-side mining tick ---
+    // Start mining interval for this room when the game starts
+    function startMiningInterval(roomId) {
         const room = rooms.get(roomId);
-        if (!room || !room.gameState || !room.gameState.started) {
-            return;
-        }
-        
-        // Broadcast the choice to the opponent
-        socket.to(roomId).emit('rpsOpponentChoice', { choice });
-    });
+        if (!room) return;
+        if (room.miningInterval) return; // Already running
+        room.miningInterval = setInterval(() => {
+            if (!room.gameState || !room.gameState.units || !room.gameState.minerals) return;
+            // For each miner unit, check if it's close to a mineral
+            room.gameState.units.forEach(unit => {
+                if (unit.type !== 'miner') return;
+                // Use unit.x, unit.y (should be updated by client on move)
+                const isNearMineral = room.gameState.minerals.some(mineral => {
+                    const dx = (unit.x ?? 0) - mineral.x;
+                    const dy = (unit.y ?? 0) - mineral.y;
+                    return Math.sqrt(dx*dx + dy*dy) < 32;
+                });
+                if (isNearMineral) {
+                    // Find player
+                    let player = room.gameState.players.find(p => p.id === unit.playerId || p.socketId === unit.playerId);
+                    if (player) {
+                        player.gold += 50;
+                    }
+                }
+            });
+            // Sync gold for both players
+            io.to(roomId).emit('goldSyncUpdate', {
+                players: room.gameState.players.map(p => ({ playerId: p.id || p.socketId, gold: p.gold }))
+            });
+        }, 1000);
+    }
 
-    // Handle rock-paper-scissors win
-    socket.on('rpsWin', () => {
-        // Get the room from userRooms map
+    // Mining: Only the owner of the mining unit gets the gold
+    socket.on('collectMineral', (data) => {
+        const { unitId, x, y } = data; // Expect miner's position from client
         const roomId = userRooms.get(socket.id);
-        if (!roomId) {
-            socket.emit('error', { message: 'not_in_room' });
-            return;
-        }
-        
+        if (!roomId) return;
         const room = rooms.get(roomId);
-        if (!room || !room.gameState || !room.gameState.started) {
-            return;
-        }
-        
-        // Find the player in the game state
-        const player = room.gameState.players.find(p => p.id === socket.id || p.socketId === socket.id);
+        if (!room || !room.gameState || !room.gameState.units || !room.gameState.minerals) return;
+        const unit = room.gameState.units.find(u => u.id === unitId);
+        if (!unit || unit.type !== 'miner') return;
+        // Only the owner can collect
+        if (unit.playerId !== socket.id) return;
+        // Check if miner is close enough to any mineral
+        const isNearMineral = room.gameState.minerals.some(mineral => {
+            const dx = (x ?? unit.x) - mineral.x;
+            const dy = (y ?? unit.y) - mineral.y;
+            return Math.sqrt(dx*dx + dy*dy) < 32;
+        });
+        if (!isNearMineral) return;
+        // Find player
+        let player = room.gameState.players.find(p => p.id === socket.id || p.socketId === socket.id);
         if (!player) return;
-        
-        // Add gold for winning RPS (100 gold)
-        player.gold += 100;
-        
-        // Get both players' gold amounts for sync
-        const playersGold = room.gameState.players.map(p => ({
-            playerId: p.id || p.socketId,
-            gold: p.gold
-        }));
-        
-        // Notify all players with updated gold information
+        player.gold += 50;
+        // Sync gold for both players
         io.to(roomId).emit('goldSyncUpdate', {
-            players: playersGold
+            players: room.gameState.players.map(p => ({ playerId: p.id || p.socketId, gold: p.gold }))
         });
     });
 
-    // Handle rock-paper-scissors round start
-    socket.on('rpsRoundStart', () => {
-        // Get the room from userRooms map
+    // --- Rock Paper Scissors (RPS) Mini-game ---
+    socket.on('rpsPlay', (data) => {
+        const { move } = data; // move: 'rock', 'paper', or 'scissors' or null
         const roomId = userRooms.get(socket.id);
         if (!roomId) {
             socket.emit('error', { message: 'not_in_room' });
             return;
         }
-        
         const room = rooms.get(roomId);
-        if (!room || !room.gameState || !room.gameState.started) {
+        if (!room) {
+            socket.emit('error', { message: 'room_not_found' });
             return;
         }
-        
-        // Broadcast round start to all players in the room
-        io.to(roomId).emit('rpsRoundStart');
+        if (!room.rps) room.rps = {};
+        room.rps[socket.id] = move;
+        socket.emit('rpsMoveReceived', { move });
+        // Start timer if not already started
+        if (!room.rpsTimer) {
+            room.rpsTimer = setTimeout(() => {
+                finishRPSRound(roomId);
+            }, 10000);
+        }
+        // If both players have played, finish round early
+        if (Object.keys(room.rps).length === 2) {
+            clearTimeout(room.rpsTimer);
+            room.rpsTimer = null;
+            finishRPSRound(roomId);
+        }
     });
 
-    // Handle rock-paper-scissors round end
-    socket.on('rpsRoundEnd', () => {
-        // Get the room from userRooms map
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) {
-            socket.emit('error', { message: 'not_in_room' });
-            return;
-        }
-        
+    function finishRPSRound(roomId) {
         const room = rooms.get(roomId);
-        if (!room || !room.gameState || !room.gameState.started) {
-            return;
+        if (!room || !room.rps) return;
+        const [p1, p2] = room.players;
+        const move1 = room.rps[p1.socketId];
+        const move2 = room.rps[p2.socketId];
+        let winner = 'draw';
+        if (move1 && move2) {
+            if (move1 === move2) {
+                winner = 'draw';
+            } else if (
+                (move1 === 'rock' && move2 === 'scissors') ||
+                (move1 === 'scissors' && move2 === 'paper') ||
+                (move1 === 'paper' && move2 === 'rock')
+            ) {
+                winner = p1.username;
+            } else {
+                winner = p2.username;
+            }
+        } else if (move1 && !move2) {
+            winner = p1.username;
+        } else if (!move1 && move2) {
+            winner = p2.username;
         }
-        
-        // Broadcast round end to all players in the room
-        io.to(roomId).emit('rpsRoundEnd');
+        // Award 100 gold to winner
+        if (winner !== 'draw') {
+            const player = room.gameState.players.find(p => p.username === winner);
+            if (player) player.gold += 100;
+        }
+        // Broadcast result
+        io.to(roomId).emit('rpsResult', {
+            player1: { username: p1.username, move: move1 },
+            player2: { username: p2.username, move: move2 },
+            winner
+        });
+        // Sync gold
+        io.to(roomId).emit('goldSyncUpdate', {
+            players: room.gameState.players.map(p => ({ playerId: p.id || p.socketId, gold: p.gold }))
+        });
+        room.rps = {};
+        // DO NOT auto-restart or auto-reset here. Wait for explicit rpsReset from clients.
+    }
+
+    socket.on('rpsReset', () => {
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) return;
+        const room = rooms.get(roomId);
+        if (!room) return;
+        room.rps = {};
+        io.to(roomId).emit('rpsReset');
+    });
+
+    // --- Game Over ---
+    socket.on('gameOver', (data) => {
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) return;
+        const room = rooms.get(roomId);
+        if (!room) return;
+        if (room.gameState && room.gameState.ended) return; // Prevent duplicate
+        room.gameState.ended = true;
+        // Clean up intervals
+        if (room.miningInterval) {
+            clearInterval(room.miningInterval);
+            room.miningInterval = null;
+        }
+        // Broadcast to all players
+        io.to(roomId).emit('gameOver', { winner: data.winner });
     });
 });
 

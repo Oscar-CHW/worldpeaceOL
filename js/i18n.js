@@ -68,7 +68,16 @@ const translations = {
     'player_left': '玩家已离开房间',
     'you_are_host': '你现在是房主',
     'last_room_message': '您有一个进行中的游戏房间',
-    'rejoin_room': '重新加入房间'
+    'rejoin_room': '重新加入房间',
+    'rps_draw': '平局',
+    'rps_you_win': '你赢了！',
+    'rps_you_lose': '你输了！',
+    'you_win': '你赢了！',
+    'you_lose': '你输了！',
+    'draw': '平局',
+    'game_over': '游戏结束',
+    'return_main': '返回主界面',
+    'result_message': '结果'
   },
   
   // Chinese translations (Traditional)
@@ -120,7 +129,8 @@ const translations = {
     'player_left': '玩家已離開房間',
     'you_are_host': '你現在是房主',
     'last_room_message': '您有一個進行中的游戲房間',
-    'rejoin_room': '重新加入房間'
+    'rejoin_room': '重新加入房間',
+    'result_message': '結果'
   },
   
   // English translations
@@ -172,7 +182,16 @@ const translations = {
     'player_left': 'Player has left the room',
     'you_are_host': 'You are now the host',
     'last_room_message': 'You have an ongoing game room',
-    'rejoin_room': 'Rejoin Room'
+    'rejoin_room': 'Rejoin Room',
+    'rps_draw': 'Draw',
+    'rps_you_win': 'You win!',
+    'rps_you_lose': 'You lose!',
+    'you_win': 'You Win!',
+    'you_lose': 'You Lose!',
+    'draw': 'Draw',
+    'game_over': 'Game Over',
+    'return_main': 'Return to Main Screen',
+    'result_message': 'Result'
   },
   
   // Japanese translations
@@ -224,7 +243,8 @@ const translations = {
     'player_left': 'プレイヤーがルームを退出しました',
     'you_are_host': 'あなたが新しいホストになりました',
     'last_room_message': '進行中のゲームルームがあります',
-    'rejoin_room': '部屋に再参加'
+    'rejoin_room': '部屋に再参加',
+    'result_message': '結果'
   },
   
   // Korean translations
@@ -276,7 +296,8 @@ const translations = {
     'player_left': '플레이어가 방을 나갔습니다',
     'you_are_host': '당신이 새로운 방장이 되었습니다',
     'last_room_message': '진행 중인 게임 방이 있습니다',
-    'rejoin_room': '방 다시 참가하기'
+    'rejoin_room': '방 다시 참가하기',
+    'result_message': '결과'
   }
 };
 
@@ -404,4 +425,4 @@ class I18n {
 
 // Create and export singleton instance
 const i18n = new I18n();
-export default i18n; 
+export default i18n;

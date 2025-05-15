@@ -18,14 +18,14 @@ body {
 
 /* Language selector styles */
 #language-selector {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 10;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 5px 10px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1000;
+    background: rgba(255,255,255,0.95);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 8px 16px;
 }
 
 .language-selector-wrapper {
@@ -902,7 +902,7 @@ button:hover {
     margin-top: 10px;
     font-size: 18px;
     font-weight: bold;
-    color: #f1c40f;
+    color: #c4750e;
 }
 
 .gold-icon {
@@ -1031,136 +1031,32 @@ button:hover {
     color: #3498db;
 }
 
-/* Player and opponent controls */
-.player-controls, .opponent-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 10px 0;
-}
-
-/* Only show controls on the player's side */
-.player-info.right .player-controls {
-    display: none;
-}
-
-.player-info.left .opponent-controls {
-    display: none;
-}
-
-/* Rock Paper Scissors Game Styles */
 .rps-controls {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin: 5px 0;
 }
 
-.rps-btn {
-    font-size: 24px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid #4a69bd;
-    background-color: white;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.rps-result-msg {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 10px 0;
+  padding: 8px 24px;
+  border-radius: 12px;
+  display: inline-block;
+  text-align: center;
 }
-
-.rps-btn:hover {
-    transform: scale(1.1);
-    background-color: #e3f2fd;
+.rps-win {
+  background: #d4ffd4;
+  color: #219a00;
+  border: 2px solid #219a00;
 }
-
-.rps-btn.selected {
-    background-color: #4a69bd;
-    color: white;
+.rps-lose {
+  background: #ffd4d4;
+  color: #b80000;
+  border: 2px solid #b80000;
 }
-
-.rps-btn.winner {
-    background-color: #4CAF50;
-    border-color: #4CAF50;
-    color: white;
-    animation: winner-pulse 1s infinite;
+.rps-draw {
+  background: #e0e0e0;
+  color: #444;
+  border: 2px solid #888;
 }
-
-.rps-btn.loser {
-    background-color: #f44336;
-    border-color: #f44336;
-    color: white;
-}
-
-@keyframes winner-pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-.rps-result {
-    min-height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 28px;
-    margin: 5px 0;
-}
-
-.rps-status {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    background-color: rgba(0, 0, 0, 0.6);
-    padding: 10px 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-}
-
-#rps-message {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-#rps-timer {
-    font-size: 16px;
-}
-
-/* Responsive adjustments for RPS game */
-@media (max-width: 768px) {
-    .rps-controls {
-        gap: 5px;
-    }
-    
-    .rps-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-    }
-    
-    .rps-status {
-        padding: 5px 10px;
-    }
-}
-
-/* Player and opponent sides */
-.player-side .player-controls {
-    display: flex;
-}
-
-.player-side .opponent-controls {
-    display: none;
-}
-
-.opponent-side .player-controls {
-    display: none;
-}
-
-.opponent-side .opponent-controls {
-    display: flex;
-} 
