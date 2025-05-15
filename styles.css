@@ -706,4 +706,93 @@ button:hover {
 /* Hide start button by default */
 #start-game-btn {
     display: none;
+}
+
+/* Game container styles */
+#game-container {
+    width: 100%;
+    height: 600px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-info.left {
+    align-items: flex-start;
+}
+
+.player-info.right {
+    align-items: flex-end;
+}
+
+.player-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.hp-bar {
+    width: 200px;
+    height: 20px;
+    background-color: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.hp-fill {
+    width: 100%;
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease;
+}
+
+.game-field {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 80px);
+    background-color: #e9ecef;
+}
+
+.tower {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100px;
+    height: 200px;
+}
+
+.tower.left {
+    left: 50px;
+}
+
+.tower.right {
+    right: 50px;
+}
+
+.tower-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Hide room elements when game starts */
+.game-started .room-info,
+.game-started .player-list,
+.game-started .room-actions {
+    display: none;
 } 
