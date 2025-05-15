@@ -35,23 +35,11 @@
             <button id="start-game-btn" class="action-button start" data-i18n="start_game">开始游戏</button>
             <button id="leave-room-btn" class="action-button leave" data-i18n="leave_room">离开房间</button>
         </div>
-
-        <div id="game-container" style="display: none;"></div>
     </div>
     
     <script type="module">
         import i18n from './js/i18n.js';
         import { createLanguageSelector } from './js/language-selector.js';
-        import { gameConfig } from './js/game/config.js';
-        
-        // Initialize Phaser game
-        let game = null;
-        
-        function initGame() {
-            if (!game) {
-                game = new Phaser.Game(gameConfig);
-            }
-        }
         
         // Get room ID and username from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -144,15 +132,7 @@
         // Handle game start
         socket.on('gameStarted', (data) => {
             console.log('Game started:', data);
-            // Show game container and initialize game
-            document.getElementById('game-container').style.display = 'block';
-            initGame();
-            
-            // Get current scene and start game
-            const scene = game.scene.getScene('GameScene');
-            if (scene) {
-                scene.startGame(data.players);
-            }
+            // TODO: Implement game start logic
         });
         
         // Handle host change
