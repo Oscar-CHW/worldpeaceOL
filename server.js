@@ -12,7 +12,7 @@ const SQLiteStore = require('connect-sqlite3')(session);
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Ensure db directory exists
 const dbDir = path.join(__dirname, 'db');
