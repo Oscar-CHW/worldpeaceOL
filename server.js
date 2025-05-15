@@ -214,38 +214,49 @@ io.on('connection', (socket) => {
 
     // Handle unit spawn
     socket.on('spawnUnit', (data) => {
-        const { roomId, unitType, x, y, isLeftPlayer } = data;
+        const { roomId, unitId, unitType, x, y, isLeftPlayer } = data;
         const room = rooms.get(roomId);
         
         // Only process if room exists, game has started, and game state is initialized
-        if (!room || !room.gameState || !room.gameState.started) return;
+        if (!room || !room.gameState || !room.gameState.started) {
+            console.log(`Invalid unit spawn attempt: room exists=${!!room}, game started=${room?.gameState?.started}`);
+            return;
+        }
         
         const player = room.gameState.players.find(p => p.id === socket.id);
-        if (!player) return;
+        if (!player) {
+            console.log(`Player not found for socket ID: ${socket.id}`);
+            return;
+        }
         
         const cost = unitType === 'miner' ? 100 : 200;
-        if (player.gold < cost) return;
+        if (player.gold < cost) {
+            console.log(`Not enough gold: player has ${player.gold}, needs ${cost}`);
+            socket.emit('error', { message: 'not_enough_gold' });
+            return;
+        }
         
         // Deduct gold
         player.gold -= cost;
         
-        // Add unit to player's units
-        const unit = {
-            id: Date.now(),
+        console.log(`Player ${player.id} spawned ${unitType} at (${x}, ${y}), isLeftPlayer: ${isLeftPlayer}`);
+        
+        // Broadcast unit spawn to all clients in the room
+        const unitData = {
+            id: unitId || Date.now(),
             type: unitType,
             x,
             y,
-            isLeftPlayer
+            isLeftPlayer,
+            playerId: player.id
         };
         
-        // Check if units array exists in player
-        if (!player.units) player.units = [];
-        player.units.push(unit);
+        // Emit to all clients in the room
+        io.to(roomId).emit('unitSpawned', unitData);
         
-        // Notify all players
-        io.to(roomId).emit('unitSpawned', unit);
-        io.to(roomId).emit('goldUpdate', {
-            playerId: socket.id,
+        // Send gold update to the player
+        socket.emit('goldUpdate', {
+            playerId: player.id,
             gold: player.gold
         });
     });
