@@ -10,7 +10,10 @@
     <div id="language-selector"></div>
     <div class="header">
         <a href="/" class="site-title" data-i18n="title">天下太平</a>
-        <div class="auth-links" id="auth-links"></div>
+        <div class="auth-links" id="auth-links">
+            <a href="/login.html" data-i18n="login">登录</a>
+            <a href="/signup.html" data-i18n="signup">注册</a>
+        </div>
     </div>
     <div class="dashboard-container">
         <h2 data-i18n="user_profile">个人中心</h2>
@@ -84,6 +87,32 @@
                 const data = await response.json();
                 
                 if (response.ok) {
+                    // Update auth links
+                    const authLinks = document.getElementById('auth-links');
+                    authLinks.innerHTML = `
+                        <a href="/dashboard.html" id="welcome-user" data-i18n="user_profile"></a>
+                        <a href="#" id="logout-link" data-i18n="logout"></a>
+                    `;
+                    
+                    // Update welcome text
+                    document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${data.username}`;
+                    
+                    // Apply translations to newly created elements
+                    i18n.applyTranslations();
+                    
+                    // Add logout functionality
+                    document.getElementById('logout-link').addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try {
+                            await fetch('/api/logout', {
+                                method: 'POST'
+                            });
+                            window.location.href = '/';
+                        } catch (error) {
+                            console.error('Logout failed', error);
+                        }
+                    });
+
                     // Update user information
                     document.getElementById('username-display').textContent = data.username;
                     document.getElementById('rank-display').textContent = data.rank;
@@ -104,24 +133,6 @@
                 showMessage(i18n.translate('system_error'), 'error');
                 console.error(error);
             }
-            
-            // Logout button
-            document.getElementById('logout-btn').addEventListener('click', async () => {
-                try {
-                    const response = await fetch('/api/logout', {
-                        method: 'POST'
-                    });
-                    
-                    if (response.ok) {
-                        window.location.href = '/';
-                    } else {
-                        showMessage(i18n.translate('logout_error'), 'error');
-                    }
-                } catch (error) {
-                    showMessage(i18n.translate('system_error'), 'error');
-                    console.error(error);
-                }
-            });
         });
         
         function showMessage(text, type) {
