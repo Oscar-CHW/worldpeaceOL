@@ -139,6 +139,7 @@ io.on('connection', (socket) => {
             
             // Initialize room data with username
             const roomData = {
+              Started:false,
                 players: [{
                     socketId: socket.id,
                     username: data.username || 'Player 1',
@@ -221,6 +222,12 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // Check if game already started
+        if (room.Started) {
+            socket.emit('error', { message: 'game_already_started' });
+            return;
+        }
+        
         // Check if username is already taken in this room
         if (room.players.some(p => p.username === username)) {
             socket.emit('error', { message: 'username_taken' });
@@ -252,7 +259,6 @@ io.on('connection', (socket) => {
         }
         
         console.log(`User ${username} (${socket.id}) joined room ${roomId}`);
-        console.log('Updated room data:', room);
         logUserRoomMap();
         
         // Send updated player list to all clients in the room
@@ -354,10 +360,6 @@ io.on('connection', (socket) => {
 
     // Debug function to log the current user-room map
     function logUserRoomMap() {
-        console.log('Current user-room mappings:');
-        for (const [socketId, roomId] of userRooms.entries()) {
-            console.log(`  - User ${socketId} is in room ${roomId}`);
-        }
     }
 
     // Handle start game
@@ -395,6 +397,9 @@ io.on('connection', (socket) => {
         }
         
         console.log(`Starting game in room ${roomId}`);
+        
+        // Set the Started flag to true
+        room.Started = true;
         
         // Initialize game state
         room.gameState = {
