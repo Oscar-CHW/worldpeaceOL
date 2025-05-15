@@ -3,9 +3,16 @@ import { createLanguageSelector } from '../language-selector.js';
 
 // Game state
 let gameState = {
-    gold: 500,
+    gold: 0,
     units: [],
-    isLeftPlayer: false
+    isLeftPlayer: false,
+    rps: {
+        playerChoice: null,
+        opponentChoice: null,
+        roundActive: false,
+        roundTimer: null,
+        countdownTimer: null
+    }
 };
 
 // Unit costs
@@ -16,6 +23,9 @@ const UNIT_COSTS = {
 
 // Mineral value
 const MINERAL_VALUE = 75;
+
+// RPS reward
+const RPS_REWARD = 100;
 
 document.addEventListener('DOMContentLoaded', async function() {
     // Get room ID and username from URL
@@ -262,6 +272,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // Setup unit selection
             setupUnitSelection();
+            
+            // Start the first RPS round
+            startRPSRound();
         }
         
         function updateGoldDisplay() {
@@ -351,5 +364,169 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Soldier behavior would go here
             console.log(`Soldier ${unitData.id} is ready to fight!`);
         }
+        
+        // Rock Paper Scissors game setup
+        function setupRPSGame(socket) {
+            // Get RPS buttons and add event listeners
+            const rpsButtons = document.querySelectorAll('.rps-btn');
+            rpsButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (!gameState.rps.roundActive) return;
+                    
+                    // Get the player's choice
+                    const choice = btn.getAttribute('data-choice');
+                    
+                    // Clear any previous selections
+                    rpsButtons.forEach(b => b.classList.remove('selected'));
+                    
+                    // Mark this button as selected
+                    btn.classList.add('selected');
+                    
+                    // Store the choice and send it to the server
+                    gameState.rps.playerChoice = choice;
+                    socket.emit('rpsChoice', { choice });
+                    
+                    // Show the choice 
+                    document.getElementById('player-choice').textContent = getChoiceEmoji(choice);
+                    
+                    // Update message
+                    document.getElementById('rps-message').textContent = "Waiting for opponent...";
+                });
+            });
+            
+            // Listen for opponent's choice
+            socket.on('rpsOpponentChoice', (data) => {
+                gameState.rps.opponentChoice = data.choice;
+                document.getElementById('opponent-choice').textContent = getChoiceEmoji(data.choice);
+                
+                // If both players have made a choice, determine the winner
+                if (gameState.rps.playerChoice && gameState.rps.opponentChoice) {
+                    determineRPSWinner();
+                }
+            });
+            
+            // Listen for RPS round start event
+            socket.on('rpsRoundStart', () => {
+                startRPSRound();
+            });
+            
+            // Listen for RPS round end event
+            socket.on('rpsRoundEnd', (data) => {
+                endRPSRound(data);
+            });
+        }
+        
+        // Start a new Rock Paper Scissors round
+        function startRPSRound() {
+            // Reset the game state
+            gameState.rps.playerChoice = null;
+            gameState.rps.opponentChoice = null;
+            gameState.rps.roundActive = true;
+            
+            // Clear previous choices
+            document.getElementById('player-choice').textContent = '';
+            document.getElementById('opponent-choice').textContent = '';
+            
+            // Remove any previous button states
+            document.querySelectorAll('.rps-btn').forEach(btn => {
+                btn.classList.remove('selected', 'winner', 'loser');
+            });
+            
+            // Update the message
+            document.getElementById('rps-message').textContent = "Choose rock, paper, or scissors";
+            
+            // Start a 10-second countdown for this round
+            let countdown = 10;
+            document.getElementById('timer-count').textContent = countdown;
+            document.getElementById('rps-timer').style.display = 'block';
+            
+            gameState.rps.countdownTimer = setInterval(() => {
+                countdown--;
+                document.getElementById('timer-count').textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(gameState.rps.countdownTimer);
+                    
+                    // If player hasn't made a choice, make a random one
+                    if (!gameState.rps.playerChoice) {
+                        const choices = ['rock', 'paper', 'scissors'];
+                        const randomChoice = choices[Math.floor(Math.random() * choices.length)];
+                        
+                        // Simulate a click on the corresponding button
+                        const btn = document.querySelector(`.rps-btn[data-choice="${randomChoice}"]`);
+                        if (btn) btn.click();
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Determine the winner of the RPS round
+        function determineRPSWinner() {
+            const playerChoice = gameState.rps.playerChoice;
+            const opponentChoice = gameState.rps.opponentChoice;
+            
+            let result;
+            if (playerChoice === opponentChoice) {
+                result = 'tie';
+                document.getElementById('rps-message').textContent = "It's a tie!";
+            } else if (
+                (playerChoice === 'rock' && opponentChoice === 'scissors') ||
+                (playerChoice === 'paper' && opponentChoice === 'rock') ||
+                (playerChoice === 'scissors' && opponentChoice === 'paper')
+            ) {
+                result = 'win';
+                document.getElementById('rps-message').textContent = "You win! +100 gold";
+                
+                // Highlight the winning choice
+                document.querySelector(`.rps-btn[data-choice="${playerChoice}"]`).classList.add('winner');
+                
+                // Add gold for winning
+                gameState.gold += RPS_REWARD;
+                updateGoldDisplay();
+                
+                // Tell the server about the gold increase
+                socket.emit('rpsWin');
+            } else {
+                result = 'lose';
+                document.getElementById('rps-message').textContent = "You lose!";
+                
+                // Highlight the losing choice
+                document.querySelector(`.rps-btn[data-choice="${playerChoice}"]`).classList.add('loser');
+            }
+            
+            // End the current round
+            endRPSRound({ result });
+        }
+        
+        // End the current RPS round
+        function endRPSRound(data) {
+            gameState.rps.roundActive = false;
+            
+            // Clear any timers
+            if (gameState.rps.countdownTimer) {
+                clearInterval(gameState.rps.countdownTimer);
+            }
+            
+            // Hide the timer
+            document.getElementById('rps-timer').style.display = 'none';
+            
+            // Start a new round after 3 seconds
+            setTimeout(() => {
+                startRPSRound();
+            }, 3000);
+        }
+        
+        // Helper function to get emoji for a choice
+        function getChoiceEmoji(choice) {
+            switch (choice) {
+                case 'rock': return '✊';
+                case 'paper': return '✋';
+                case 'scissors': return '✌️';
+                default: return '';
+            }
+        }
+
+        // Set up RPS game
+        setupRPSGame(socket);
     }
 }); 

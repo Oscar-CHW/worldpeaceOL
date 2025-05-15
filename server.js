@@ -442,7 +442,7 @@ io.on('connection', (socket) => {
             players: room.players.map(p => ({
                 id: p.socketId,
                 username: p.username,
-                gold: 500,
+                gold: 0,
                 hp: 100
             })),
             units: []
@@ -548,6 +548,59 @@ io.on('connection', (socket) => {
         }));
         
         // Send gold update to all players
+        io.to(roomId).emit('goldSyncUpdate', {
+            players: playersGold
+        });
+    });
+
+    // Handle rock-paper-scissors choice
+    socket.on('rpsChoice', (data) => {
+        const { choice } = data;
+        
+        // Get the room from userRooms map
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
+        const room = rooms.get(roomId);
+        if (!room || !room.gameState || !room.gameState.started) {
+            return;
+        }
+        
+        // Broadcast the choice to the opponent
+        socket.to(roomId).emit('rpsOpponentChoice', { choice });
+    });
+
+    // Handle rock-paper-scissors win
+    socket.on('rpsWin', () => {
+        // Get the room from userRooms map
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
+        const room = rooms.get(roomId);
+        if (!room || !room.gameState || !room.gameState.started) {
+            return;
+        }
+        
+        // Find the player in the game state
+        const player = room.gameState.players.find(p => p.id === socket.id || p.socketId === socket.id);
+        if (!player) return;
+        
+        // Add gold for winning RPS (100 gold)
+        player.gold += 100;
+        
+        // Get both players' gold amounts for sync
+        const playersGold = room.gameState.players.map(p => ({
+            playerId: p.id || p.socketId,
+            gold: p.gold
+        }));
+        
+        // Notify all players with updated gold information
         io.to(roomId).emit('goldSyncUpdate', {
             players: playersGold
         });

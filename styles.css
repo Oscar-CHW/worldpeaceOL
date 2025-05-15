@@ -1029,4 +1029,104 @@ button:hover {
 .last-room-prompt #last-room-id {
     font-weight: bold;
     color: #3498db;
+}
+
+/* Rock Paper Scissors Game Styles */
+.rps-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.rps-btn {
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #4a69bd;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rps-btn:hover {
+    transform: scale(1.1);
+    background-color: #e3f2fd;
+}
+
+.rps-btn.selected {
+    background-color: #4a69bd;
+    color: white;
+}
+
+.rps-btn.winner {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    color: white;
+    animation: winner-pulse 1s infinite;
+}
+
+.rps-btn.loser {
+    background-color: #f44336;
+    border-color: #f44336;
+    color: white;
+}
+
+@keyframes winner-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.rps-result {
+    min-height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    margin: 5px 0;
+}
+
+.rps-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+#rps-message {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+#rps-timer {
+    font-size: 16px;
+}
+
+/* Responsive adjustments for RPS game */
+@media (max-width: 768px) {
+    .rps-controls {
+        gap: 5px;
+    }
+    
+    .rps-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
+    .rps-status {
+        padding: 5px 10px;
+    }
 } 
