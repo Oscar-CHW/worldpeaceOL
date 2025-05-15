@@ -55,35 +55,6 @@ function createLanguageSelector(containerId = 'language-selector') {
   selectorWrapper.appendChild(label);
   selectorWrapper.appendChild(select);
   container.appendChild(selectorWrapper);
-  
-  // Style the language selector
-  const style = document.createElement('style');
-  style.textContent = `
-    .language-selector-wrapper {
-      display: flex;
-      align-items: center;
-      margin: 10px 0;
-    }
-    
-    .language-label {
-      margin-right: 8px;
-      font-size: 14px;
-    }
-    
-    .language-select {
-      padding: 4px 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background-color: white;
-      font-size: 14px;
-    }
-    
-    .language-select:focus {
-      outline: none;
-      border-color: #4a69bd;
-    }
-  `;
-  document.head.appendChild(style);
 }
 
 export { createLanguageSelector }; 

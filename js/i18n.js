@@ -5,7 +5,8 @@
 
 // Available languages with their locale codes
 const AVAILABLE_LANGUAGES = {
-  'zh': 'Chinese',
+  'zh': 'Chinese (Simplified)',
+  'zh-TW': 'Chinese (Traditional)',
   'en': 'English',
   'ja': 'Japanese',
   'ko': 'Korean'
@@ -16,7 +17,7 @@ const DEFAULT_LANGUAGE = 'zh';
 
 // Translations dictionary
 const translations = {
-  // Chinese translations (default)
+  // Chinese translations (default - Simplified)
   zh: {
     'title': '天下太平',
     'login': '登录',
@@ -39,12 +40,44 @@ const translations = {
     'have_account': '已有账号?',
     'logout_success': '退出登录成功！正在跳转...',
     'logout_error': '退出登录失败',
-    'profile_welcome_text': '您已成功登录系统，可以访问所有功能。'
+    'profile_welcome_text': '您已成功登录系统，可以访问所有功能。',
+    'create_room': '创建房间',
+    'join_room': '加入房间',
+    'room_id': '房间号'
+  },
+  
+  // Chinese translations (Traditional)
+  'zh-TW': {
+    'title': '天下太平',
+    'login': '登入',
+    'signup': '註冊',
+    'logout': '登出',
+    'welcome': '歡迎來到天下太平',
+    'username': '使用者名稱',
+    'password': '密碼',
+    'confirm_password': '確認密碼',
+    'rank': '等級',
+    'user_profile': '個人中心',
+    'back_to_home': '返回首頁',
+    'login_success': '登入成功！正在跳轉...',
+    'login_error': '使用者名稱或密碼錯誤',
+    'signup_success': '註冊成功！正在跳轉到首頁...',
+    'passwords_mismatch': '兩次輸入的密碼不匹配',
+    'username_exists': '使用者名稱已存在',
+    'system_error': '發生錯誤，請稍後再試',
+    'no_account': '還沒有帳號?',
+    'have_account': '已有帳號?',
+    'logout_success': '登出成功！正在跳轉...',
+    'logout_error': '登出失敗',
+    'profile_welcome_text': '您已成功登入系統，可以訪問所有功能。',
+    'create_room': '創建房間',
+    'join_room': '加入房間',
+    'room_id': '房間號'
   },
   
   // English translations
   en: {
-    'title': 'Peace Under Heaven',
+    'title': '天下太平',
     'login': 'Login',
     'signup': 'Sign Up',
     'logout': 'Logout',
@@ -65,12 +98,15 @@ const translations = {
     'have_account': 'Already have an account?',
     'logout_success': 'Logout successful! Redirecting...',
     'logout_error': 'Logout failed',
-    'profile_welcome_text': 'You have successfully logged in and can access all features.'
+    'profile_welcome_text': 'You have successfully logged in and can access all features.',
+    'create_room': 'Create Room',
+    'join_room': 'Join Room',
+    'room_id': 'Room ID'
   },
   
   // Japanese translations
   ja: {
-    'title': '天下泰平',
+    'title': '天下太平',
     'login': 'ログイン',
     'signup': '登録',
     'logout': 'ログアウト',
@@ -91,7 +127,10 @@ const translations = {
     'have_account': 'すでにアカウントをお持ちですか？',
     'logout_success': 'ログアウト成功！リダイレクト中...',
     'logout_error': 'ログアウトに失敗しました',
-    'profile_welcome_text': 'ログインに成功しました。すべての機能にアクセスできます。'
+    'profile_welcome_text': 'ログインに成功しました。すべての機能にアクセスできます。',
+    'create_room': 'ルームを作成',
+    'join_room': 'ルームに参加',
+    'room_id': 'ルームID'
   },
   
   // Korean translations
@@ -117,7 +156,10 @@ const translations = {
     'have_account': '이미 계정이 있으신가요?',
     'logout_success': '로그아웃 성공! 리디렉션 중...',
     'logout_error': '로그아웃 실패',
-    'profile_welcome_text': '성공적으로 로그인했습니다. 모든 기능에 접근할 수 있습니다.'
+    'profile_welcome_text': '성공적으로 로그인했습니다. 모든 기능에 접근할 수 있습니다.',
+    'create_room': '방 만들기',
+    'join_room': '방 참가하기',
+    'room_id': '방 ID'
   }
 };
 
@@ -136,8 +178,14 @@ class I18n {
    */
   getBrowserLanguage() {
     const browserLang = navigator.language || navigator.userLanguage;
-    const langCode = browserLang.split('-')[0];
     
+    // Check for full locale match (e.g., zh-TW)
+    if (translations[browserLang]) {
+      return browserLang;
+    }
+    
+    // Check for language match only (e.g., zh from zh-HK)
+    const langCode = browserLang.split('-')[0];
     return translations[langCode] ? langCode : null;
   }
   

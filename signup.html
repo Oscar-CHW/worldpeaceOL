@@ -5,77 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="signup">注册 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .auth-form {
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            max-width: 400px;
-            width: 100%;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        
-        input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        
-        button {
-            background-color: #4a69bd;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            width: 100%;
-            margin-top: 1rem;
-        }
-        
-        button:hover {
-            background-color: #3c58a8;
-        }
-        
-        .form-footer {
-            margin-top: 1rem;
-            text-align: center;
-        }
-        
-        .message {
-            margin-top: 1rem;
-            padding: 0.5rem;
-            border-radius: 4px;
-            display: none;
-        }
-        
-        .error {
-            background-color: #ff7675;
-            color: white;
-        }
-        
-        .success {
-            background-color: #55efc4;
-            color: #333;
-        }
-        
-        #language-selector {
-            text-align: right;
-            margin-bottom: 1rem;
-        }
-    </style>
 </head>
 <body>
     <div id="language-selector"></div>
@@ -122,9 +51,6 @@
             document.documentElement.lang = i18n.getCurrentLanguage();
             document.title = `${i18n.translate(titleKey)} - ${i18n.translate('title')}`;
         });
-    </script>
-
-    <script>
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -132,12 +58,16 @@
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
             
+            console.log('Signup attempt for user:', username);
+            
             if (password !== confirmPassword) {
+                console.warn('Passwords do not match');
                 showMessage(i18n.translate('passwords_mismatch'), 'error');
                 return;
             }
             
             try {
+                console.log('Sending signup request...');
                 const response = await fetch('/api/signup', {
                     method: 'POST',
                     headers: {
@@ -146,21 +76,32 @@
                     body: JSON.stringify({ username, password })
                 });
                 
-                const data = await response.json();
+                console.log('Signup response received:', response.status, response.statusText);
+                
+                let data;
+                try {
+                    data = await response.json();
+                    console.log('Response data:', data);
+                } catch (parseError) {
+                    console.error('Error parsing response JSON:', parseError);
+                    data = {};
+                }
                 
                 if (response.ok) {
                     // Signup successful
+                    console.log('Signup successful, redirecting...');
                     showMessage(i18n.translate('signup_success'), 'success');
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1000);
                 } else {
                     // Signup failed
+                    console.error('Signup failed:', data.error || 'Unknown error');
                     showMessage(data.error || i18n.translate('system_error'), 'error');
                 }
             } catch (error) {
+                console.error('Signup request error:', error);
                 showMessage(i18n.translate('system_error'), 'error');
-                console.error(error);
             }
         });
         

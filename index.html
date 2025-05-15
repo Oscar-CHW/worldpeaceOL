@@ -5,42 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">天下太平</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .header {
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
-        
-        .auth-links a {
-            display: inline-block;
-            margin-left: 1rem;
-            padding: 0.5rem 1rem;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 4px;
-            text-decoration: none;
-            color: #333;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        
-        .auth-links a:hover {
-            background-color: #4a69bd;
-            color: white;
-        }
-        
-        #language-selector {
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
 <body>
+    <div id="language-selector"></div>
     <div class="header">
-        <div id="language-selector"></div>
         <div class="auth-links" id="auth-links">
             <a href="/login.html" data-i18n="login">登录</a>
             <a href="/signup.html" data-i18n="signup">注册</a>
@@ -49,6 +17,27 @@
 
     <div class="title-container">
         <h1 data-i18n="title">天下太平</h1>
+        
+        <div class="room-buttons">
+            <button class="room-button create" id="create-room-btn" data-i18n="create_room">创建房间</button>
+            <button class="room-button join" id="join-room-btn" data-i18n="join_room">加入房间</button>
+        </div>
+    </div>
+    
+    <!-- Join Room Modal -->
+    <div class="join-room-modal" id="join-room-modal">
+        <div class="join-room-content">
+            <div class="join-room-header">
+                <h3 data-i18n="join_room">加入房间</h3>
+                <button class="join-room-close" id="close-modal">&times;</button>
+            </div>
+            <div class="join-room-form">
+                <input type="text" class="room-id-input" id="room-id-input" data-i18n-placeholder="room_id" placeholder="Room ID">
+                <button class="join-button" id="submit-join-room">
+                    <span data-i18n="join_room">加入房间</span>
+                </button>
+            </div>
+        </div>
     </div>
     
     <script src="script.js"></script>
@@ -63,6 +52,54 @@
             
             // Create language selector
             createLanguageSelector('language-selector');
+            
+            // Join Room modal elements
+            const joinRoomModal = document.getElementById('join-room-modal');
+            const closeModalBtn = document.getElementById('close-modal');
+            const roomIdInput = document.getElementById('room-id-input');
+            const submitJoinRoomBtn = document.getElementById('submit-join-room');
+            
+            // Create Room button - redirect to create room page
+            document.getElementById('create-room-btn').addEventListener('click', () => {
+                window.location.href = 'create-room.html';
+            });
+            
+            // Join Room button - show modal
+            document.getElementById('join-room-btn').addEventListener('click', () => {
+                joinRoomModal.classList.add('active');
+                roomIdInput.focus();
+            });
+            
+            // Close modal when clicking the close button
+            closeModalBtn.addEventListener('click', () => {
+                joinRoomModal.classList.remove('active');
+            });
+            
+            // Close modal when clicking outside the modal content
+            joinRoomModal.addEventListener('click', (e) => {
+                if (e.target === joinRoomModal) {
+                    joinRoomModal.classList.remove('active');
+                }
+            });
+            
+            // Handle join room form submission
+            submitJoinRoomBtn.addEventListener('click', () => {
+                const roomId = roomIdInput.value.trim();
+                if (roomId) {
+                    console.log('Joining room:', roomId);
+                    // Functionality to be added later
+                    joinRoomModal.classList.remove('active');
+                } else {
+                    roomIdInput.focus();
+                }
+            });
+            
+            // Allow pressing Enter to submit the form
+            roomIdInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    submitJoinRoomBtn.click();
+                }
+            });
             
             try {
                 // Check if user is logged in
