@@ -103,12 +103,28 @@
             });
             
             // Handle join room form submission
-            submitJoinRoomBtn.addEventListener('click', () => {
+            submitJoinRoomBtn.addEventListener('click', async () => {
                 const roomId = roomIdInput.value.trim();
                 if (roomId) {
-                    console.log('Joining room:', roomId);
-                    // Functionality to be added later
-                    joinRoomModal.classList.remove('active');
+                    try {
+                        // Check if user is logged in
+                        const response = await fetch('/api/user/me');
+                        
+                        if (response.status === 401) {
+                            // Show error message if not logged in
+                            errorMessage.style.display = 'block';
+                            return;
+                        }
+                        
+                        // Get user data
+                        const data = await response.json();
+                        
+                        // Redirect to game room page with room ID
+                        window.location.href = `/game-room.html?roomId=${roomId}`;
+                    } catch (error) {
+                        console.error('Error joining room:', error);
+                        errorMessage.style.display = 'block';
+                    }
                 } else {
                     roomIdInput.focus();
                 }
