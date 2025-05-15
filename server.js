@@ -22,6 +22,8 @@ if (!fs.existsSync(dbDir)) {
 
 // Store room data globally
 const rooms = new Map();
+// Store which room each socket is in
+const userRooms = new Map();
 
 // Middleware
 app.use(express.json());
@@ -90,6 +92,15 @@ io.on('connection', (socket) => {
     // Handle room creation
     socket.on('createRoom', async (data) => {
         try {
+            // Check if user is already in a room
+            if (userRooms.has(socket.id)) {
+                const currentRoomId = userRooms.get(socket.id);
+                console.log(`User ${socket.id} is already in room ${currentRoomId}, leaving before creating new room`);
+                
+                // Leave current room first
+                await leaveRoom(socket, currentRoomId);
+            }
+            
             // Use provided room ID or generate a new one
             const roomId = data.roomId || Math.random().toString(36).substring(2, 8).toUpperCase();
             
@@ -112,6 +123,9 @@ io.on('connection', (socket) => {
             };
             rooms.set(roomId, roomData);
             
+            // Associate this socket with the room
+            userRooms.set(socket.id, roomId);
+            
             // Notify the creator that the room was created
             socket.emit('roomCreated', { roomId });
             
@@ -120,8 +134,9 @@ io.on('connection', (socket) => {
                 players: roomData.players
             });
             
-            console.log(`Room created: ${roomId} by user: ${data.username}`);
+            console.log(`Room created: ${roomId} by user: ${data.username} (${socket.id})`);
             console.log('Current room data:', roomData);
+            logUserRoomMap();
         } catch (error) {
             console.error('Error creating room:', error);
             socket.emit('error', { message: 'Failed to create room' });
@@ -131,8 +146,31 @@ io.on('connection', (socket) => {
     // Handle room joining
     socket.on('joinRoom', (data) => {
         const { roomId, username } = data;
-        console.log(`User ${username} attempting to join room ${roomId}`);
+        console.log(`User ${username} (${socket.id}) attempting to join room ${roomId}`);
         
+        // Check if user is already in a room
+        if (userRooms.has(socket.id)) {
+            const currentRoomId = userRooms.get(socket.id);
+            console.log(`User ${socket.id} is already in room ${currentRoomId}, leaving before joining new room`);
+            
+            // Leave current room first
+            leaveRoom(socket, currentRoomId)
+                .then(() => {
+                    // Continue with join after leaving
+                    processRoomJoin(socket, roomId, username);
+                })
+                .catch(error => {
+                    console.error('Error leaving current room:', error);
+                    socket.emit('error', { message: 'Failed to join room' });
+                });
+        } else {
+            // Not in any room, proceed with join
+            processRoomJoin(socket, roomId, username);
+        }
+    });
+
+    // Function to handle the actual room joining logic
+    function processRoomJoin(socket, roomId, username) {
         if (!rooms.has(roomId)) {
             socket.emit('error', { message: 'room_not_found' });
             return;
@@ -160,12 +198,98 @@ io.on('connection', (socket) => {
             isHost: false 
         });
         
-        console.log(`User ${username} joined room ${roomId}`);
+        // Associate this socket with the room
+        userRooms.set(socket.id, roomId);
+        
+        console.log(`User ${username} (${socket.id}) joined room ${roomId}`);
         console.log('Updated room data:', room);
+        logUserRoomMap();
         
         // Send updated player list to all clients in the room
         io.to(roomId).emit('playerList', { players: room.players });
+    }
+
+    // Handle leaving room
+    socket.on('leaveRoom', (data) => {
+        try {
+            const { roomId } = data;
+            leaveRoom(socket, roomId);
+        } catch (error) {
+            console.error('Error leaving room:', error);
+        }
     });
+
+    // Reusable function for leaving a room
+    async function leaveRoom(socket, roomId) {
+        const room = rooms.get(roomId);
+        
+        if (room) {
+            // Find the leaving player
+            const leavingPlayer = room.players.find(p => p.socketId === socket.id);
+            
+            // Remove player from room
+            room.players = room.players.filter(p => p.socketId !== socket.id);
+            
+            // Remove the socket from the user-room mapping
+            userRooms.delete(socket.id);
+            
+            // If room is empty, delete it
+            if (room.players.length === 0) {
+                rooms.delete(roomId);
+                console.log(`Room ${roomId} deleted because it's empty`);
+            } else {
+                // If host left, assign new host (first remaining player)
+                if (leavingPlayer?.isHost) {
+                    room.players[0].isHost = true;
+                    // Notify the new host
+                    io.to(room.players[0].socketId).emit('hostChanged', { isHost: true });
+                }
+                
+                // Update remaining players
+                io.to(roomId).emit('playerList', {
+                    players: room.players
+                });
+                
+                // Notify remaining players that someone left
+                io.to(roomId).emit('playerLeft', {
+                    username: leavingPlayer?.username,
+                    isHost: leavingPlayer?.isHost
+                });
+            }
+            
+            // Leave the socket room
+            socket.leave(roomId);
+            
+            console.log(`User ${socket.id} left room ${roomId}`);
+            logUserRoomMap();
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+        
+        // Check if user was in a room
+        if (userRooms.has(socket.id)) {
+            const roomId = userRooms.get(socket.id);
+            console.log(`Disconnected user ${socket.id} was in room ${roomId}, cleaning up`);
+            
+            leaveRoom(socket, roomId);
+        } else {
+            console.log(`Disconnected user ${socket.id} was not in any room`);
+        }
+    });
+
+    // Debug function to log the current user-room map
+    function logUserRoomMap() {
+        console.log('Current user-room mappings:');
+        for (const [socketId, roomId] of userRooms.entries()) {
+            console.log(`  - User ${socketId} is in room ${roomId}`);
+        }
+    }
 
     // Handle start game
     socket.on('startGame', (roomId) => {
@@ -223,10 +347,15 @@ io.on('connection', (socket) => {
             return;
         }
         
-        const player = room.gameState.players.find(p => p.id === socket.id);
+        // Find player by socket ID
+        let player = room.gameState.players.find(p => p.id === socket.id);
         if (!player) {
-            console.log(`Player not found for socket ID: ${socket.id}`);
-            return;
+            // Try finding by socketId if not found by id
+            player = room.gameState.players.find(p => p.socketId === socket.id);
+            if (!player) {
+                console.log(`Player not found for socket ID: ${socket.id}`);
+                return;
+            }
         }
         
         const cost = unitType === 'miner' ? 100 : 200;
@@ -239,7 +368,7 @@ io.on('connection', (socket) => {
         // Deduct gold
         player.gold -= cost;
         
-        console.log(`Player ${player.id} spawned ${unitType} at (${x}, ${y}), isLeftPlayer: ${isLeftPlayer}`);
+        console.log(`Player ${socket.id} spawned ${unitType} at (${x}, ${y}), isLeftPlayer: ${isLeftPlayer}`);
         
         // Broadcast unit spawn to all clients in the room
         const unitData = {
@@ -248,7 +377,7 @@ io.on('connection', (socket) => {
             x,
             y,
             isLeftPlayer,
-            playerId: player.id
+            playerId: socket.id
         };
         
         // Emit to all clients in the room
@@ -256,7 +385,7 @@ io.on('connection', (socket) => {
         
         // Send gold update to the player
         socket.emit('goldUpdate', {
-            playerId: player.id,
+            playerId: socket.id,
             gold: player.gold
         });
     });
@@ -269,7 +398,7 @@ io.on('connection', (socket) => {
         // Only process if room exists, game has started, and game state is initialized
         if (!room || !room.gameState || !room.gameState.started) return;
         
-        const player = room.gameState.players.find(p => p.id === socket.id);
+        const player = room.gameState.players.find(p => p.socketId === socket.id);
         if (!player) return;
         
         // Add gold to player (fixed value of 75)
@@ -280,88 +409,6 @@ io.on('connection', (socket) => {
             playerId: socket.id,
             gold: player.gold
         });
-    });
-
-    // Handle leaving room
-    socket.on('leaveRoom', (data) => {
-        try {
-            const { roomId } = data;
-            const room = rooms.get(roomId);
-            
-            if (room) {
-                // Find the leaving player
-                const leavingPlayer = room.players.find(p => p.socketId === socket.id);
-                
-                // Remove player from room
-                room.players = room.players.filter(p => p.socketId !== socket.id);
-                
-                // If room is empty, delete it
-                if (room.players.length === 0) {
-                    rooms.delete(roomId);
-                    console.log(`Room ${roomId} deleted because it's empty`);
-                } else {
-                    // If host left, assign new host (first remaining player)
-                    if (leavingPlayer?.isHost) {
-                        room.players[0].isHost = true;
-                        // Notify the new host
-                        io.to(room.players[0].socketId).emit('hostChanged', { isHost: true });
-                    }
-                    
-                    // Update remaining players
-                    io.to(roomId).emit('playerList', {
-                        players: room.players
-                    });
-                    
-                    // Notify remaining players that someone left
-                    io.to(roomId).emit('playerLeft', {
-                        username: leavingPlayer?.username,
-                        isHost: leavingPlayer?.isHost
-                    });
-                }
-            }
-            
-            // Leave the socket room
-            socket.leave(roomId);
-            
-            console.log(`User ${socket.id} left room ${roomId}`);
-        } catch (error) {
-            console.error('Error leaving room:', error);
-        }
-    });
-
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-        
-        // Find and remove player from all rooms
-        for (const [roomId, room] of rooms.entries()) {
-            const leavingPlayer = room.players.find(p => p.socketId === socket.id);
-            if (leavingPlayer) {
-                room.players = room.players.filter(p => p.socketId !== socket.id);
-                
-                if (room.players.length === 0) {
-                    rooms.delete(roomId);
-                    console.log(`Room ${roomId} deleted because it's empty`);
-                } else {
-                    // If host disconnected, assign new host
-                    if (leavingPlayer.isHost) {
-                        room.players[0].isHost = true;
-                        // Notify the new host
-                        io.to(room.players[0].socketId).emit('hostChanged', { isHost: true });
-                    }
-                    
-                    // Update remaining players
-                    io.to(roomId).emit('playerList', {
-                        players: room.players
-                    });
-                    
-                    // Notify remaining players that someone left
-                    io.to(roomId).emit('playerLeft', {
-                        username: leavingPlayer.username,
-                        isHost: leavingPlayer.isHost
-                    });
-                }
-            }
-        }
     });
 });
 
