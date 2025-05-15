@@ -201,6 +201,8 @@
         socket.on('playerLeft', (data) => {
             if (data.isHost) {
                 alert(i18n.translate('host_left'));
+                // Redirect to homepage when host leaves
+                window.location.href = '/';
             } else {
                 alert(i18n.translate('player_left'));
             }
