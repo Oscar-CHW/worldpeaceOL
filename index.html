@@ -24,6 +24,12 @@
             <button class="room-button join" id="join-room-btn" data-i18n="join_room">加入房间</button>
         </div>
         
+        <!-- Last Room Prompt -->
+        <div id="last-room-prompt" class="last-room-prompt" style="display: none; margin-top: 20px;">
+            <p><span data-i18n="last_room_message">您有一个进行中的游戏房间</span>: <span id="last-room-id"></span></p>
+            <button class="room-button rejoin" id="rejoin-room-btn" data-i18n="rejoin_room">重新加入房间</button>
+        </div>
+        
         <div id="error-message" class="message error" style="display: none; margin-top: 20px;" data-i18n="login_required">
             请先登录后再创建房间
         </div>
@@ -64,6 +70,11 @@
             const roomIdInput = document.getElementById('room-id-input');
             const submitJoinRoomBtn = document.getElementById('submit-join-room');
             const errorMessage = document.getElementById('error-message');
+            const lastRoomPrompt = document.getElementById('last-room-prompt');
+            const lastRoomId = document.getElementById('last-room-id');
+            const rejoinRoomBtn = document.getElementById('rejoin-room-btn');
+            
+            let lastRoom = null;
             
             // Create Room button - check login status first
             document.getElementById('create-room-btn').addEventListener('click', async () => {
@@ -99,6 +110,13 @@
             joinRoomModal.addEventListener('click', (e) => {
                 if (e.target === joinRoomModal) {
                     joinRoomModal.classList.remove('active');
+                }
+            });
+            
+            // Handle rejoin room button
+            rejoinRoomBtn.addEventListener('click', () => {
+                if (lastRoom) {
+                    window.location.href = `/game-room.html?roomId=${lastRoom}`;
                 }
             });
             
@@ -169,6 +187,22 @@
                             console.error('Logout failed', error);
                         }
                     });
+                    
+                    // Check for last room
+                    try {
+                        const lastRoomResponse = await fetch('/api/user/last-room');
+                        if (lastRoomResponse.ok) {
+                            const lastRoomData = await lastRoomResponse.json();
+                            
+                            if (lastRoomData.hasLastRoom && lastRoomData.roomId) {
+                                lastRoom = lastRoomData.roomId;
+                                lastRoomId.textContent = lastRoom;
+                                lastRoomPrompt.style.display = 'block';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error checking last room:', error);
+                    }
                 }
             } catch (error) {
                 console.error('Error checking auth status', error);

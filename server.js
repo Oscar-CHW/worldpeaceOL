@@ -126,6 +126,19 @@ io.on('connection', (socket) => {
             // Associate this socket with the room
             userRooms.set(socket.id, roomId);
             
+            // Save the room ID to the user's database record if they're logged in
+            if (socket.request.session.userId) {
+                try {
+                    await prisma.user.update({
+                        where: { id: socket.request.session.userId },
+                        data: { lastRoom: roomId }
+                    });
+                    console.log(`Saved lastRoom=${roomId} for user ID ${socket.request.session.userId}`);
+                } catch (dbError) {
+                    console.error('Error saving lastRoom to database:', dbError);
+                }
+            }
+            
             // Notify the creator that the room was created
             socket.emit('roomCreated', { roomId });
             
@@ -170,7 +183,7 @@ io.on('connection', (socket) => {
     });
 
     // Function to handle the actual room joining logic
-    function processRoomJoin(socket, roomId, username) {
+    async function processRoomJoin(socket, roomId, username) {
         if (!rooms.has(roomId)) {
             socket.emit('error', { message: 'room_not_found' });
             return;
@@ -200,6 +213,19 @@ io.on('connection', (socket) => {
         
         // Associate this socket with the room
         userRooms.set(socket.id, roomId);
+        
+        // Save the room ID to the user's database record if they're logged in
+        if (socket.request.session.userId) {
+            try {
+                await prisma.user.update({
+                    where: { id: socket.request.session.userId },
+                    data: { lastRoom: roomId }
+                });
+                console.log(`Saved lastRoom=${roomId} for user ID ${socket.request.session.userId}`);
+            } catch (dbError) {
+                console.error('Error saving lastRoom to database:', dbError);
+            }
+        }
         
         console.log(`User ${username} (${socket.id}) joined room ${roomId}`);
         console.log('Updated room data:', room);
@@ -243,6 +269,19 @@ io.on('connection', (socket) => {
             if (room.players.length === 0) {
                 rooms.delete(roomId);
                 console.log(`Room ${roomId} deleted because it's empty`);
+                
+                // If the user is logged in, clear their lastRoom since the room no longer exists
+                if (socket.request.session.userId) {
+                    try {
+                        await prisma.user.update({
+                            where: { id: socket.request.session.userId },
+                            data: { lastRoom: null }
+                        });
+                        console.log(`Cleared lastRoom for user ID ${socket.request.session.userId} as room was deleted`);
+                    } catch (dbError) {
+                        console.error('Error clearing lastRoom in database:', dbError);
+                    }
+                }
             } else {
                 // If host left, assign new host (first remaining player)
                 if (leavingPlayer?.isHost) {
@@ -712,6 +751,30 @@ app.get('/api/user/me', isAuthenticated, async (req, res) => {
     console.error('Get user error:', error);
     res.status(500).json({ error: '获取用户信息失败' });
   }
+});
+
+// Add this API endpoint to check for lastRoom
+app.get('/api/user/last-room', isAuthenticated, async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: req.session.userId }
+        });
+        
+        if (!user || !user.lastRoom) {
+            return res.json({ hasLastRoom: false });
+        }
+        
+        // Check if the room still exists
+        const roomExists = rooms.has(user.lastRoom);
+        
+        res.json({
+            hasLastRoom: roomExists,
+            roomId: roomExists ? user.lastRoom : null
+        });
+    } catch (error) {
+        console.error('Error checking last room:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 // Serve the index.html file

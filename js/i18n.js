@@ -66,7 +66,9 @@ const translations = {
     'disconnected': '与服务器断开连接',
     'host_left': '房主已离开房间',
     'player_left': '玩家已离开房间',
-    'you_are_host': '你现在是房主'
+    'you_are_host': '你现在是房主',
+    'last_room_message': '您有一个进行中的游戏房间',
+    'rejoin_room': '重新加入房间'
   },
   
   // Chinese translations (Traditional)
@@ -116,7 +118,9 @@ const translations = {
     'disconnected': '與伺服器斷開連接',
     'host_left': '房主已離開房間',
     'player_left': '玩家已離開房間',
-    'you_are_host': '你現在是房主'
+    'you_are_host': '你現在是房主',
+    'last_room_message': '您有一個進行中的游戲房間',
+    'rejoin_room': '重新加入房間'
   },
   
   // English translations
@@ -166,7 +170,9 @@ const translations = {
     'disconnected': 'Disconnected from server',
     'host_left': 'Host has left the room',
     'player_left': 'Player has left the room',
-    'you_are_host': 'You are now the host'
+    'you_are_host': 'You are now the host',
+    'last_room_message': 'You have an ongoing game room',
+    'rejoin_room': 'Rejoin Room'
   },
   
   // Japanese translations
@@ -216,7 +222,9 @@ const translations = {
     'disconnected': 'サーバーから切断されました',
     'host_left': 'ホストがルームを退出しました',
     'player_left': 'プレイヤーがルームを退出しました',
-    'you_are_host': 'あなたが新しいホストになりました'
+    'you_are_host': 'あなたが新しいホストになりました',
+    'last_room_message': '進行中のゲームルームがあります',
+    'rejoin_room': '部屋に再参加'
   },
   
   // Korean translations
@@ -266,7 +274,9 @@ const translations = {
     'disconnected': '서버와 연결이 끊어졌습니다',
     'host_left': '방장이 방을 나갔습니다',
     'player_left': '플레이어가 방을 나갔습니다',
-    'you_are_host': '당신이 새로운 방장이 되었습니다'
+    'you_are_host': '당신이 새로운 방장이 되었습니다',
+    'last_room_message': '진행 중인 게임 방이 있습니다',
+    'rejoin_room': '방 다시 참가하기'
   }
 };
 

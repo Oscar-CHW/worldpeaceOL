@@ -169,6 +169,15 @@ h1 {
     background-color: #f0b74d;
 }
 
+.room-button.rejoin {
+    background-color: #3498db;
+    color: white;
+}
+
+.room-button.rejoin:hover {
+    background-color: #2980b9;
+}
+
 /* Auth form styles (login/signup) */
 .auth-form {
     background-color: rgba(255, 255, 255, 0.9);
@@ -994,4 +1003,23 @@ button:hover {
         width: 30px;
         height: 30px;
     }
+}
+
+.last-room-prompt {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.last-room-prompt p {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.last-room-prompt #last-room-id {
+    font-weight: bold;
+    color: #3498db;
 } 
