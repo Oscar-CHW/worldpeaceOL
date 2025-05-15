@@ -104,23 +104,11 @@
                     const data = await response.json();
                     currentUser = data;
                     
-                    // Initialize socket.io only when creating a room
-                    const socket = io();
+                    // Generate a unique room ID (same format as server)
+                    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
                     
-                    // Handle room creation response
-                    socket.on('roomCreated', (data) => {
-                        // Redirect to game room page
-                        window.location.href = `/game-room.html?roomId=${data.roomId}`;
-                    });
-                    
-                    // Handle errors
-                    socket.on('error', (data) => {
-                        console.error('Socket error:', data.message);
-                        alert(data.message);
-                    });
-                    
-                    // Emit createRoom event to server with user info
-                    socket.emit('createRoom', { username: currentUser.username });
+                    // Redirect to game room page with room ID
+                    window.location.href = `/game-room.html?roomId=${roomId}&username=${encodeURIComponent(currentUser.username)}`;
                     
                 } catch (error) {
                     console.error('Error creating room:', error);

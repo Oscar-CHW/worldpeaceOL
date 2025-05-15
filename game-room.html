@@ -38,16 +38,25 @@
         import i18n from './js/i18n.js';
         import { createLanguageSelector } from './js/language-selector.js';
         
+        // Get room ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('roomId');
+        const username = urlParams.get('username');
+        
+        if (!roomId) {
+            window.location.href = '/index.html';
+            return;
+        }
+        
         // Initialize socket.io
         const socket = io();
         
-        // Get room ID from URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const roomId = urlParams.get('roomId');
-        
-        if (!roomId) {
-            window.location.href = '/';
-            throw new Error('No room ID provided');
+        // If username is provided, this is the room creator
+        if (username) {
+            socket.emit('createRoom', { roomId, username });
+        } else {
+            // Otherwise, this is a player joining the room
+            socket.emit('joinRoom', { roomId });
         }
         
         // Initialize the i18n system
@@ -75,9 +84,6 @@
                 
                 // Get user data
                 currentUser = await response.json();
-                
-                // Join the room with username
-                socket.emit('joinRoom', { roomId, username: currentUser.username });
                 
                 // Update auth links
                 const authLinks = document.getElementById('auth-links');
@@ -135,6 +141,12 @@
             startButton.addEventListener('click', () => {
                 // Will be implemented later
                 console.log('Start game clicked');
+            });
+            
+            // Handle errors
+            socket.on('error', (data) => {
+                console.error('Socket error:', data.message);
+                alert(data.message);
             });
         });
     </script>

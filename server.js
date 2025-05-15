@@ -72,8 +72,14 @@ io.on('connection', (socket) => {
     // Handle room creation
     socket.on('createRoom', async (data) => {
         try {
-            // Generate a unique room ID
-            const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            // Use provided room ID or generate a new one
+            const roomId = data.roomId || Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            // Check if room already exists
+            if (rooms.has(roomId)) {
+                socket.emit('error', { message: 'Room already exists' });
+                return;
+            }
             
             // Create the room
             socket.join(roomId);
