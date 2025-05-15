@@ -168,8 +168,7 @@ io.on('connection', (socket) => {
     });
 
     // Handle start game
-    socket.on('startGame', (data) => {
-        const { roomId } = data;
+    socket.on('startGame', (roomId) => {
         const room = rooms.get(roomId);
         
         if (!room) {
@@ -177,21 +176,124 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // Verify that the sender is the host
+        // Check if sender is the host
         const player = room.players.find(p => p.socketId === socket.id);
         if (!player || !player.isHost) {
             socket.emit('error', { message: 'only_host_can_start' });
             return;
         }
         
-        // Verify that there are exactly 2 players
+        // Check if there are exactly 2 players
         if (room.players.length !== 2) {
             socket.emit('error', { message: 'need_two_players' });
             return;
         }
         
-        // Emit game start event to all players in the room
-        io.to(roomId).emit('gameStarted', { roomId });
+        room.gameState = {
+            started: true,
+            players: room.players.map(p => ({
+                id: p.socketId,
+                gold: 500,
+                hp: 100
+            })),
+            units: [],
+            minerals: []
+        };
+        
+        // Start mineral spawning
+        const spawnInterval = setInterval(() => {
+            if (room.gameState) {
+                const mineral = {
+                    id: Date.now(),
+                    x: Math.random() * 80 + 10, // Random position between 10% and 90%
+                    y: Math.random() * 80 + 10,
+                    value: Math.floor(Math.random() * 50) + 50 // Random value between 50 and 100
+                };
+                room.gameState.minerals.push(mineral);
+                io.to(roomId).emit('mineralSpawned', mineral);
+            }
+        }, 5000); // Spawn a mineral every 5 seconds
+
+        room.mineralSpawnInterval = spawnInterval;
+        io.to(roomId).emit('gameStarted', room.gameState);
+    });
+
+    // Handle unit spawn
+    socket.on('spawnUnit', (data) => {
+        const { roomId, unitType, x, y, isLeftPlayer } = data;
+        const room = rooms.get(roomId);
+        
+        if (!room || !room.gameState) return;
+        
+        const player = room.gameState.players.find(p => p.socketId === socket.id);
+        if (!player) return;
+        
+        const cost = unitType === 'miner' ? 100 : 200;
+        if (player.gold < cost) return;
+        
+        // Deduct gold
+        player.gold -= cost;
+        
+        // Add unit to player's units
+        const unit = {
+            id: Date.now(),
+            type: unitType,
+            x,
+            y,
+            isLeftPlayer
+        };
+        player.units.push(unit);
+        
+        // Notify all players
+        io.to(roomId).emit('unitSpawned', unit);
+        io.to(roomId).emit('goldUpdate', {
+            playerId: socket.id,
+            gold: player.gold
+        });
+    });
+
+    // Handle mineral spawn
+    socket.on('spawnMineral', (data) => {
+        const { roomId, x, y } = data;
+        const room = rooms.get(roomId);
+        
+        if (!room || !room.gameState) return;
+        
+        const mineral = {
+            id: Date.now(),
+            x,
+            y
+        };
+        
+        room.gameState.minerals.push(mineral);
+        io.to(roomId).emit('mineralSpawned', mineral);
+    });
+
+    // Handle mineral collection
+    socket.on('collectMineral', (data) => {
+        const { roomId, mineralId } = data;
+        const room = rooms.get(roomId);
+        
+        if (!room || !room.gameState) return;
+        
+        const mineral = room.gameState.minerals.find(m => m.id === mineralId);
+        if (!mineral) return;
+        
+        const player = room.gameState.players.find(p => p.socketId === socket.id);
+        if (!player) return;
+        
+        // Add gold to player
+        player.gold += 50;
+        
+        // Remove mineral
+        room.gameState.minerals = room.gameState.minerals.filter(m => m.id !== mineralId);
+        
+        // Notify all players
+        io.to(roomId).emit('mineralCollected', { mineralId });
+        io.to(roomId).emit('goldUpdate', {
+            playerId: socket.id,
+            gold: player.gold
+        });
     });
 
     // Handle leaving room
@@ -271,6 +373,9 @@ io.on('connection', (socket) => {
                     });
                 }
             }
+        }
+        if (room && room.mineralSpawnInterval) {
+            clearInterval(room.mineralSpawnInterval);
         }
     });
 });

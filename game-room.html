@@ -44,11 +44,19 @@
                     <div class="hp-bar">
                         <div class="hp-fill"></div>
                     </div>
+                    <div class="gold-display">
+                        <img src="images/coin.png" alt="Gold" class="gold-icon">
+                        <span class="gold-amount">500</span>
+                    </div>
                 </div>
                 <div class="player-info right">
                     <span class="player-name"></span>
                     <div class="hp-bar">
                         <div class="hp-fill"></div>
+                    </div>
+                    <div class="gold-display">
+                        <img src="images/coin.png" alt="Gold" class="gold-icon">
+                        <span class="gold-amount">500</span>
                     </div>
                 </div>
             </div>
@@ -60,6 +68,16 @@
                     <img src="images/tower.png" alt="Right Tower" class="tower-image">
                 </div>
             </div>
+            <div class="unit-selection-bar">
+                <div class="unit-option" data-unit="miner">
+                    <img src="images/miner.png" alt="Miner" class="unit-icon">
+                    <span class="unit-cost">100</span>
+                </div>
+                <div class="unit-option" data-unit="soldier">
+                    <img src="images/soldier.png" alt="Soldier" class="unit-icon">
+                    <span class="unit-cost">200</span>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -67,6 +85,25 @@
         import i18n from './js/i18n.js';
         import { createLanguageSelector } from './js/language-selector.js';
         
+        // Game state
+        let gameState = {
+            gold: 500,
+            minerals: [],
+            units: [],
+            isLeftPlayer: false
+        };
+
+        // Mineral spawn configuration
+        const MINERAL_SPAWN_INTERVAL = 5000; // 5 seconds
+        const MINERAL_VALUE = 50;
+        const MINERAL_LIFETIME = 10000; // 10 seconds
+
+        // Unit costs
+        const UNIT_COSTS = {
+            miner: 100,
+            soldier: 200
+        };
+
         // Get room ID and username from URL
         const urlParams = new URLSearchParams(window.location.search);
         const roomId = urlParams.get('roomId');
@@ -156,29 +193,23 @@
         });
         
         // Handle game start
-        socket.on('gameStarted', (data) => {
-            console.log('Game started:', data);
+        socket.on('gameStarted', (gameState) => {
+            document.getElementById('game-container').style.display = 'block';
+            document.getElementById('room-info').style.display = 'none';
             
-            // Show game container
-            const gameContainer = document.getElementById('game-container');
-            gameContainer.style.display = 'block';
+            // Initialize game state
+            gameState.gold = gameState.players.find(p => p.id === socket.id).gold;
+            updateGoldDisplay();
             
-            // Hide room info and player list
-            document.querySelector('.room-info').style.display = 'none';
-            document.querySelector('.player-list').style.display = 'none';
-            document.querySelector('.room-actions').style.display = 'none';
+            // Clear existing minerals and units
+            gameState.minerals = [];
+            gameState.units = [];
             
-            // Set player names and initialize HP bars
-            const leftPlayer = data.players[0];
-            const rightPlayer = data.players[1];
+            // Start mineral spawning
+            startMineralSpawning();
             
-            document.querySelector('.player-info.left .player-name').textContent = leftPlayer.username;
-            document.querySelector('.player-info.right .player-name').textContent = rightPlayer.username;
-            
-            // Initialize HP bars to 100%
-            document.querySelectorAll('.hp-fill').forEach(bar => {
-                bar.style.width = '100%';
-            });
+            // Setup unit selection
+            setupUnitSelection();
         });
         
         // Handle HP updates
@@ -239,6 +270,172 @@
             console.log('Room created:', data.roomId);
         });
         
+        // Handle gold updates
+        socket.on('goldUpdate', (data) => {
+            gameState.gold = data.gold;
+            updateGoldDisplay();
+        });
+
+        // Handle unit spawn
+        socket.on('unitSpawned', (data) => {
+            spawnUnit(data.unitType, data.x, data.y, data.isLeftPlayer);
+        });
+
+        // Handle mineral spawn
+        socket.on('mineralSpawned', (mineral) => {
+            gameState.minerals.push(mineral);
+            spawnMineral(mineral);
+        });
+
+        // Handle mineral collected
+        socket.on('mineralCollected', (data) => {
+            collectMineral(data.mineralId);
+        });
+
+        function startMineralSpawning() {
+            setInterval(() => {
+                const x = Math.random() * (window.innerWidth - 100) + 50;
+                const y = Math.random() * (window.innerHeight - 200) + 100;
+                socket.emit('spawnMineral', { x, y });
+            }, MINERAL_SPAWN_INTERVAL);
+        }
+
+        function spawnMineral(mineral) {
+            const mineralElement = document.createElement('div');
+            mineralElement.className = 'mineral';
+            mineralElement.id = `mineral-${mineral.id}`;
+            mineralElement.style.left = `${mineral.x}%`;
+            mineralElement.style.top = `${mineral.y}%`;
+            document.getElementById('game-field').appendChild(mineralElement);
+        }
+
+        function collectMineral(mineralId) {
+            const mineral = gameState.minerals.find(m => m.id === mineralId);
+            if (mineral) {
+                socket.emit('collectMineral', {
+                    roomId: roomId,
+                    mineralId: mineralId,
+                    value: mineral.value
+                });
+                gameState.minerals = gameState.minerals.filter(m => m.id !== mineralId);
+                const mineralElement = document.getElementById(`mineral-${mineralId}`);
+                if (mineralElement) {
+                    mineralElement.remove();
+                }
+            }
+        }
+
+        function spawnUnit(type, x, y, isLeftPlayer) {
+            const unit = document.createElement('div');
+            unit.className = `unit ${type}`;
+            unit.style.left = `${x}px`;
+            unit.style.top = `${y}px`;
+            
+            // Create and add unit image
+            const unitImg = document.createElement('img');
+            unitImg.src = `images/${type}.png`;
+            unitImg.alt = type;
+            unitImg.className = 'unit-image';
+            unit.appendChild(unitImg);
+            
+            document.querySelector('.game-field').appendChild(unit);
+            
+            if (type === 'miner') {
+                // Find nearest mineral and move towards it
+                const minerals = document.querySelectorAll('.mineral');
+                if (minerals.length > 0) {
+                    const nearestMineral = findNearestMineral(unit, minerals);
+                    moveUnitTowards(unit, nearestMineral.x, nearestMineral.y);
+                }
+            } else if (type === 'soldier') {
+                // Position soldier in front of tower
+                const towerX = isLeftPlayer ? 150 : window.innerWidth - 150;
+                unit.style.left = `${towerX}px`;
+            }
+        }
+
+        function findNearestMineral(unit, minerals) {
+            let nearest = null;
+            let minDistance = Infinity;
+            
+            minerals.forEach(mineral => {
+                const distance = getDistance(unit, mineral);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearest = mineral;
+                }
+            });
+            
+            return nearest;
+        }
+
+        function getDistance(element1, element2) {
+            const rect1 = element1.getBoundingClientRect();
+            const rect2 = element2.getBoundingClientRect();
+            
+            return Math.sqrt(
+                Math.pow(rect2.left - rect1.left, 2) +
+                Math.pow(rect2.top - rect1.top, 2)
+            );
+        }
+
+        function moveUnitTowards(unit, targetX, targetY) {
+            const unitElement = document.querySelector(`.player-info.${gameState.isLeftPlayer ? 'left' : 'right'} .unit-image`);
+            if (!unitElement) return;
+
+            const currentX = parseFloat(unitElement.style.left);
+            const currentY = parseFloat(unitElement.style.top);
+            
+            const dx = targetX - currentX;
+            const dy = targetY - currentY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 1) {
+                if (unit.type === 'miner') {
+                    collectMineral(unit.targetMineralId);
+                }
+                return;
+            }
+            
+            const speed = 0.5;
+            const newX = currentX + (dx / distance) * speed;
+            const newY = currentY + (dy / distance) * speed;
+            
+            unitElement.style.left = `${newX}%`;
+            unitElement.style.top = `${newY}%`;
+            
+            requestAnimationFrame(() => moveUnitTowards(unit, targetX, targetY));
+        }
+
+        function setupUnitSelection() {
+            document.querySelectorAll('.unit-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const unitType = option.dataset.unit;
+                    const cost = UNIT_COSTS[unitType];
+                    
+                    if (gameState.gold >= cost) {
+                        const x = gameState.isLeftPlayer ? 150 : window.innerWidth - 150;
+                        const y = window.innerHeight / 2;
+                        
+                        socket.emit('spawnUnit', {
+                            roomId,
+                            unitType,
+                            x,
+                            y,
+                            isLeftPlayer: gameState.isLeftPlayer
+                        });
+                    }
+                });
+            });
+        }
+
+        function updateGoldDisplay() {
+            const goldAmount = document.querySelector(
+                gameState.isLeftPlayer ? '.player-info.left .gold-amount' : '.player-info.right .gold-amount'
+            );
+            goldAmount.textContent = gameState.gold;
+        }
+        
         document.addEventListener('DOMContentLoaded', async () => {
             // Initialize language system
             i18n.init();
@@ -273,7 +470,7 @@
             // Set up start game button
             const startButton = document.getElementById('start-game-btn');
             startButton.addEventListener('click', () => {
-                socket.emit('startGame', { roomId });
+                socket.emit('startGame', roomId);
             });
         });
     </script>
