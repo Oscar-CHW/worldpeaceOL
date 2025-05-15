@@ -47,39 +47,45 @@
             window.location.href = '/';
             throw new Error('No room ID provided');
         }
+
+        let currentUser = null;
+        
+        // Check authentication first
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/user/me');
+                if (response.status === 401) {
+                    window.location.href = '/login.html';
+                    return false;
+                }
+                currentUser = await response.json();
+                return true;
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+                window.location.href = '/login.html';
+                return false;
+            }
+        }
         
         // Initialize socket.io
         const socket = io();
         
         // Wait for socket connection before proceeding
-        socket.on('connect', () => {
+        socket.on('connect', async () => {
             console.log('Socket connected');
             
             // Check authentication before creating/joining room
-            fetch('/api/user/me')
-                .then(response => {
-                    if (response.status === 401) {
-                        window.location.href = '/login.html';
-                        return;
-                    }
-                    return response.json();
-                })
-                .then(userData => {
-                    if (!userData) return;
-                    
-                    // Join or create the room after socket connection is established
-                    if (usernameFromUrl) {
-                        // Room creator
-                        socket.emit('createRoom', { roomId, username: userData.username });
-                    } else {
-                        // Joining user
-                        socket.emit('joinRoom', { roomId, username: userData.username });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking auth status:', error);
-                    window.location.href = '/login.html';
-                });
+            const isAuthenticated = await checkAuth();
+            if (!isAuthenticated) return;
+            
+            // Join or create the room after socket connection is established
+            if (usernameFromUrl) {
+                // Room creator
+                socket.emit('createRoom', { roomId, username: currentUser.username });
+            } else {
+                // Joining user
+                socket.emit('joinRoom', { roomId, username: currentUser.username });
+            }
         });
         
         document.addEventListener('DOMContentLoaded', async () => {
@@ -92,51 +98,36 @@
             // Display room ID
             document.getElementById('room-id').textContent = roomId;
             
-            let currentUser = null;
+            // Check authentication
+            const isAuthenticated = await checkAuth();
+            if (!isAuthenticated) return;
             
-            try {
-                // Check if user is logged in
-                const response = await fetch('/api/user/me');
+            // Update auth links
+            const authLinks = document.getElementById('auth-links');
+            authLinks.innerHTML = `
+                <a href="/dashboard.html" id="welcome-user" data-i18n="my_profile"></a>
+                <a href="#" id="logout-link" data-i18n="logout"></a>
+            `;
+            
+            // Update welcome text
+            document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${currentUser.username}`;
+            
+            // Apply translations to newly created elements
+            i18n.applyTranslations();
+            
+            // Add logout functionality
+            document.getElementById('logout-link').addEventListener('click', async (e) => {
+                e.preventDefault();
                 
-                if (response.status === 401) {
-                    // Not logged in, redirect to login
-                    window.location.href = '/login.html';
-                    return;
+                try {
+                    await fetch('/api/logout', {
+                        method: 'POST'
+                    });
+                    window.location.href = '/';
+                } catch (error) {
+                    console.error('Logout failed', error);
                 }
-                
-                // Get user data
-                currentUser = await response.json();
-                
-                // Update auth links
-                const authLinks = document.getElementById('auth-links');
-                authLinks.innerHTML = `
-                    <a href="/dashboard.html" id="welcome-user" data-i18n="my_profile"></a>
-                    <a href="#" id="logout-link" data-i18n="logout"></a>
-                `;
-                
-                // Update welcome text
-                document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${currentUser.username}`;
-                
-                // Apply translations to newly created elements
-                i18n.applyTranslations();
-                
-                // Add logout functionality
-                document.getElementById('logout-link').addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    
-                    try {
-                        await fetch('/api/logout', {
-                            method: 'POST'
-                        });
-                        window.location.href = '/';
-                    } catch (error) {
-                        console.error('Logout failed', error);
-                    }
-                });
-            } catch (error) {
-                console.error('Error checking auth status', error);
-                window.location.href = '/login.html';
-            }
+            });
             
             // Handle player list updates
             socket.on('playerList', (data) => {
