@@ -55,14 +55,31 @@
         socket.on('connect', () => {
             console.log('Socket connected');
             
-            // Join or create the room after socket connection is established
-            if (usernameFromUrl) {
-                // Room creator
-                socket.emit('createRoom', { roomId, username: usernameFromUrl });
-            } else {
-                // Joining user
-                socket.emit('joinRoom', { roomId });
-            }
+            // Check authentication before creating/joining room
+            fetch('/api/user/me')
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(userData => {
+                    if (!userData) return;
+                    
+                    // Join or create the room after socket connection is established
+                    if (usernameFromUrl) {
+                        // Room creator
+                        socket.emit('createRoom', { roomId, username: userData.username });
+                    } else {
+                        // Joining user
+                        socket.emit('joinRoom', { roomId, username: userData.username });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking auth status:', error);
+                    window.location.href = '/login.html';
+                });
         });
         
         document.addEventListener('DOMContentLoaded', async () => {
