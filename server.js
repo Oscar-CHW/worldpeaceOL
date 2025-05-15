@@ -6,12 +6,19 @@ const cookieParser = require('cookie-parser');
 const prisma = require('./prisma/client');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const fs = require('fs');
 const SQLiteStore = require('connect-sqlite3')(session);
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 const PORT = 3000;
+
+// Ensure db directory exists
+const dbDir = path.join(__dirname, 'db');
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
 
 // Store room data globally
 const rooms = new Map();
@@ -21,11 +28,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
-  store: new SQLiteStore({ db: 'sessions.sqlite', dir: './db' }),
-  secret: 'tianxia-taiping-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 1 day
+    store: new SQLiteStore({ 
+        db: 'sessions.sqlite',
+        dir: dbDir,
+        table: 'sessions'
+    }),
+    secret: 'tianxia-taiping-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 1 day
 }));
 
 // Serve static files from the current directory
