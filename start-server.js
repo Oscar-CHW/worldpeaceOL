@@ -107,32 +107,3 @@ function startServer() {
 // Initial server start
 startServer();
 
-// Handle Ctrl+R to restart the server
-process.stdin.setRawMode(true);
-process.stdin.resume();
-process.stdin.on('data', (data) => {
-  if (data[0] === 18) { // Ctrl+R
-    console.log(colors.yellow + '\nRestarting server...' + colors.reset);
-    if (serverProcess) {
-      serverProcess.kill('SIGTERM');
-    }
-    startServer();
-  }
-});
-
-// Handle signals to gracefully shut down
-process.on('SIGINT', () => {
-  console.log(colors.yellow + '\nShutting down server...' + colors.reset);
-  if (serverProcess) {
-    serverProcess.kill('SIGINT');
-  }
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  console.log(colors.yellow + '\nShutting down server...' + colors.reset);
-  if (serverProcess) {
-    serverProcess.kill('SIGTERM');
-  }
-  process.exit(0);
-});
