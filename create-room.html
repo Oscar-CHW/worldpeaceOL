@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">天下太平</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
     <div id="language-selector"></div>
@@ -20,6 +21,10 @@
         
         <div class="room-type-container">
             <button class="room-type-button" id="one-v-one-btn">1v1</button>
+        </div>
+        
+        <div id="error-message" class="message error" style="display: none; margin-top: 20px;">
+            请先登录后再创建房间
         </div>
         
         <div class="back-link">
@@ -39,19 +44,20 @@
             // Create language selector
             createLanguageSelector('language-selector');
             
-            // Set up 1v1 button event listener
-            document.getElementById('one-v-one-btn').addEventListener('click', () => {
-                console.log('1v1 button clicked');
-                // Functionality to be added later
-            });
+            const createRoomBtn = document.getElementById('one-v-one-btn');
+            const errorMessage = document.getElementById('error-message');
+            let currentUser = null;
             
             try {
                 // Check if user is logged in
                 const response = await fetch('/api/user/me');
                 
                 if (response.status !== 401) {
-                    // User is logged in, update the auth links
+                    // User is logged in
                     const data = await response.json();
+                    currentUser = data;
+                    
+                    // Update auth links
                     const authLinks = document.getElementById('auth-links');
                     authLinks.innerHTML = `
                         <a href="/dashboard.html" id="welcome-user"></a>
@@ -81,6 +87,46 @@
             } catch (error) {
                 console.error('Error checking auth status', error);
             }
+            
+            // Set up 1v1 button event listener
+            createRoomBtn.addEventListener('click', async () => {
+                try {
+                    // Check login status again when button is clicked
+                    const response = await fetch('/api/user/me');
+                    
+                    if (response.status === 401) {
+                        // Show error message if not logged in
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Get user data
+                    const data = await response.json();
+                    currentUser = data;
+                    
+                    // Initialize socket.io only when creating a room
+                    const socket = io();
+                    
+                    // Handle room creation response
+                    socket.on('roomCreated', (data) => {
+                        // Redirect to game room page
+                        window.location.href = `/game-room.html?roomId=${data.roomId}`;
+                    });
+                    
+                    // Handle errors
+                    socket.on('error', (data) => {
+                        console.error('Socket error:', data.message);
+                        alert(data.message);
+                    });
+                    
+                    // Emit createRoom event to server with user info
+                    socket.emit('createRoom', { username: currentUser.username });
+                    
+                } catch (error) {
+                    console.error('Error creating room:', error);
+                    errorMessage.style.display = 'block';
+                }
+            });
         });
     </script>
 </body>

@@ -22,6 +22,10 @@
             <button class="room-button create" id="create-room-btn" data-i18n="create_room">创建房间</button>
             <button class="room-button join" id="join-room-btn" data-i18n="join_room">加入房间</button>
         </div>
+        
+        <div id="error-message" class="message error" style="display: none; margin-top: 20px;" data-i18n="login_required">
+            请先登录后再创建房间
+        </div>
     </div>
     
     <!-- Join Room Modal -->
@@ -58,10 +62,25 @@
             const closeModalBtn = document.getElementById('close-modal');
             const roomIdInput = document.getElementById('room-id-input');
             const submitJoinRoomBtn = document.getElementById('submit-join-room');
+            const errorMessage = document.getElementById('error-message');
             
-            // Create Room button - redirect to create room page
-            document.getElementById('create-room-btn').addEventListener('click', () => {
-                window.location.href = 'create-room.html';
+            // Create Room button - check login status first
+            document.getElementById('create-room-btn').addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/user/me');
+                    
+                    if (response.status === 401) {
+                        // Show error message if not logged in
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    
+                    // If logged in, proceed to create room page
+                    window.location.href = 'create-room.html';
+                } catch (error) {
+                    console.error('Error checking auth status:', error);
+                    errorMessage.style.display = 'block';
+                }
             });
             
             // Join Room button - show modal

@@ -43,7 +43,16 @@ const translations = {
     'profile_welcome_text': '您已成功登录系统，可以访问所有功能。',
     'create_room': '创建房间',
     'join_room': '加入房间',
-    'room_id': '房间号'
+    'room_id': '房间号',
+    'login_required': '请先登录后再创建房间',
+    'game_room': '游戏房间',
+    'player_count': '玩家数量',
+    'player_list': '玩家列表',
+    'room_owner': '房主',
+    'start_game': '开始游戏',
+    'leave_room': '离开房间',
+    'loading': '加载中...',
+    'admin_panel': '管理面板'
   },
   
   // Chinese translations (Traditional)
@@ -72,7 +81,16 @@ const translations = {
     'profile_welcome_text': '您已成功登入系統，可以訪問所有功能。',
     'create_room': '創建房間',
     'join_room': '加入房間',
-    'room_id': '房間號'
+    'room_id': '房間號',
+    'login_required': '請先登入後再創建房間',
+    'game_room': '遊戲房間',
+    'player_count': '玩家數量',
+    'player_list': '玩家列表',
+    'room_owner': '房主',
+    'start_game': '開始遊戲',
+    'leave_room': '離開房間',
+    'loading': '載入中...',
+    'admin_panel': '管理面板'
   },
   
   // English translations
@@ -101,7 +119,16 @@ const translations = {
     'profile_welcome_text': 'You have successfully logged in and can access all features.',
     'create_room': 'Create Room',
     'join_room': 'Join Room',
-    'room_id': 'Room ID'
+    'room_id': 'Room ID',
+    'login_required': 'Please log in first to create a room',
+    'game_room': 'Game Room',
+    'player_count': 'Players',
+    'player_list': 'Player List',
+    'room_owner': 'Host',
+    'start_game': 'Start Game',
+    'leave_room': 'Leave Room',
+    'loading': 'Loading...',
+    'admin_panel': 'Admin Panel'
   },
   
   // Japanese translations
@@ -130,7 +157,16 @@ const translations = {
     'profile_welcome_text': 'ログインに成功しました。すべての機能にアクセスできます。',
     'create_room': 'ルームを作成',
     'join_room': 'ルームに参加',
-    'room_id': 'ルームID'
+    'room_id': 'ルームID',
+    'login_required': 'ルームを作成するには、先にログインしてください',
+    'game_room': 'ゲームルーム',
+    'player_count': 'プレイヤー数',
+    'player_list': 'プレイヤーリスト',
+    'room_owner': 'ホスト',
+    'start_game': 'ゲーム開始',
+    'leave_room': 'ルームを退出',
+    'loading': '読み込み中...',
+    'admin_panel': '管理パネル'
   },
   
   // Korean translations
@@ -159,7 +195,16 @@ const translations = {
     'profile_welcome_text': '성공적으로 로그인했습니다. 모든 기능에 접근할 수 있습니다.',
     'create_room': '방 만들기',
     'join_room': '방 참가하기',
-    'room_id': '방 ID'
+    'room_id': '방 ID',
+    'login_required': '방을 만들려면 먼저 로그인해주세요',
+    'game_room': '게임방',
+    'player_count': '플레이어 수',
+    'player_list': '플레이어 목록',
+    'room_owner': '방장',
+    'start_game': '게임 시작',
+    'leave_room': '방 나가기',
+    'loading': '로딩 중...',
+    'admin_panel': '관리자 패널'
   }
 };
 

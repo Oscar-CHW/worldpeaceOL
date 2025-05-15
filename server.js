@@ -4,8 +4,12 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const prisma = require('./prisma/client');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer);
 const PORT = 3000;
 
 // Middleware
@@ -57,6 +61,136 @@ const isAdmin = async (req, res, next) => {
     res.status(500).json({ error: 'Server error checking admin status' });
   }
 };
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+
+    // Store room data
+    const rooms = new Map();
+
+    // Handle room creation
+    socket.on('createRoom', async (data) => {
+        try {
+            // Generate a unique room ID
+            const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            // Create the room
+            socket.join(roomId);
+            
+            // Initialize room data with username
+            const roomData = {
+                players: [{
+                    id: socket.id,
+                    username: data.username || 'Player 1',
+                    isHost: true
+                }]
+            };
+            rooms.set(roomId, roomData);
+            
+            // Notify the creator that the room was created
+            socket.emit('roomCreated', { roomId });
+            
+            // Send initial player list to all clients in the room (including creator)
+            io.in(roomId).emit('playerList', {
+                players: roomData.players
+            });
+            
+            console.log(`Room created: ${roomId} by user: ${data.username}`);
+        } catch (error) {
+            console.error('Error creating room:', error);
+            socket.emit('error', { message: 'Failed to create room' });
+        }
+    });
+
+    // Handle room joining
+    socket.on('joinRoom', async (data) => {
+        try {
+            const { roomId, username } = data;
+            const room = rooms.get(roomId);
+            
+            if (!room) {
+                socket.emit('error', { message: 'Room not found' });
+                return;
+            }
+            
+            if (room.players.length >= 2) {
+                socket.emit('error', { message: 'Room is full' });
+                return;
+            }
+            
+            // Join the room
+            socket.join(roomId);
+            
+            // Add player to room with username
+            room.players.push({
+                id: socket.id,
+                username: username || 'Player 2',
+                isHost: false
+            });
+            
+            // Update player list for all clients in the room
+            io.to(roomId).emit('playerList', {
+                players: room.players
+            });
+            
+            console.log(`User ${username} joined room ${roomId}`);
+        } catch (error) {
+            console.error('Error joining room:', error);
+            socket.emit('error', { message: 'Failed to join room' });
+        }
+    });
+
+    // Handle leaving room
+    socket.on('leaveRoom', (data) => {
+        try {
+            const { roomId } = data;
+            const room = rooms.get(roomId);
+            
+            if (room) {
+                // Remove player from room
+                room.players = room.players.filter(p => p.id !== socket.id);
+                
+                // If room is empty, delete it
+                if (room.players.length === 0) {
+                    rooms.delete(roomId);
+                } else {
+                    // Update remaining players
+                    io.to(roomId).emit('playerList', {
+                        players: room.players
+                    });
+                }
+            }
+            
+            // Leave the socket room
+            socket.leave(roomId);
+            
+            console.log(`User ${socket.id} left room ${roomId}`);
+        } catch (error) {
+            console.error('Error leaving room:', error);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+        
+        // Find and remove player from all rooms
+        for (const [roomId, room] of rooms.entries()) {
+            const playerIndex = room.players.findIndex(p => p.id === socket.id);
+            if (playerIndex !== -1) {
+                room.players.splice(playerIndex, 1);
+                
+                if (room.players.length === 0) {
+                    rooms.delete(roomId);
+                } else {
+                    io.to(roomId).emit('playerList', {
+                        players: room.players
+                    });
+                }
+            }
+        }
+    });
+});
 
 // ===== API Routes =====
 
@@ -343,7 +477,7 @@ async function startServer() {
     // Check if Prisma schema exists
     console.log('Starting server and initializing database...');
     
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
       console.log(`Website "天下太平" is now available!`);
       console.log(`Press Ctrl+C to stop the server.`);

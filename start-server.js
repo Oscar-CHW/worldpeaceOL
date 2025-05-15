@@ -49,30 +49,56 @@ console.log(colors.green + '✓ Dependencies check passed' + colors.reset);
 console.log(colors.green + '✓ Server file found' + colors.reset);
 console.log('\n' + colors.yellow + 'Starting server...' + colors.reset + '\n');
 
-// Start the server as a separate process
-const serverProcess = spawn('node', ['server.js'], { stdio: 'inherit' });
+let serverProcess = null;
 
-// Server URL
-console.log(colors.bright + '\nServer will be available at: ' + 
-  colors.cyan + 'http://localhost:3000' + colors.reset);
-console.log(colors.dim + 'Press Ctrl+C to stop the server' + colors.reset + '\n');
+function startServer() {
+  // Start the server as a separate process
+  serverProcess = spawn('node', ['server.js'], { stdio: 'inherit' });
 
-// Handle server process events
-serverProcess.on('close', (code) => {
-  if (code !== 0) {
-    console.log(colors.red + `\nServer process exited with code ${code}` + colors.reset);
-  } else {
-    console.log(colors.green + '\nServer stopped successfully.' + colors.reset);
+  // Server URL
+  console.log(colors.bright + '\nServer will be available at: ' + 
+    colors.cyan + 'http://localhost:3000' + colors.reset);
+  console.log(colors.dim + 'Press Ctrl+R to restart the server' + colors.reset + '\n');
+
+  // Handle server process events
+  serverProcess.on('close', (code) => {
+    if (code !== 0) {
+      console.log(colors.red + `\nServer process exited with code ${code}` + colors.reset);
+    } else {
+      console.log(colors.green + '\nServer stopped successfully.' + colors.reset);
+    }
+  });
+}
+
+// Initial server start
+startServer();
+
+// Handle Ctrl+R to restart the server
+process.stdin.setRawMode(true);
+process.stdin.resume();
+process.stdin.on('data', (data) => {
+  if (data[0] === 18) { // Ctrl+R
+    console.log(colors.yellow + '\nRestarting server...' + colors.reset);
+    if (serverProcess) {
+      serverProcess.kill('SIGTERM');
+    }
+    startServer();
   }
 });
 
 // Handle signals to gracefully shut down
 process.on('SIGINT', () => {
   console.log(colors.yellow + '\nShutting down server...' + colors.reset);
-  serverProcess.kill('SIGINT');
+  if (serverProcess) {
+    serverProcess.kill('SIGINT');
+  }
+  process.exit(0);
 });
 
 process.on('SIGTERM', () => {
   console.log(colors.yellow + '\nShutting down server...' + colors.reset);
-  serverProcess.kill('SIGTERM');
+  if (serverProcess) {
+    serverProcess.kill('SIGTERM');
+  }
+  process.exit(0);
 }); 

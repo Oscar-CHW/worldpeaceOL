@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">天下太平 - Game Room</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="language-selector"></div>
+    <div class="header">
+        <div class="auth-links" id="auth-links">
+            <a href="/login.html" data-i18n="login">登录</a>
+            <a href="/signup.html" data-i18n="signup">注册</a>
+        </div>
+    </div>
+
+    <div class="game-room-container">
+        <h2><span data-i18n="game_room">游戏房间</span> <span id="room-id"></span></h2>
+        
+        <div class="room-info">
+            <p><span data-i18n="player_count">玩家数量</span>: <span id="player-count">1</span></p>
+        </div>
+        
+        <div class="player-list">
+            <h3 data-i18n="player_list">玩家列表</h3>
+            <ul id="players"></ul>
+        </div>
+        
+        <div class="room-actions">
+            <button id="start-game-btn" class="action-button start" data-i18n="start_game">开始游戏</button>
+            <button id="leave-room-btn" class="action-button leave" data-i18n="leave_room">离开房间</button>
+        </div>
+    </div>
+    
+    <script type="module">
+        import i18n from './js/i18n.js';
+        import { createLanguageSelector } from './js/language-selector.js';
+        
+        // Initialize socket.io
+        const socket = io();
+        
+        // Get room ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('roomId');
+        
+        if (!roomId) {
+            window.location.href = '/';
+            throw new Error('No room ID provided');
+        }
+        
+        // Initialize the i18n system
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize language system
+            i18n.init();
+            
+            // Create language selector
+            createLanguageSelector('language-selector');
+            
+            // Display room ID
+            document.getElementById('room-id').textContent = roomId;
+            
+            let currentUser = null;
+            
+            try {
+                // Check if user is logged in
+                const response = await fetch('/api/user/me');
+                
+                if (response.status === 401) {
+                    // Not logged in, redirect to login
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Get user data
+                currentUser = await response.json();
+                
+                // Join the room with username
+                socket.emit('joinRoom', { roomId, username: currentUser.username });
+                
+                // Update auth links
+                const authLinks = document.getElementById('auth-links');
+                authLinks.innerHTML = `
+                    <a href="/dashboard.html" id="welcome-user"></a>
+                    <a href="#" id="logout-link" data-i18n="logout"></a>
+                `;
+                
+                // Update welcome text
+                document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${currentUser.username}`;
+                
+                // Apply translations to newly created elements
+                i18n.applyTranslations();
+                
+                // Add logout functionality
+                document.getElementById('logout-link').addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    
+                    try {
+                        await fetch('/api/logout', {
+                            method: 'POST'
+                        });
+                        window.location.href = '/';
+                    } catch (error) {
+                        console.error('Logout failed', error);
+                    }
+                });
+            } catch (error) {
+                console.error('Error checking auth status', error);
+                window.location.href = '/login.html';
+            }
+            
+            // Handle player list updates
+            socket.on('playerList', (data) => {
+                const playersList = document.getElementById('players');
+                const playerCount = document.getElementById('player-count');
+                
+                // Update player count
+                playerCount.textContent = data.players.length;
+                
+                // Update player list
+                playersList.innerHTML = data.players.map(player => 
+                    `<li>${player.username} ${player.isHost ? `(${i18n.translate('room_owner')})` : ''}</li>`
+                ).join('');
+            });
+            
+            // Set up leave room button
+            document.getElementById('leave-room-btn').addEventListener('click', () => {
+                socket.emit('leaveRoom', { roomId });
+                window.location.href = '/';
+            });
+            
+            // Set up start game button (disabled for now)
+            const startButton = document.getElementById('start-game-btn');
+            startButton.addEventListener('click', () => {
+                // Will be implemented later
+                console.log('Start game clicked');
+            });
+        });
+    </script>
+</body>
+</html>
