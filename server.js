@@ -44,13 +44,6 @@ app.use(session({
     }
 }));
 
-// Add session debugging middleware
-app.use((req, res, next) => {
-    console.log('Session ID:', req.sessionID);
-    console.log('Session data:', req.session);
-    next();
-});
-
 // Serve static files from the current directory
 app.use(express.static(__dirname));
 
