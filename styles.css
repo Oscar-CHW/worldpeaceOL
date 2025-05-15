@@ -76,17 +76,29 @@ h1 {
 }
 
 .header {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 1rem;
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.site-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.site-title:hover {
+    color: #666;
 }
 
 .auth-links {
-    margin-top: 60px;
+    display: flex;
+    gap: 1rem;
 }
 
 .auth-links a {
