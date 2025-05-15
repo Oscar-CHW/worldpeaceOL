@@ -354,12 +354,6 @@ io.on('connection', (socket) => {
                     }
                 }
             } else {
-                // If host left, assign new host (first remaining player)
-                if (leavingPlayer?.isHost) {
-                    room.players[0].isHost = true;
-                    // Notify the new host
-                    io.to(room.players[0].socketId).emit('hostChanged', { isHost: true });
-                }
                 
                 // Update remaining players
                 io.to(roomId).emit('playerList', {

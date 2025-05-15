@@ -232,12 +232,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
         
-        // Handle host change
-        socket.on('hostChanged', (data) => {
-            if (data.isHost) {
-                alert(i18n.translate('you_are_host'));
-            }
-        });
         
         // Handle player left
         socket.on('playerLeft', (data) => {
