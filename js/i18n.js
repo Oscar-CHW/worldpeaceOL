@@ -57,7 +57,13 @@ const translations = {
     'admin_panel': '管理面板',
     'copy_room_link': '复制房间链接',
     'room_link_copied': '房间链接已复制到剪贴板',
-    'copy_failed': '复制失败，请手动复制链接'
+    'copy_failed': '复制失败，请手动复制链接',
+    'room_full': '房间已满',
+    'room_not_found': '房间不存在',
+    'username_taken': '该用户名已被使用',
+    'need_two_players': '需要两名玩家才能开始游戏',
+    'only_host_can_start': '只有房主可以开始游戏',
+    'disconnected': '与服务器断开连接'
   },
   
   // Chinese translations (Traditional)
@@ -98,7 +104,13 @@ const translations = {
     'admin_panel': '管理面板',
     'copy_room_link': '複製房間連結',
     'room_link_copied': '房間連結已複製到剪貼簿',
-    'copy_failed': '複製失敗，請手動複製連結'
+    'copy_failed': '複製失敗，請手動複製連結',
+    'room_full': '房間已滿',
+    'room_not_found': '房間不存在',
+    'username_taken': '該使用者名稱已被使用',
+    'need_two_players': '需要兩名玩家才能開始遊戲',
+    'only_host_can_start': '只有房主可以開始遊戲',
+    'disconnected': '與伺服器斷開連接'
   },
   
   // English translations
@@ -139,7 +151,13 @@ const translations = {
     'admin_panel': 'Admin Panel',
     'copy_room_link': 'Copy Room Link',
     'room_link_copied': 'Room link copied to clipboard',
-    'copy_failed': 'Copy failed, please copy the link manually'
+    'copy_failed': 'Copy failed, please copy the link manually',
+    'room_full': 'Room is full',
+    'room_not_found': 'Room not found',
+    'username_taken': 'Username is already taken',
+    'need_two_players': 'Need exactly 2 players to start',
+    'only_host_can_start': 'Only the host can start the game',
+    'disconnected': 'Disconnected from server'
   },
   
   // Japanese translations
@@ -180,7 +198,13 @@ const translations = {
     'admin_panel': '管理パネル',
     'copy_room_link': 'ルームリンクをコピー',
     'room_link_copied': 'ルームリンクをクリップボードにコピーしました',
-    'copy_failed': 'コピーに失敗しました。リンクを手動でコピーしてください'
+    'copy_failed': 'コピーに失敗しました。リンクを手動でコピーしてください',
+    'room_full': 'ルームが満員です',
+    'room_not_found': 'ルームが見つかりません',
+    'username_taken': 'このユーザー名は既に使用されています',
+    'need_two_players': 'ゲームを開始するには2人のプレイヤーが必要です',
+    'only_host_can_start': 'ホストのみがゲームを開始できます',
+    'disconnected': 'サーバーから切断されました'
   },
   
   // Korean translations
@@ -221,7 +245,13 @@ const translations = {
     'admin_panel': '관리자 패널',
     'copy_room_link': '방 링크 복사',
     'room_link_copied': '방 링크가 클립보드에 복사되었습니다',
-    'copy_failed': '복사 실패, 링크를 수동으로 복사해주세요'
+    'copy_failed': '복사 실패, 링크를 수동으로 복사해주세요',
+    'room_full': '방이 가득 찼습니다',
+    'room_not_found': '방을 찾을 수 없습니다',
+    'username_taken': '이미 사용 중인 사용자 이름입니다',
+    'need_two_players': '게임을 시작하려면 2명의 플레이어가 필요합니다',
+    'only_host_can_start': '방장만 게임을 시작할 수 있습니다',
+    'disconnected': '서버와 연결이 끊어졌습니다'
   }
 };
 

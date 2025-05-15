@@ -134,7 +134,7 @@ io.on('connection', (socket) => {
         console.log(`User ${username} attempting to join room ${roomId}`);
         
         if (!rooms.has(roomId)) {
-            socket.emit('error', { message: 'Room not found' });
+            socket.emit('error', { message: 'room_not_found' });
             return;
         }
         
@@ -142,13 +142,13 @@ io.on('connection', (socket) => {
         
         // Check if room is full (2 players)
         if (room.players.length >= 2) {
-            socket.emit('error', { message: 'Room is full' });
+            socket.emit('error', { message: 'room_full' });
             return;
         }
         
         // Check if username is already taken in this room
         if (room.players.some(p => p.username === username)) {
-            socket.emit('error', { message: 'Username already taken in this room' });
+            socket.emit('error', { message: 'username_taken' });
             return;
         }
         
@@ -173,20 +173,20 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomId);
         
         if (!room) {
-            socket.emit('error', { message: 'Room not found' });
+            socket.emit('error', { message: 'room_not_found' });
             return;
         }
         
         // Verify that the sender is the host
         const player = room.players.find(p => p.socketId === socket.id);
         if (!player || !player.isHost) {
-            socket.emit('error', { message: 'Only the host can start the game' });
+            socket.emit('error', { message: 'only_host_can_start' });
             return;
         }
         
         // Verify that there are exactly 2 players
         if (room.players.length !== 2) {
-            socket.emit('error', { message: 'Need exactly 2 players to start' });
+            socket.emit('error', { message: 'need_two_players' });
             return;
         }
         

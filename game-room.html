@@ -194,7 +194,20 @@
             // Handle errors
             socket.on('error', (data) => {
                 console.error('Socket error:', data.message);
-                alert(data.message);
+                alert(i18n.translate(data.message));
+            });
+            
+            // Handle game start
+            socket.on('gameStarted', (data) => {
+                console.log('Game started:', data);
+                // TODO: Implement game start logic
+            });
+            
+            // Handle disconnection
+            socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+                alert(i18n.translate('disconnected'));
+                window.location.href = '/';
             });
         });
     </script>
