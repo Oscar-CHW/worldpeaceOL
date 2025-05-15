@@ -189,6 +189,14 @@ io.on('connection', (socket) => {
             return;
         }
         
+        // Check if game already started
+        if (room.gameState && room.gameState.started) {
+            socket.emit('error', { message: 'game_already_started' });
+            return;
+        }
+        
+        console.log(`Starting game in room ${roomId}`);
+        
         room.gameState = {
             started: true,
             players: room.players.map(p => ({
@@ -202,7 +210,7 @@ io.on('connection', (socket) => {
         
         // Start mineral spawning
         const spawnInterval = setInterval(() => {
-            if (room.gameState) {
+            if (room.gameState && room.gameState.started) {
                 // Create left side mineral
                 const leftMineral = {
                     id: Date.now(),
@@ -225,10 +233,14 @@ io.on('connection', (socket) => {
                 // Notify clients about the new minerals
                 io.to(roomId).emit('mineralSpawned', leftMineral);
                 io.to(roomId).emit('mineralSpawned', rightMineral);
+                
+                console.log(`Spawned minerals in room ${roomId}`);
             }
         }, 5000); // Spawn minerals every 5 seconds
 
         room.mineralSpawnInterval = spawnInterval;
+        
+        // Send initial game state to all players
         io.to(roomId).emit('gameStarted', room.gameState);
     });
 
@@ -271,7 +283,8 @@ io.on('connection', (socket) => {
         const { roomId, x, y } = data;
         const room = rooms.get(roomId);
         
-        if (!room || !room.gameState) return;
+        // Only process if room exists, game has started, and game state is initialized
+        if (!room || !room.gameState || !room.gameState.started) return;
         
         const mineral = {
             id: Date.now(),
@@ -318,6 +331,12 @@ io.on('connection', (socket) => {
             const room = rooms.get(roomId);
             
             if (room) {
+                // Clean up mineral spawn interval if it exists
+                if (room.mineralSpawnInterval) {
+                    clearInterval(room.mineralSpawnInterval);
+                    room.mineralSpawnInterval = null;
+                }
+                
                 // Find the leaving player
                 const leavingPlayer = room.players.find(p => p.socketId === socket.id);
                 
@@ -327,6 +346,7 @@ io.on('connection', (socket) => {
                 // If room is empty, delete it
                 if (room.players.length === 0) {
                     rooms.delete(roomId);
+                    console.log(`Room ${roomId} deleted because it's empty`);
                 } else {
                     // If host left, assign new host (first remaining player)
                     if (leavingPlayer?.isHost) {
@@ -362,12 +382,19 @@ io.on('connection', (socket) => {
         
         // Find and remove player from all rooms
         for (const [roomId, room] of rooms.entries()) {
+            // Clean up mineral spawn interval if it exists
+            if (room.mineralSpawnInterval) {
+                clearInterval(room.mineralSpawnInterval);
+                room.mineralSpawnInterval = null;
+            }
+            
             const leavingPlayer = room.players.find(p => p.socketId === socket.id);
             if (leavingPlayer) {
                 room.players = room.players.filter(p => p.socketId !== socket.id);
                 
                 if (room.players.length === 0) {
                     rooms.delete(roomId);
+                    console.log(`Room ${roomId} deleted because it's empty`);
                 } else {
                     // If host disconnected, assign new host
                     if (leavingPlayer.isHost) {
@@ -388,9 +415,6 @@ io.on('connection', (socket) => {
                     });
                 }
             }
-        }
-        if (room && room.mineralSpawnInterval) {
-            clearInterval(room.mineralSpawnInterval);
         }
     });
 });

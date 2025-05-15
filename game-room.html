@@ -205,11 +205,10 @@
             gameState.minerals = [];
             gameState.units = [];
             
-            // Start mineral spawning
-            startMineralSpawning();
-            
             // Setup unit selection
             setupUnitSelection();
+            
+            console.log('Game started, waiting for server to spawn minerals...');
         });
         
         // Handle HP updates
