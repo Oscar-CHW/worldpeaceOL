@@ -197,6 +197,7 @@ io.on('connection', (socket) => {
         
         console.log(`Starting game in room ${roomId}`);
         
+        // Initialize game state
         room.gameState = {
             started: true,
             players: room.players.map(p => ({
@@ -208,40 +209,32 @@ io.on('connection', (socket) => {
             minerals: []
         };
         
-        // Start mineral spawning
-        const spawnInterval = setInterval(() => {
-            if (room.gameState && room.gameState.started) {
-                // Create left side mineral
-                const leftMineral = {
-                    id: Date.now(),
-                    x: 15, // Left side position (15%)
-                    y: 50, // Middle height
-                    value: Math.floor(Math.random() * 50) + 50 // Random value between 50 and 100
-                };
-                
-                // Create right side mineral
-                const rightMineral = {
-                    id: Date.now() + 1, // Ensure unique ID
-                    x: 85, // Right side position (85%)
-                    y: 50, // Middle height
-                    value: Math.floor(Math.random() * 50) + 50 // Random value between 50 and 100
-                };
-                
-                // Add both minerals to game state
-                room.gameState.minerals.push(leftMineral, rightMineral);
-                
-                // Notify clients about the new minerals
-                io.to(roomId).emit('mineralSpawned', leftMineral);
-                io.to(roomId).emit('mineralSpawned', rightMineral);
-                
-                console.log(`Spawned minerals in room ${roomId}`);
-            }
-        }, 5000); // Spawn minerals every 5 seconds
-
-        room.mineralSpawnInterval = spawnInterval;
+        // Create static minerals (like the towers)
+        const leftMineral = {
+            id: Date.now(),
+            x: 15, // Left side position (15%)
+            y: 50, // Middle height
+            value: 75 // Fixed value
+        };
+        
+        const rightMineral = {
+            id: Date.now() + 1, // Ensure unique ID
+            x: 85, // Right side position (85%)
+            y: 50, // Middle height
+            value: 75 // Fixed value
+        };
+        
+        // Add both minerals to game state
+        room.gameState.minerals.push(leftMineral, rightMineral);
+        
+        console.log(`Spawned static minerals in room ${roomId}`);
         
         // Send initial game state to all players
         io.to(roomId).emit('gameStarted', room.gameState);
+        
+        // Send mineral information separately to ensure they're displayed
+        io.to(roomId).emit('mineralSpawned', leftMineral);
+        io.to(roomId).emit('mineralSpawned', rightMineral);
     });
 
     // Handle unit spawn
@@ -278,7 +271,7 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Handle mineral spawn
+    // Handle mineral spawn (only used for manual spawning if needed)
     socket.on('spawnMineral', (data) => {
         const { roomId, x, y } = data;
         const room = rooms.get(roomId);
@@ -290,7 +283,7 @@ io.on('connection', (socket) => {
             id: Date.now(),
             x,
             y,
-            value: Math.floor(Math.random() * 50) + 50 // Random value between 50 and 100
+            value: 75 // Fixed value
         };
         
         room.gameState.minerals.push(mineral);
@@ -331,12 +324,6 @@ io.on('connection', (socket) => {
             const room = rooms.get(roomId);
             
             if (room) {
-                // Clean up mineral spawn interval if it exists
-                if (room.mineralSpawnInterval) {
-                    clearInterval(room.mineralSpawnInterval);
-                    room.mineralSpawnInterval = null;
-                }
-                
                 // Find the leaving player
                 const leavingPlayer = room.players.find(p => p.socketId === socket.id);
                 
@@ -382,12 +369,6 @@ io.on('connection', (socket) => {
         
         // Find and remove player from all rooms
         for (const [roomId, room] of rooms.entries()) {
-            // Clean up mineral spawn interval if it exists
-            if (room.mineralSpawnInterval) {
-                clearInterval(room.mineralSpawnInterval);
-                room.mineralSpawnInterval = null;
-            }
-            
             const leavingPlayer = room.players.find(p => p.socketId === socket.id);
             if (leavingPlayer) {
                 room.players = room.players.filter(p => p.socketId !== socket.id);

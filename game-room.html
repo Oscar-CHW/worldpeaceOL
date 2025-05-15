@@ -93,11 +93,6 @@
             isLeftPlayer: false
         };
 
-        // Mineral spawn configuration
-        const MINERAL_SPAWN_INTERVAL = 5000; // 5 seconds
-        const MINERAL_VALUE = 50;
-        const MINERAL_LIFETIME = 10000; // 10 seconds
-
         // Unit costs
         const UNIT_COSTS = {
             miner: 100,
@@ -208,7 +203,7 @@
             // Setup unit selection
             setupUnitSelection();
             
-            console.log('Game started, waiting for server to spawn minerals...');
+            console.log('Game started, waiting for server-spawned minerals...');
         });
         
         // Handle HP updates
@@ -291,24 +286,6 @@
             collectMineral(data.mineralId);
         });
 
-        function startMineralSpawning() {
-            setInterval(() => {
-                // Spawn one mineral on the left side
-                socket.emit('spawnMineral', { 
-                    roomId,
-                    x: 15, // Left side position (15%)
-                    y: 50  // Middle height
-                });
-                
-                // Spawn one mineral on the right side
-                socket.emit('spawnMineral', { 
-                    roomId,
-                    x: 85, // Right side position (85%)
-                    y: 50  // Middle height
-                });
-            }, MINERAL_SPAWN_INTERVAL);
-        }
-
         function spawnMineral(mineral) {
             const mineralElement = document.createElement('div');
             mineralElement.className = 'mineral';
@@ -316,6 +293,7 @@
             mineralElement.style.left = `${mineral.x}%`;
             mineralElement.style.top = `${mineral.y}%`;
             document.getElementById('game-field').appendChild(mineralElement);
+            console.log(`Displaying mineral at x:${mineral.x}%, y:${mineral.y}%`);
         }
 
         function collectMineral(mineralId) {
