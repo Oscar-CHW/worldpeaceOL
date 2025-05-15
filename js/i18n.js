@@ -63,7 +63,10 @@ const translations = {
     'username_taken': '该用户名已被使用',
     'need_two_players': '需要两名玩家才能开始游戏',
     'only_host_can_start': '只有房主可以开始游戏',
-    'disconnected': '与服务器断开连接'
+    'disconnected': '与服务器断开连接',
+    'host_left': '房主已离开房间',
+    'player_left': '玩家已离开房间',
+    'you_are_host': '你现在是房主'
   },
   
   // Chinese translations (Traditional)
@@ -110,7 +113,10 @@ const translations = {
     'username_taken': '該使用者名稱已被使用',
     'need_two_players': '需要兩名玩家才能開始遊戲',
     'only_host_can_start': '只有房主可以開始遊戲',
-    'disconnected': '與伺服器斷開連接'
+    'disconnected': '與伺服器斷開連接',
+    'host_left': '房主已離開房間',
+    'player_left': '玩家已離開房間',
+    'you_are_host': '你現在是房主'
   },
   
   // English translations
@@ -157,7 +163,10 @@ const translations = {
     'username_taken': 'Username is already taken',
     'need_two_players': 'Need exactly 2 players to start',
     'only_host_can_start': 'Only the host can start the game',
-    'disconnected': 'Disconnected from server'
+    'disconnected': 'Disconnected from server',
+    'host_left': 'Host has left the room',
+    'player_left': 'Player has left the room',
+    'you_are_host': 'You are now the host'
   },
   
   // Japanese translations
@@ -204,7 +213,10 @@ const translations = {
     'username_taken': 'このユーザー名は既に使用されています',
     'need_two_players': 'ゲームを開始するには2人のプレイヤーが必要です',
     'only_host_can_start': 'ホストのみがゲームを開始できます',
-    'disconnected': 'サーバーから切断されました'
+    'disconnected': 'サーバーから切断されました',
+    'host_left': 'ホストがルームを退出しました',
+    'player_left': 'プレイヤーがルームを退出しました',
+    'you_are_host': 'あなたが新しいホストになりました'
   },
   
   // Korean translations
@@ -251,7 +263,10 @@ const translations = {
     'username_taken': '이미 사용 중인 사용자 이름입니다',
     'need_two_players': '게임을 시작하려면 2명의 플레이어가 필요합니다',
     'only_host_can_start': '방장만 게임을 시작할 수 있습니다',
-    'disconnected': '서버와 연결이 끊어졌습니다'
+    'disconnected': '서버와 연결이 끊어졌습니다',
+    'host_left': '방장이 방을 나갔습니다',
+    'player_left': '플레이어가 방을 나갔습니다',
+    'you_are_host': '당신이 새로운 방장이 되었습니다'
   }
 };
 

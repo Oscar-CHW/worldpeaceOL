@@ -201,6 +201,9 @@ io.on('connection', (socket) => {
             const room = rooms.get(roomId);
             
             if (room) {
+                // Find the leaving player
+                const leavingPlayer = room.players.find(p => p.socketId === socket.id);
+                
                 // Remove player from room
                 room.players = room.players.filter(p => p.socketId !== socket.id);
                 
@@ -208,9 +211,22 @@ io.on('connection', (socket) => {
                 if (room.players.length === 0) {
                     rooms.delete(roomId);
                 } else {
+                    // If host left, assign new host (first remaining player)
+                    if (leavingPlayer?.isHost) {
+                        room.players[0].isHost = true;
+                        // Notify the new host
+                        io.to(room.players[0].socketId).emit('hostChanged', { isHost: true });
+                    }
+                    
                     // Update remaining players
                     io.to(roomId).emit('playerList', {
                         players: room.players
+                    });
+                    
+                    // Notify remaining players that someone left
+                    io.to(roomId).emit('playerLeft', {
+                        username: leavingPlayer?.username,
+                        isHost: leavingPlayer?.isHost
                     });
                 }
             }
@@ -229,15 +245,29 @@ io.on('connection', (socket) => {
         
         // Find and remove player from all rooms
         for (const [roomId, room] of rooms.entries()) {
-            const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
-            if (playerIndex !== -1) {
-                room.players.splice(playerIndex, 1);
+            const leavingPlayer = room.players.find(p => p.socketId === socket.id);
+            if (leavingPlayer) {
+                room.players = room.players.filter(p => p.socketId !== socket.id);
                 
                 if (room.players.length === 0) {
                     rooms.delete(roomId);
                 } else {
+                    // If host disconnected, assign new host
+                    if (leavingPlayer.isHost) {
+                        room.players[0].isHost = true;
+                        // Notify the new host
+                        io.to(room.players[0].socketId).emit('hostChanged', { isHost: true });
+                    }
+                    
+                    // Update remaining players
                     io.to(roomId).emit('playerList', {
                         players: room.players
+                    });
+                    
+                    // Notify remaining players that someone left
+                    io.to(roomId).emit('playerLeft', {
+                        username: leavingPlayer.username,
+                        isHost: leavingPlayer.isHost
                     });
                 }
             }
