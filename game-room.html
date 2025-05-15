@@ -294,9 +294,19 @@
 
         function startMineralSpawning() {
             setInterval(() => {
-                const x = Math.random() * (window.innerWidth - 100) + 50;
-                const y = Math.random() * (window.innerHeight - 200) + 100;
-                socket.emit('spawnMineral', { x, y });
+                // Spawn one mineral on the left side
+                socket.emit('spawnMineral', { 
+                    roomId,
+                    x: 15, // Left side position (15%)
+                    y: 50  // Middle height
+                });
+                
+                // Spawn one mineral on the right side
+                socket.emit('spawnMineral', { 
+                    roomId,
+                    x: 85, // Right side position (85%)
+                    y: 50  // Middle height
+                });
             }, MINERAL_SPAWN_INTERVAL);
         }
 

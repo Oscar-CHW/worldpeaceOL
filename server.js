@@ -203,16 +203,30 @@ io.on('connection', (socket) => {
         // Start mineral spawning
         const spawnInterval = setInterval(() => {
             if (room.gameState) {
-                const mineral = {
+                // Create left side mineral
+                const leftMineral = {
                     id: Date.now(),
-                    x: Math.random() * 80 + 10, // Random position between 10% and 90%
-                    y: Math.random() * 80 + 10,
+                    x: 15, // Left side position (15%)
+                    y: 50, // Middle height
                     value: Math.floor(Math.random() * 50) + 50 // Random value between 50 and 100
                 };
-                room.gameState.minerals.push(mineral);
-                io.to(roomId).emit('mineralSpawned', mineral);
+                
+                // Create right side mineral
+                const rightMineral = {
+                    id: Date.now() + 1, // Ensure unique ID
+                    x: 85, // Right side position (85%)
+                    y: 50, // Middle height
+                    value: Math.floor(Math.random() * 50) + 50 // Random value between 50 and 100
+                };
+                
+                // Add both minerals to game state
+                room.gameState.minerals.push(leftMineral, rightMineral);
+                
+                // Notify clients about the new minerals
+                io.to(roomId).emit('mineralSpawned', leftMineral);
+                io.to(roomId).emit('mineralSpawned', rightMineral);
             }
-        }, 5000); // Spawn a mineral every 5 seconds
+        }, 5000); // Spawn minerals every 5 seconds
 
         room.mineralSpawnInterval = spawnInterval;
         io.to(roomId).emit('gameStarted', room.gameState);
@@ -262,7 +276,8 @@ io.on('connection', (socket) => {
         const mineral = {
             id: Date.now(),
             x,
-            y
+            y,
+            value: Math.floor(Math.random() * 50) + 50 // Random value between 50 and 100
         };
         
         room.gameState.minerals.push(mineral);
