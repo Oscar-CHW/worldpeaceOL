@@ -21,7 +21,7 @@ const MINERAL_VALUE = 75;
 document.addEventListener('DOMContentLoaded', async function() {
     // Get room ID and username from URL
     const urlParams = new URLSearchParams(window.location.search);
-    const roomId = urlParams.get('roomId');
+    const roomId = urlParams.get('room') || urlParams.get('roomId');
     const usernameFromUrl = urlParams.get('username');
     
     if (!roomId) {
@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         throw new Error('No room ID provided');
     }
 
+    // Store room ID globally for reconnection
+    window.roomId = roomId;
+    
     let currentUser = null;
     
     // Initialize language system

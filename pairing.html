@@ -985,18 +985,32 @@
                                 console.log('Last room data:', roomData);
                                 
                                 if (roomData.hasLastRoom && roomData.roomId) {
-                                    // Show match found message
-                                    showSuccess('Match found! Redirecting to game room...');
-                                    announceToScreenReader('Match found! Redirecting to game room in a moment.');
+                                    // Verify room exists using socket
+                                    socket.emit('checkRoom', { roomId: roomData.roomId });
                                     
-                                    // Stop all ongoing polling and timers before redirecting
-                                    stopTimer();
-                                    stopAllSimulations();
-                                    
-                                    // Redirect to the game room after a short delay
-                                    setTimeout(() => {
-                                        window.location.href = `/game-room.html?room=${roomData.roomId}`;
-                                    }, 2000);
+                                    // Wait for socket response
+                                    socket.once('roomCheckResult', (checkResult) => {
+                                        if (checkResult.exists) {
+                                            // Show match found message
+                                            showSuccess('Match found! Joining game room...');
+                                            announceToScreenReader('Match found! Joining game room momentarily.');
+                                            
+                                            // Stop all ongoing polling and timers
+                                            stopTimer();
+                                            stopAllSimulations();
+                                            
+                                            // Actually join the room through socket
+                                            attemptToJoinRoom(roomData.roomId, userData.username);
+                                        } else {
+                                            // Room doesn't exist despite database saying it does
+                                            console.log('Room exists in database but not in memory, clearing reference');
+                                            fetch('/api/user/clear-last-room', { method: 'POST' })
+                                                .catch(err => console.error('Failed to clear last room:', err));
+                                            
+                                            // Manual check as fallback
+                                            checkForMatchesManually();
+                                        }
+                                    });
                                     
                                     return;
                                 } else {
@@ -1236,20 +1250,18 @@
                 // Update status text with result
                 document.getElementById('queueStatusText').textContent = result.message;
                 
-                // If match found, redirect to game room
+                // If match found, join the room via socket
                 if (result.matched && result.roomId) {
                     // Show match found message
-                    showSuccess('Match found! Redirecting to game room...');
-                    announceToScreenReader('Match found! Redirecting to game room in a moment.');
+                    showSuccess('Match found! Joining game room...');
+                    announceToScreenReader('Match found! Joining game room momentarily.');
                     
-                    // Stop all ongoing polling and timers before redirecting
+                    // Stop all ongoing polling and timers
                     stopTimer();
                     stopAllSimulations();
                     
-                    // Redirect to the game room after a short delay
-                    setTimeout(() => {
-                        window.location.href = `/game-room.html?room=${result.roomId}`;
-                    }, 2000);
+                    // Join via socket instead of direct redirect
+                    attemptToJoinRoom(result.roomId, userData.username);
                 }
             } catch (error) {
                 console.error('Error checking for matches manually:', error);
@@ -1270,6 +1282,10 @@
         // Helper function to attempt joining a room via socket
         function attemptToJoinRoom(roomId, username) {
             console.log(`Attempting to join room ${roomId} as ${username}`);
+            
+            // Clear any existing event listeners to prevent duplicates
+            socket.off('joinedRoom');
+            socket.off('error');
             
             // Join the room via socket
             socket.emit('joinRoom', { roomId, username });
@@ -1301,13 +1317,33 @@
                     }, 2000);
                 } else {
                     showError(`Failed to join room: ${errorData.message}`);
+                    
+                    // Reset UI to allow user to try again
+                    setTimeout(() => {
+                        document.getElementById('matchmakingOptions').style.display = 'block';
+                        document.getElementById('queueStatus').style.display = 'none';
+                        document.getElementById('recentMatchesSection').style.display = 'block';
+                    }, 3000);
                 }
             });
             
             // Set a timeout in case we don't get a response
             setTimeout(() => {
-                // If we haven't redirected by now, show an error
-                showError('Failed to join room: Timeout. Please try again.');
+                // If joinedRoom or error hasn't fired after 5 seconds
+                if (socket.listeners('joinedRoom').length > 0 || socket.listeners('error').length > 0) {
+                    showError('Failed to join room: Timeout. Please try again.');
+                    
+                    // Remove the listeners we added
+                    socket.off('joinedRoom');
+                    socket.off('error');
+                    
+                    // Reset UI to allow user to try again
+                    setTimeout(() => {
+                        document.getElementById('matchmakingOptions').style.display = 'block';
+                        document.getElementById('queueStatus').style.display = 'none';
+                        document.getElementById('recentMatchesSection').style.display = 'block';
+                    }, 2000);
+                }
             }, 5000);
         }
     </script>
