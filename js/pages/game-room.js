@@ -113,24 +113,90 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // First, check if the room exists
         socket.on('connect', () => {
-            // We'll emit a custom event to check if the room exists
-            socket.emit('checkRoom', { roomId });
+            console.log('Connected to socket server, checking room:', roomId);
+            
+            // Fix URL parameter handling - params may be 'room' or 'roomId'
+            const fixedRoomId = urlParams.get('room') || urlParams.get('roomId');
+            if (fixedRoomId) {
+                // Store fixed room ID for later use
+                window.roomId = fixedRoomId;
+                
+                // Check if this room exists
+                socket.emit('checkRoom', { roomId: fixedRoomId });
+            } else {
+                console.error('No valid room ID found in URL parameters');
+                alert('Missing room ID. Redirecting to home page...');
+                window.location.href = '/';
+            }
+        });
+        
+        // Handle reconnection events
+        socket.on('reconnect', () => {
+            console.log('Socket reconnected, attempting to rejoin room:', window.roomId);
+            if (window.roomId && currentUser) {
+                // Automatically attempt to rejoin the room
+                socket.emit('joinRoom', {
+                    roomId: window.roomId,
+                    username: currentUser.username
+                });
+            }
         });
         
         // Handle room check response
         socket.on('roomCheckResult', (data) => {
+            console.log('Room check result:', data);
+            
             if (data.exists) {
+                console.log('Room exists, joining:', data.roomId);
                 // Room exists, join it
                 socket.emit('joinRoom', {
-                    roomId,
+                    roomId: data.roomId,
                     username: currentUser.username
                 });
             } else {
+                console.log('Room does not exist, creating new room:', data.roomId || window.roomId);
                 // Room doesn't exist, create it
                 socket.emit('createRoom', {
-                    roomId,
+                    roomId: data.roomId || window.roomId,
                     username: currentUser.username
                 });
+            }
+        });
+        
+        // Add specific handler for successful room join
+        socket.on('joinedRoom', (data) => {
+            console.log('Successfully joined room:', data);
+            
+            // Update UI with game mode if provided
+            if (data.gameMode && window.gameModeFunctions) {
+                window.gameModeFunctions.updateGameModeBanner(data.gameMode);
+            }
+            
+            // Update room display just in case
+            document.getElementById('room-id').textContent = data.roomId;
+        });
+        
+        // Handle errors from the server
+        socket.on('error', (data) => {
+            console.error('Socket error:', data);
+            
+            // Handle specific error messages
+            if (data.message === 'room_not_found') {
+                alert('Room not found. You will be redirected to the home page.');
+                
+                // Clear the lastRoom reference via API
+                fetch('/api/user/clear-last-room', { method: 'POST' })
+                    .catch(err => console.error('Failed to clear last room:', err));
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else if (data.message === 'room_full' || data.message === 'game_already_started') {
+                alert(`Cannot join: ${data.message}. Returning to home page.`);
+                window.location.href = '/';
+            } else {
+                // Generic error handling
+                alert(`Error: ${data.message}`);
             }
         });
         
@@ -238,12 +304,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 alert(i18n.translate('player_left'));
             }
-        });
-        
-        // Handle errors
-        socket.on('error', (data) => {
-            console.error('Socket error:', data.message);
-            alert(i18n.translate(data.message) || data.message);
         });
         
         // Functions for game setup and display

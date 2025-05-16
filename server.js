@@ -431,18 +431,39 @@ io.on('connection', (socket) => {
             
             // Check if room is full (2 players)
             if (room.players.length >= 2) {
-                socket.emit('error', { message: 'room_full' });
-                return;
+                // Check if this user is trying to rejoin as a player that was already in the room
+                const existingPlayer = room.players.find(p => p.username === username);
+                if (!existingPlayer) {
+                    socket.emit('error', { message: 'room_full' });
+                    return;
+                }
+                // Otherwise this is a reconnect attempt
+                console.log(`Player ${username} is reconnecting to room ${roomId}`);
             }
             
-            // Check if username is already taken in this room
-            if (room.players.some(p => p.username === username)) {
-                socket.emit('error', { message: 'username_taken' });
-                return;
+            // Handle the case where a player is rejoining
+            const existingPlayerIndex = room.players.findIndex(p => p.username === username);
+            if (existingPlayerIndex !== -1) {
+                // Update the socket ID for this existing player
+                room.players[existingPlayerIndex].socketId = socket.id;
+                console.log(`Updated socket ID for player ${username} in room ${roomId}`);
+            } else {
+                // Check if username is already taken (different player with same username)
+                if (room.players.some(p => p.username === username)) {
+                    socket.emit('error', { message: 'username_taken' });
+                    return;
+                }
+                
+                // Add as a new player
+                room.players.push({ 
+                    socketId: socket.id,
+                    username, 
+                    isHost: room.players.length === 0 // First player is host
+                });
             }
         }
         
-        // Join the room
+        // Join the socket.io room
         socket.join(roomId);
         
         // If game already started, update the player's socket ID in the game state
@@ -452,29 +473,6 @@ io.on('connection', (socket) => {
             if (playerInGame) {
                 playerInGame.id = socket.id;
             }
-            
-            // Add player to the room.players array if they're not there
-            const playerInRoom = room.players.find(p => p.username === username);
-            if (!playerInRoom) {
-                room.players.push({ 
-                    socketId: socket.id,
-                    username, 
-                    isHost: false 
-                });
-            } else {
-                // Update existing player's socket ID
-                playerInRoom.socketId = socket.id;
-            }
-            
-            // Send game state to the reconnected player
-            socket.emit('gameStarted', room.gameState);
-        } else {
-            // Regular join for a game that hasn't started
-            room.players.push({ 
-                socketId: socket.id,
-                username, 
-                isHost: false 
-            });
         }
         
         // Associate this socket with the room
@@ -1309,7 +1307,25 @@ app.get('/api/user/me', isAuthenticated, async (req, res) => {
   }
 });
 
-// Add this API endpoint to check for lastRoom
+// Add this API endpoint to clear lastRoom
+app.post('/api/user/clear-last-room', isAuthenticated, async (req, res) => {
+    try {
+        // Update user to clear lastRoom field
+        await prisma.user.update({
+            where: { id: req.session.userId },
+            data: { lastRoom: null }
+        });
+        
+        console.log(`Cleared lastRoom for user ID ${req.session.userId}`);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error clearing lastRoom:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Existing /api/user/last-room endpoint update to better check room existence
 app.get('/api/user/last-room', isAuthenticated, async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
@@ -1331,6 +1347,22 @@ app.get('/api/user/last-room', isAuthenticated, async (req, res) => {
                 p.userId === req.session.userId || 
                 p.username === user.username
             );
+            
+            // If room exists but user is not in it, clear the lastRoom reference
+            if (!isInRoom) {
+                await prisma.user.update({
+                    where: { id: req.session.userId },
+                    data: { lastRoom: null }
+                });
+                console.log(`User ${req.session.userId} not found in room ${user.lastRoom}, cleared lastRoom reference`);
+            }
+        } else {
+            // Room doesn't exist anymore, clear the lastRoom field
+            await prisma.user.update({
+                where: { id: req.session.userId },
+                data: { lastRoom: null }
+            });
+            console.log(`Room ${user.lastRoom} no longer exists, cleared lastRoom for user ${req.session.userId}`);
         }
         
         // Detailed logging to debug matchmaking

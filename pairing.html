@@ -686,11 +686,21 @@
                     
                     // If user already has a game room, offer to join it
                     if (roomData.hasLastRoom && roomData.roomId) {
-                        showSuccess(`You have an active game room (${roomData.roomId}). Redirecting...`);
-                        setTimeout(() => {
-                            window.location.href = `/game-room.html?room=${roomData.roomId}`;
-                        }, 2000);
-                        return;
+                        // Check if the room actually exists via socket
+                        socket.emit('checkRoom', { roomId: roomData.roomId });
+                        
+                        socket.once('roomCheckResult', (checkResult) => {
+                            if (checkResult.exists) {
+                                showSuccess(`You have an active game room (${roomData.roomId}). Redirecting...`);
+                                // Directly attempt to join the room
+                                attemptToJoinRoom(roomData.roomId, userData.username);
+                            } else {
+                                console.log(`Room ${roomData.roomId} no longer exists, clearing lastRoom reference.`);
+                                // Clear the stale room reference
+                                fetch('/api/user/clear-last-room', { method: 'POST' })
+                                    .catch(err => console.error('Failed to clear last room:', err));
+                            }
+                        });
                     }
                 }
                 
@@ -1255,6 +1265,50 @@
                 // Update status text
                 document.getElementById('queueStatusText').textContent = "Error checking for matches";
             }
+        }
+
+        // Helper function to attempt joining a room via socket
+        function attemptToJoinRoom(roomId, username) {
+            console.log(`Attempting to join room ${roomId} as ${username}`);
+            
+            // Join the room via socket
+            socket.emit('joinRoom', { roomId, username });
+            
+            // Listen for successful join response
+            socket.once('joinedRoom', (data) => {
+                console.log('Successfully joined room:', data);
+                
+                // Successfully joined, redirect to game room
+                window.location.href = `/game-room.html?room=${roomId}`;
+            });
+            
+            // Listen for errors
+            socket.once('error', (errorData) => {
+                console.error('Error joining room:', errorData);
+                
+                if (errorData.message === 'room_not_found') {
+                    showError(`Room ${roomId} no longer exists. Starting new matchmaking...`);
+                    
+                    // Clear the stale room reference
+                    fetch('/api/user/clear-last-room', { method: 'POST' })
+                        .catch(err => console.error('Failed to clear last room:', err));
+                        
+                    // Show matchmaking options again after a short delay
+                    setTimeout(() => {
+                        document.getElementById('matchmakingOptions').style.display = 'block';
+                        document.getElementById('queueStatus').style.display = 'none';
+                        document.getElementById('recentMatchesSection').style.display = 'block';
+                    }, 2000);
+                } else {
+                    showError(`Failed to join room: ${errorData.message}`);
+                }
+            });
+            
+            // Set a timeout in case we don't get a response
+            setTimeout(() => {
+                // If we haven't redirected by now, show an error
+                showError('Failed to join room: Timeout. Please try again.');
+            }, 5000);
         }
     </script>
 </body>
