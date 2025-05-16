@@ -37,15 +37,58 @@ let onlineUserCount = 0;
 const gameModes = {
   classic: {
     initialGold: 500,
-    miningRate: 50
+    miningRate: 50,
+    unitCosts: {
+      miner: 100,
+      soldier: 200,
+      barrier: 50
+    },
+    unitStats: {
+      miner: { health: 100, speed: 1 },
+      soldier: { health: 200, damage: 10, speed: 1 },
+      barrier: { health: 300 }
+    },
+    rpsGoldReward: 100, // Gold awarded for winning RPS
+    miningInterval: 1000 // 1 second mining tick
   },
   insane: {
     initialGold: 1000,
-    miningRate: 100
+    miningRate: 100,
+    unitCosts: {
+      miner: 100,
+      soldier: 250,
+      barrier: 75,
+      berserker: 400  // Extra unit only in insane mode
+    },
+    unitStats: {
+      miner: { health: 80, speed: 1.5 },
+      soldier: { health: 250, damage: 20, speed: 1.3 },
+      barrier: { health: 500 },
+      berserker: { health: 180, damage: 40, speed: 1.8 }
+    },
+    rpsGoldReward: 200, // Double gold for insane mode
+    miningInterval: 800 // Faster mining tick (0.8 seconds)
   },
   beta: {
     initialGold: 700,
-    miningRate: 65
+    miningRate: 65,
+    unitCosts: {
+      miner: 120,
+      soldier: 220,
+      barrier: 60,
+      scout: 150  // Extra unit only in beta mode
+    },
+    unitStats: {
+      miner: { health: 120, speed: 1, ability: "Find Bonus" },
+      soldier: { health: 180, damage: 15, speed: 1, ability: "Stun" },
+      barrier: { health: 350, ability: "Repair" },
+      scout: { health: 90, damage: 5, speed: 2, ability: "Stealth" }
+    },
+    rpsGoldReward: 150, // Moderate gold reward
+    miningInterval: 900, // Moderate mining tick (0.9 seconds)
+    specialRules: {
+      bonusChance: 0.2 // 20% chance for miners to find bonus gold
+    }
   }
 };
 
@@ -690,7 +733,13 @@ io.on('connection', (socket) => {
             }
         }
         
-        const cost = unitType === 'miner' ? 100 : 200;
+        // Get game mode configuration for unit costs
+        const gameMode = room.gameMode || 'classic';
+        const modeConfig = gameModes[gameMode] || gameModes.classic;
+        
+        // Get unit cost from the game mode configuration
+        const cost = modeConfig.unitCosts[unitType] || 100; // Default to 100 if not specified
+        
         if (player.gold < cost) {
             console.log(`Not enough gold: player has ${player.gold}, needs ${cost}`);
             socket.emit('error', { message: 'not_enough_gold' });
@@ -699,6 +748,9 @@ io.on('connection', (socket) => {
         
         // Deduct gold
         player.gold -= cost;
+        
+        // Get unit stats from the game mode configuration
+        const unitStats = modeConfig.unitStats[unitType] || {};
         
         console.log(`Player ${socket.id} spawned ${unitType} at (${x}, ${y}), isLeftPlayer: ${isLeftPlayer}`);
         
@@ -709,7 +761,8 @@ io.on('connection', (socket) => {
             x,
             y,
             isLeftPlayer,
-            playerId: socket.id // Track owner
+            playerId: socket.id, // Track owner
+            ...unitStats // Add the unit stats from the game mode configuration
         };
         
         // Add to server-side unit list for this room
@@ -738,10 +791,11 @@ io.on('connection', (socket) => {
         if (!room) return;
         if (room.miningInterval) return; // Already running
         
-        // Get mining rate based on game mode
+        // Get mining rate and interval based on game mode
         const gameMode = room.gameMode || 'classic';
         const modeConfig = gameModes[gameMode] || gameModes.classic;
         const miningRate = modeConfig.miningRate;
+        const intervalTime = modeConfig.miningInterval || 1000; // Default to 1 second
         
         room.miningInterval = setInterval(() => {
             if (!room.gameState || !room.gameState.units || !room.gameState.minerals) return;
@@ -758,7 +812,23 @@ io.on('connection', (socket) => {
                     // Find player
                     let player = room.gameState.players.find(p => p.id === unit.playerId || p.socketId === unit.playerId);
                     if (player) {
+                        // Apply basic mining rate
                         player.gold += miningRate;
+                        
+                        // Check for bonus gold in beta mode
+                        if (gameMode === 'beta' && modeConfig.specialRules?.bonusChance) {
+                            if (Math.random() < modeConfig.specialRules.bonusChance) {
+                                const bonus = Math.floor(Math.random() * 30) + 20; // 20-50 bonus gold
+                                player.gold += bonus;
+                                
+                                // Notify player of bonus gold (if we had a way to send individual messages)
+                                io.to(roomId).emit('bonusGold', {
+                                    playerId: player.id || player.socketId,
+                                    amount: bonus,
+                                    unitId: unit.id
+                                });
+                            }
+                        }
                     }
                 }
             });
@@ -766,7 +836,7 @@ io.on('connection', (socket) => {
             io.to(roomId).emit('goldSyncUpdate', {
                 players: room.gameState.players.map(p => ({ playerId: p.id || p.socketId, gold: p.gold }))
             });
-        }, 1000);
+        }, intervalTime);
     }
 
     // Mining: Only the owner of the mining unit gets the gold
@@ -851,16 +921,23 @@ io.on('connection', (socket) => {
         } else if (!move1 && move2) {
             winner = p2.username;
         }
-        // Award 100 gold to winner
+        
+        // Get game mode configuration for RPS gold reward
+        const gameMode = room.gameMode || 'classic';
+        const modeConfig = gameModes[gameMode] || gameModes.classic;
+        const goldReward = modeConfig.rpsGoldReward || 100; // Default to 100 if not specified
+        
+        // Award gold to winner based on game mode
         if (winner !== 'draw') {
             const player = room.gameState.players.find(p => p.username === winner);
-            if (player) player.gold += 100;
+            if (player) player.gold += goldReward;
         }
         // Broadcast result
         io.to(roomId).emit('rpsResult', {
             player1: { username: p1.username, move: move1 },
             player2: { username: p2.username, move: move2 },
-            winner
+            winner,
+            goldReward // Include the gold reward in the response
         });
         // Sync gold
         io.to(roomId).emit('goldSyncUpdate', {
@@ -1246,9 +1323,22 @@ app.get('/api/user/last-room', isAuthenticated, async (req, res) => {
         // Check if the room still exists
         const roomExists = rooms.has(user.lastRoom);
         
+        // Check if the room has this user as a player
+        let isInRoom = false;
+        if (roomExists) {
+            const room = rooms.get(user.lastRoom);
+            isInRoom = room.players.some(p => 
+                p.userId === req.session.userId || 
+                p.username === user.username
+            );
+        }
+        
+        // Detailed logging to debug matchmaking
+        console.log(`Last room check for user ${req.session.userId}: roomId=${user.lastRoom}, exists=${roomExists}, isInRoom=${isInRoom}`);
+        
         res.json({
-            hasLastRoom: roomExists,
-            roomId: roomExists ? user.lastRoom : null
+            hasLastRoom: roomExists && isInRoom,
+            roomId: (roomExists && isInRoom) ? user.lastRoom : null
         });
     } catch (error) {
         console.error('Error checking last room:', error);
@@ -1544,8 +1634,131 @@ app.post('/api/pairing/join', isAuthenticated, async (req, res) => {
       }
     });
     
-    // Try to find a match
-    await tryMatchmaking(userId);
+    // Try to find a match immediately
+    const matchResult = await tryMatchmaking(userId);
+    
+    // If match found, create room and update user records
+    if (matchResult) {
+      console.log(`Match found for user ${userId}, creating room ${matchResult.roomId}`);
+      
+      // Create a room for the match
+      const roomId = matchResult.roomId;
+      
+      // Update both users' lastRoom
+      await prisma.user.update({
+        where: { id: matchResult.player1.id },
+        data: { lastRoom: roomId }
+      });
+      
+      await prisma.user.update({
+        where: { id: matchResult.player2.id },
+        data: { lastRoom: roomId }
+      });
+      
+      // Create the room in memory
+      const room = {
+        Started: false,
+        gameMode: 'classic', // Default game mode
+        players: [
+          {
+            socketId: null, // Will be set when they join the room
+            username: matchResult.player1.username || `Player1`,
+            isHost: true,
+            userId: matchResult.player1.id
+          },
+          {
+            socketId: null, // Will be set when they join the room
+            username: matchResult.player2.username || `Player2`,
+            isHost: false,
+            userId: matchResult.player2.id
+          }
+        ]
+      };
+      
+      // Store the room
+      rooms.set(roomId, room);
+      
+      console.log(`Created room ${roomId} for matched players`);
+    } else {
+      console.log(`No immediate match found for user ${userId}, added to queue`);
+      
+      // Schedule continuous matchmaking attempts
+      // We'll try every 5 seconds to find matches for users in queue
+      if (!global.matchmakingInterval) {
+        console.log('Starting global matchmaking interval');
+        global.matchmakingInterval = setInterval(async () => {
+          try {
+            // Get all users in queue
+            const queuedUsers = await prisma.pairingQueue.findMany({
+              select: { userId: true }
+            });
+            
+            console.log(`Processing matchmaking for ${queuedUsers.length} users in queue`);
+            
+            // Try matchmaking for each user
+            for (const user of queuedUsers) {
+              const matchResult = await tryMatchmaking(user.userId);
+              
+              if (matchResult) {
+                console.log(`Match found for user ${user.userId}, creating room ${matchResult.roomId}`);
+                
+                // Create a room for the match
+                const roomId = matchResult.roomId;
+                
+                // Fetch usernames for both players
+                const player1 = await prisma.user.findUnique({
+                  where: { id: matchResult.player1.id },
+                  select: { username: true }
+                });
+                
+                const player2 = await prisma.user.findUnique({
+                  where: { id: matchResult.player2.id },
+                  select: { username: true }
+                });
+                
+                // Update both users' lastRoom
+                await prisma.user.update({
+                  where: { id: matchResult.player1.id },
+                  data: { lastRoom: roomId }
+                });
+                
+                await prisma.user.update({
+                  where: { id: matchResult.player2.id },
+                  data: { lastRoom: roomId }
+                });
+                
+                // Create the room in memory
+                const room = {
+                  Started: false,
+                  gameMode: 'classic', // Default game mode
+                  players: [
+                    {
+                      socketId: null, // Will be set when they join the room
+                      username: player1.username || `Player1`,
+                      isHost: true,
+                      userId: matchResult.player1.id
+                    },
+                    {
+                      socketId: null, // Will be set when they join the room
+                      username: player2.username || `Player2`,
+                      isHost: false,
+                      userId: matchResult.player2.id
+                    }
+                  ]
+                };
+                
+                // Store the room
+                rooms.set(roomId, room);
+                
+                console.log(`Created room ${roomId} for matched players`);
+              }
+            }
+          } catch (error) {
+            console.error('Error in matchmaking interval:', error);
+          }
+        }, 5000);
+      }
+    }
     
     res.status(201).json({ message: 'Joined matchmaking queue' });
   } catch (error) {
@@ -1666,11 +1879,13 @@ async function tryMatchmaking(userId) {
       roomId,
       player1: {
         id: userId,
-        elo: userElo
+        elo: userElo,
+        username: userQueue.user.username
       },
       player2: {
         id: match.userId,
-        elo: match.user.elo
+        elo: match.user.elo,
+        username: match.user.username
       }
     };
   } catch (error) {
@@ -1839,11 +2054,163 @@ app.get('/api/users/count', (req, res) => {
     res.json({ count: onlineUserCount });
 });
 
+// Add an endpoint to manually check for matches (for debugging and testing)
+app.post('/api/pairing/check-matches', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        
+        // Check if user is in queue
+        const queueEntry = await prisma.pairingQueue.findUnique({
+            where: { userId }
+        });
+        
+        if (!queueEntry) {
+            return res.status(400).json({ error: 'You are not in the matchmaking queue' });
+        }
+        
+        // Try to find a match
+        const matchResult = await tryMatchmaking(userId);
+        
+        if (matchResult) {
+            // Create a room for the match
+            const roomId = matchResult.roomId;
+            
+            // Update both users' lastRoom
+            await prisma.user.update({
+                where: { id: matchResult.player1.id },
+                data: { lastRoom: roomId }
+            });
+            
+            await prisma.user.update({
+                where: { id: matchResult.player2.id },
+                data: { lastRoom: roomId }
+            });
+            
+            // Create the room in memory
+            const room = {
+                Started: false,
+                gameMode: 'classic', // Default game mode
+                players: [
+                    {
+                        socketId: null, // Will be set when they join the room
+                        username: matchResult.player1.username || `Player1`,
+                        isHost: true,
+                        userId: matchResult.player1.id
+                    },
+                    {
+                        socketId: null, // Will be set when they join the room
+                        username: matchResult.player2.username || `Player2`,
+                        isHost: false,
+                        userId: matchResult.player2.id
+                    }
+                ]
+            };
+            
+            // Store the room
+            rooms.set(roomId, room);
+            
+            return res.json({ 
+                matched: true, 
+                roomId,
+                message: 'Match found! Redirecting to game room...'
+            });
+        }
+        
+        return res.json({ 
+            matched: false,
+            message: 'No match found yet. Still in queue.'
+        });
+    } catch (error) {
+        console.error('Error checking for matches:', error);
+        res.status(500).json({ error: 'Failed to check for matches' });
+    }
+});
+
 // Initialize database and start server
 async function startServer() {
   try {
     // Check if Prisma schema exists
     console.log('Starting server and initializing database...');
+    
+    // Start the global matchmaking interval if it doesn't exist
+    if (!global.matchmakingInterval) {
+      console.log('Starting global matchmaking interval');
+      global.matchmakingInterval = setInterval(async () => {
+        try {
+          // Get all users in queue
+          const queuedUsers = await prisma.pairingQueue.findMany({
+            select: { userId: true }
+          });
+          
+          console.log(`Processing matchmaking for ${queuedUsers.length} users in queue`);
+          
+          // Try matchmaking for each user
+          for (const user of queuedUsers) {
+            const matchResult = await tryMatchmaking(user.userId);
+            
+            if (matchResult) {
+              console.log(`Match found for user ${user.userId}, creating room ${matchResult.roomId}`);
+              
+              // Create a room for the match
+              const roomId = matchResult.roomId;
+              
+              try {
+                // Fetch usernames for both players
+                const player1 = await prisma.user.findUnique({
+                  where: { id: matchResult.player1.id },
+                  select: { username: true }
+                });
+                
+                const player2 = await prisma.user.findUnique({
+                  where: { id: matchResult.player2.id },
+                  select: { username: true }
+                });
+                
+                // Update both users' lastRoom
+                await prisma.user.update({
+                  where: { id: matchResult.player1.id },
+                  data: { lastRoom: roomId }
+                });
+                
+                await prisma.user.update({
+                  where: { id: matchResult.player2.id },
+                  data: { lastRoom: roomId }
+                });
+                
+                // Create the room in memory
+                const room = {
+                  Started: false,
+                  gameMode: 'classic', // Default game mode
+                  players: [
+                    {
+                      socketId: null, // Will be set when they join the room
+                      username: player1.username || `Player1`,
+                      isHost: true,
+                      userId: matchResult.player1.id
+                    },
+                    {
+                      socketId: null, // Will be set when they join the room
+                      username: player2.username || `Player2`,
+                      isHost: false,
+                      userId: matchResult.player2.id
+                    }
+                  ]
+                };
+                
+                // Store the room
+                rooms.set(roomId, room);
+                
+                console.log(`Created room ${roomId} for matched players`);
+              } catch (innerError) {
+                console.error(`Error setting up match: ${innerError}`);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error in matchmaking interval:', error);
+        }
+      }, 5000);
+    }
     
     httpServer.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
@@ -1946,5 +2313,14 @@ const EloRating = {
     };
   }
 };
+
+// Handle cleanup of matchmaking on server shutdown
+process.on('SIGINT', async () => {
+  if (global.matchmakingInterval) {
+    clearInterval(global.matchmakingInterval);
+  }
+  console.log('Gracefully shutting down...');
+  process.exit(0);
+});
 
 startServer();

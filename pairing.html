@@ -545,9 +545,13 @@
                 <p><strong>Your ELO:</strong> <span id="statusElo">---</span></p>
                 <p><strong>Target ELO range:</strong> <span id="statusEloRange">Any</span></p>
                 <p><strong>Players in queue:</strong> <span id="playersInQueue" class="pulse">Searching...</span></p>
+                <p><strong>Status:</strong> <span id="queueStatusText">Waiting for match...</span></p>
             </div>
             
-            <button id="cancelSearch" class="btn btn-large btn-cancel">Cancel</button>
+            <div class="queue-actions">
+                <button id="checkMatchesBtn" class="btn btn-large" style="margin-bottom: 10px; background-color: #2ecc71;">Check Now</button>
+                <button id="cancelSearch" class="btn btn-large btn-cancel">Cancel</button>
+            </div>
         </div>
         
         <div class="section recent-matches" id="recentMatchesSection">
@@ -613,6 +617,11 @@
                 });
             });
             
+            // Initialize check matches button
+            document.getElementById('checkMatchesBtn').addEventListener('click', function() {
+                checkForMatchesManually();
+            });
+            
             // Remove loading state
             document.body.removeAttribute('aria-busy');
         });
@@ -668,6 +677,22 @@
                 
                 document.getElementById('eloMin').placeholder = `Suggested: ${suggestedMin}`;
                 document.getElementById('eloMax').placeholder = `Suggested: ${suggestedMax}`;
+                
+                // Debug: check if user has a last room
+                const roomResponse = await fetch('/api/user/last-room');
+                if (roomResponse.ok) {
+                    const roomData = await roomResponse.json();
+                    console.log('Last room check at page load:', roomData);
+                    
+                    // If user already has a game room, offer to join it
+                    if (roomData.hasLastRoom && roomData.roomId) {
+                        showSuccess(`You have an active game room (${roomData.roomId}). Redirecting...`);
+                        setTimeout(() => {
+                            window.location.href = `/game-room.html?room=${roomData.roomId}`;
+                        }, 2000);
+                        return;
+                    }
+                }
                 
                 // Announce user data loaded
                 announceToScreenReader(`Welcome, ${userData.username}. Your current ELO is ${userData.elo}`);
@@ -843,6 +868,29 @@
             }
         }
 
+        // Periodically update the status text to provide feedback
+        function updateQueueStatus() {
+            const statusElement = document.getElementById('queueStatusText');
+            
+            // Rotate through different status messages to show activity
+            const messages = [
+                "Searching for players...",
+                "Looking for compatible ELO...",
+                "Checking matchmaking system...",
+                "Waiting for opponent..."
+            ];
+            
+            let messageIndex = 0;
+            
+            const statusInterval = setInterval(() => {
+                statusElement.textContent = messages[messageIndex];
+                messageIndex = (messageIndex + 1) % messages.length;
+            }, 3000);
+            
+            // Store interval for cleanup
+            simulationIntervals.push(statusInterval);
+        }
+        
         // Start timer to track waiting time
         function startTimer() {
             timerInterval = setInterval(updateTimer, 1000);
@@ -850,6 +898,9 @@
             
             // Use real player count instead of simulation
             updatePlayerCountDisplay(currentUserCount);
+            
+            // Start status updates
+            updateQueueStatus();
         }
 
         // Stop timer
@@ -897,6 +948,8 @@
             const pollTimeout = setTimeout(async () => {
                 try {
                     console.log('Polling for matchmaking status...');
+                    document.getElementById('queueStatusText').textContent = "Checking queue status...";
+                    
                     const response = await fetch('/api/pairing/status');
                     
                     if (!response.ok) {
@@ -912,6 +965,8 @@
                     // If no longer in queue, we might have a match or were removed
                     if (!status.inQueue) {
                         console.log('No longer in queue, checking for active game room...');
+                        document.getElementById('queueStatusText').textContent = "Match potential found, checking game room...";
+                        
                         // Check for active game room
                         try {
                             const roomResponse = await fetch('/api/user/last-room');
@@ -934,6 +989,11 @@
                                     }, 2000);
                                     
                                     return;
+                                } else {
+                                    console.log('No active game room found, but not in queue - calling check-matches');
+                                    // If not in queue but no room, try manual check as fallback
+                                    checkForMatchesManually();
+                                    return;
                                 }
                             } else {
                                 console.warn('Error checking last room:', roomResponse.status);
@@ -947,22 +1007,16 @@
                             pollForMatches();
                             return;
                         }
-                        
-                        // No active game, reset UI
-                        console.log('No active game found, resetting UI...');
-                        document.getElementById('matchmakingOptions').style.display = 'block';
-                        document.getElementById('queueStatus').style.display = 'none';
-                        document.getElementById('recentMatchesSection').style.display = 'block';
-                        stopAllSimulations();
-                        showMessage('You are no longer in the matchmaking queue', 'info');
                     } else {
                         // Still in queue, keep polling
                         console.log('Still in queue, continuing to poll...');
+                        document.getElementById('queueStatusText').textContent = "Waiting for match...";
                         pollForMatches();
                     }
                 } catch (error) {
                     console.error('Error polling for matches:', error);
                     showError('Communication error. Retrying...');
+                    document.getElementById('queueStatusText').textContent = "Communication error, retrying...";
                     pollForMatches(); // Continue polling despite error
                 }
             }, 5000);
@@ -1139,6 +1193,68 @@
                     document.body.removeChild(ariaLive);
                 }, 3000);
             }, 100);
+        }
+
+        // New function to manually check for matches
+        async function checkForMatchesManually() {
+            try {
+                const checkBtn = document.getElementById('checkMatchesBtn');
+                
+                // Update button state
+                checkBtn.textContent = 'Checking...';
+                checkBtn.setAttribute('disabled', 'true');
+                
+                // Update status text
+                document.getElementById('queueStatusText').textContent = "Manually checking for matches...";
+                
+                // Call the server to check for matches
+                const response = await fetch('/api/pairing/check-matches', {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check for matches');
+                }
+                
+                const result = await response.json();
+                console.log('Manual match check result:', result);
+                
+                // Reset button state
+                checkBtn.textContent = 'Check Now';
+                checkBtn.removeAttribute('disabled');
+                
+                // Update status text with result
+                document.getElementById('queueStatusText').textContent = result.message;
+                
+                // If match found, redirect to game room
+                if (result.matched && result.roomId) {
+                    // Show match found message
+                    showSuccess('Match found! Redirecting to game room...');
+                    announceToScreenReader('Match found! Redirecting to game room in a moment.');
+                    
+                    // Stop all ongoing polling and timers before redirecting
+                    stopTimer();
+                    stopAllSimulations();
+                    
+                    // Redirect to the game room after a short delay
+                    setTimeout(() => {
+                        window.location.href = `/game-room.html?room=${result.roomId}`;
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Error checking for matches manually:', error);
+                const checkBtn = document.getElementById('checkMatchesBtn');
+                
+                // Reset button state
+                checkBtn.textContent = 'Check Now';
+                checkBtn.removeAttribute('disabled');
+                
+                // Show error
+                showError('Failed to check for matches. Try again later.');
+                
+                // Update status text
+                document.getElementById('queueStatusText').textContent = "Error checking for matches";
+            }
         }
     </script>
 </body>
