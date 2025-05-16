@@ -8,6 +8,11 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const SQLiteStore = require('connect-sqlite3')(session);
+// Add passport and Google OAuth support
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+// Add dotenv for environment variables
+require('dotenv').config();
 
 const app = express();
 const httpServer = createServer(app);
@@ -24,6 +29,25 @@ if (!fs.existsSync(dbDir)) {
 const rooms = new Map();
 // Store which room each socket is in
 const userRooms = new Map();
+// Track connected users and their count
+const connectedUsers = new Set();
+let onlineUserCount = 0;
+
+// Game mode configurations
+const gameModes = {
+  classic: {
+    initialGold: 500,
+    miningRate: 50
+  },
+  insane: {
+    initialGold: 1000,
+    miningRate: 100
+  },
+  beta: {
+    initialGold: 700,
+    miningRate: 65
+  }
+};
 
 // Middleware
 app.use(express.json());
@@ -37,7 +61,7 @@ const sessionMiddleware = session({
         dir: dbDir,
         table: 'sessions'
     }),
-    secret: 'tianxia-taiping-secret-key',
+    secret: process.env.SESSION_SECRET || 'tianxia-taiping-secret-key',
     resave: true,
     saveUninitialized: true,
     cookie: { 
@@ -50,6 +74,94 @@ const sessionMiddleware = session({
 
 // Apply session middleware to Express
 app.use(sessionMiddleware);
+
+// Initialize Passport and session support
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Configure Passport to use Google OAuth 2.0 strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback',
+    scope: ['profile', 'email'],
+    passReqToCallback: true
+}, async (req, accessToken, refreshToken, profile, done) => {
+    try {
+        // Check if we are linking an existing account
+        if (req.session && req.session.linkGoogleToUserId) {
+            const userId = req.session.linkGoogleToUserId;
+            
+            // Check if this Google ID is already linked to another account
+            const existingGoogleUser = await prisma.user.findFirst({
+                where: { googleId: profile.id }
+            });
+            
+            if (existingGoogleUser && existingGoogleUser.id !== userId) {
+                // This Google account is already linked to another user
+                return done(null, false, { message: 'This Google account is already linked to another user' });
+            }
+            
+            // Update the existing user with Google info
+            const user = await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    googleId: profile.id,
+                    email: profile.emails?.[0]?.value || null
+                }
+            });
+            
+            return done(null, user);
+        }
+        
+        // Regular authentication flow
+        // Check if user already exists with this Google ID
+        let user = await prisma.user.findFirst({
+            where: {
+                googleId: profile.id
+            }
+        });
+
+        if (!user) {
+            // If no user with this Google ID exists, create a new one
+            // Generate a unique username based on Google profile
+            const username = `${profile.displayName.replace(/\s+/g, '')}_${Math.floor(Math.random() * 1000)}`;
+            
+            user = await prisma.user.create({
+                data: {
+                    username: username,
+                    googleId: profile.id,
+                    email: profile.emails?.[0]?.value || null,
+                    password: await bcrypt.hash(Math.random().toString(36).slice(-10), 10), // Generate random password
+                    role: 'PLAYER',
+                    elo: 1200,
+                    banStatus: 'CLEAR'
+                }
+            });
+        }
+        
+        return done(null, user);
+    } catch (error) {
+        console.error("Error in Google authentication strategy:", error);
+        return done(error);
+    }
+}));
+
+// Serialize and deserialize user for sessions
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id }
+        });
+        done(null, user);
+    } catch (error) {
+        done(error);
+    }
+});
 
 // Share session with Socket.IO
 io.use((socket, next) => {
@@ -83,8 +195,8 @@ const isAdmin = async (req, res, next) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Admin is defined as a user with rank >= 10
-    if (user.rank < 10) {
+    // Check if the user has ADMIN role
+    if (user.role !== "ADMIN") {
       return res.status(403).json({ error: 'Admin access required' });
     }
     
@@ -95,9 +207,48 @@ const isAdmin = async (req, res, next) => {
   }
 };
 
+// Check if user is banned middleware
+const checkBanStatus = async (req, res, next) => {
+  if (!req.session.userId) {
+    return next();
+  }
+  
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.session.userId }
+    });
+    
+    if (user && user.banStatus === "BANNED") {
+      // User is banned, destroy session and redirect
+      req.session.destroy(err => {
+        if (err) {
+          console.error('Error destroying session for banned user:', err);
+        }
+      });
+      
+      return res.status(403).json({ error: 'Your account has been banned' });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Ban check error:', error);
+    next();
+  }
+};
+
+// Apply ban check middleware to all requests
+app.use(checkBanStatus);
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
+    
+    // Add user to connected users set
+    connectedUsers.add(socket.id);
+    onlineUserCount = connectedUsers.size;
+    
+    // Broadcast updated user count to all clients
+    io.emit('userCountUpdate', { count: onlineUserCount });
 
     // Handle room check
     socket.on('checkRoom', (data) => {
@@ -137,14 +288,18 @@ io.on('connection', (socket) => {
             // Create the room
             socket.join(roomId);
             
-            // Initialize room data with username
+            // Set game mode (default to classic if not specified)
+            const gameMode = data.gameMode || 'classic';
+            
+            // Initialize room data with username and game mode
             const roomData = {
-              Started:false,
-                players: [{
-                    socketId: socket.id,
-                    username: data.username || 'Player 1',
-                    isHost: true
-                }]
+              Started: false,
+              gameMode: gameMode,
+              players: [{
+                  socketId: socket.id,
+                  username: data.username || 'Player 1',
+                  isHost: true
+              }]
             };
             rooms.set(roomId, roomData);
             
@@ -165,14 +320,15 @@ io.on('connection', (socket) => {
             }
             
             // Notify the creator that the room was created
-            socket.emit('roomCreated', { roomId });
+            socket.emit('roomCreated', { roomId, gameMode });
             
             // Send initial player list to all clients in the room (including creator)
             io.in(roomId).emit('playerList', {
-                players: roomData.players
+                players: roomData.players,
+                gameMode: roomData.gameMode
             });
             
-            console.log(`Room created: ${roomId} by user: ${data.username} (${socket.id})`);
+            console.log(`Room created: ${roomId} by user: ${data.username} (${socket.id}) with game mode: ${gameMode}`);
         } catch (error) {
             console.error('Error creating room:', error);
             socket.emit('error', { message: 'Failed to create room' });
@@ -380,6 +536,13 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
         
+        // Remove from connected users set
+        connectedUsers.delete(socket.id);
+        onlineUserCount = connectedUsers.size;
+        
+        // Broadcast updated user count
+        io.emit('userCountUpdate', { count: onlineUserCount });
+        
         // Check if user was in a room
         if (userRooms.has(socket.id)) {
             const roomId = userRooms.get(socket.id);
@@ -429,19 +592,24 @@ io.on('connection', (socket) => {
             return;
         }
         
-        console.log(`Starting game in room ${roomId}`);
+        console.log(`Starting game in room ${roomId} with mode ${room.gameMode || 'classic'}`);
         
         // Set the Started flag to true
         room.Started = true;
         
-        // Initialize game state
+        // Get game mode configuration
+        const gameMode = room.gameMode || 'classic';
+        const modeConfig = gameModes[gameMode] || gameModes.classic;
+        
+        // Initialize game state with game mode settings
         // Place two minerals: one for each side (static positions for now)
         room.gameState = {
             started: true,
+            gameMode: gameMode,
             players: room.players.map(p => ({
                 id: p.socketId,
                 username: p.username,
-                gold: 500,
+                gold: modeConfig.initialGold,
                 hp: 100
             })),
             units: [],
@@ -569,6 +737,12 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomId);
         if (!room) return;
         if (room.miningInterval) return; // Already running
+        
+        // Get mining rate based on game mode
+        const gameMode = room.gameMode || 'classic';
+        const modeConfig = gameModes[gameMode] || gameModes.classic;
+        const miningRate = modeConfig.miningRate;
+        
         room.miningInterval = setInterval(() => {
             if (!room.gameState || !room.gameState.units || !room.gameState.minerals) return;
             // For each miner unit, check if it's close to a mineral
@@ -584,7 +758,7 @@ io.on('connection', (socket) => {
                     // Find player
                     let player = room.gameState.players.find(p => p.id === unit.playerId || p.socketId === unit.playerId);
                     if (player) {
-                        player.gold += 50;
+                        player.gold += miningRate;
                     }
                 }
             });
@@ -721,6 +895,43 @@ io.on('connection', (socket) => {
         // Broadcast to all players
         io.to(roomId).emit('gameOver', { winner: data.winner });
     });
+
+    // Add handler for setting game mode
+    socket.on('setGameMode', (data) => {
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
+        const room = rooms.get(roomId);
+        if (!room) {
+            socket.emit('error', { message: 'room_not_found' });
+            return;
+        }
+        
+        // Check if sender is the host
+        const player = room.players.find(p => p.socketId === socket.id);
+        if (!player || !player.isHost) {
+            socket.emit('error', { message: 'only_host_can_change_mode' });
+            return;
+        }
+        
+        // Check if game already started
+        if (room.Started) {
+            socket.emit('error', { message: 'cannot_change_mode_after_start' });
+            return;
+        }
+        
+        // Update game mode
+        const newMode = data.mode || 'classic';
+        room.gameMode = newMode;
+        
+        // Notify all players in the room
+        io.to(roomId).emit('gameModeChanged', { gameMode: newMode });
+        
+        console.log(`Game mode changed to ${newMode} in room ${roomId}`);
+    });
 });
 
 // ===== API Routes =====
@@ -734,7 +945,9 @@ app.get('/api/admin/users', isAdmin, async (req, res) => {
       select: {
         id: true,
         username: true,
-        rank: true,
+        role: true,
+        elo: true,
+        banStatus: true,
         createdAt: true,
         updatedAt: true
         // password is intentionally excluded for security
@@ -765,7 +978,9 @@ app.get('/api/admin/users/:id', isAdmin, async (req, res) => {
       select: {
         id: true,
         username: true,
-        rank: true,
+        role: true,
+        elo: true,
+        banStatus: true,
         createdAt: true,
         updatedAt: true
       }
@@ -791,15 +1006,20 @@ app.put('/api/admin/users/:id', isAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid user ID' });
     }
     
-    const { username, rank } = req.body;
+    const { username, role, elo } = req.body;
     
     // Validate input
     if (!username) {
       return res.status(400).json({ error: 'Username is required' });
     }
     
-    if (typeof rank !== 'undefined' && (isNaN(rank) || rank < 0)) {
-      return res.status(400).json({ error: 'Rank must be a non-negative number' });
+    // Validate role
+    if (role && !["ADMIN", "PLAYER"].includes(role)) {
+      return res.status(400).json({ error: 'Role must be either ADMIN or PLAYER' });
+    }
+    
+    if (typeof elo !== 'undefined' && (isNaN(elo) || elo < 0)) {
+      return res.status(400).json({ error: 'ELO must be a non-negative number' });
     }
     
     // Check if user exists
@@ -822,17 +1042,23 @@ app.put('/api/admin/users/:id', isAdmin, async (req, res) => {
       }
     }
     
+    // Prepare update data
+    const updateData = {
+      username,
+      ...(role && { role }),
+      ...(typeof elo !== 'undefined' && { elo: parseInt(elo) })
+    };
+    
     // Update user
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: {
-        username,
-        rank: typeof rank !== 'undefined' ? parseInt(rank) : existingUser.rank
-      },
+      data: updateData,
       select: {
         id: true,
         username: true,
-        rank: true,
+        role: true,
+        elo: true,
+        banStatus: true,
         createdAt: true,
         updatedAt: true
       }
@@ -912,7 +1138,8 @@ app.post('/api/signup', async (req, res) => {
       data: {
         username,
         password: hashedPassword,
-        rank: userCount === 0 ? 10 : 1 // First user gets admin rank (10), others get regular rank (1)
+        role: userCount === 0 ? "ADMIN" : "PLAYER", // First user gets ADMIN role, others get PLAYER role
+        elo: 1200
       }
     });
     
@@ -922,7 +1149,8 @@ app.post('/api/signup', async (req, res) => {
     res.status(201).json({
       id: newUser.id,
       username: newUser.username,
-      rank: newUser.rank
+      role: newUser.role,
+      elo: newUser.elo
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -950,13 +1178,19 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: '用户名或密码错误' });
     }
     
+    // Check if user is banned
+    if (user.banStatus === "BANNED") {
+      return res.status(403).json({ error: '您的账户已被封禁' });
+    }
+    
     // Set session
     req.session.userId = user.id;
     
     res.json({
       id: user.id,
       username: user.username,
-      rank: user.rank
+      role: user.role,
+      elo: user.elo
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -989,7 +1223,8 @@ app.get('/api/user/me', isAuthenticated, async (req, res) => {
     res.json({
       id: user.id,
       username: user.username,
-      rank: user.rank
+      role: user.role,
+      elo: user.elo
     });
   } catch (error) {
     console.error('Get user error:', error);
@@ -1021,9 +1256,587 @@ app.get('/api/user/last-room', isAuthenticated, async (req, res) => {
     }
 });
 
+// Get current user info
+app.get('/api/me', isAuthenticated, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.session.userId }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Return user info without password
+    res.json({
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      elo: user.elo,
+      banStatus: user.banStatus,
+      lastRoom: user.lastRoom
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Friend system API routes
+app.post('/api/friends/request', isAuthenticated, async (req, res) => {
+  try {
+    const { targetUsername } = req.body;
+    const senderId = req.session.userId;
+
+    // Find target user
+    const targetUser = await prisma.user.findUnique({
+      where: { username: targetUsername }
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if sending request to self
+    if (targetUser.id === senderId) {
+      return res.status(400).json({ error: 'You cannot send a friend request to yourself' });
+    }
+
+    // Check if friendship already exists
+    const existingFriendship = await prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { senderId, receiverId: targetUser.id },
+          { senderId: targetUser.id, receiverId: senderId }
+        ]
+      }
+    });
+
+    if (existingFriendship) {
+      return res.status(400).json({ error: 'Friend request already exists' });
+    }
+
+    // Create friendship
+    const friendship = await prisma.friendship.create({
+      data: {
+        senderId,
+        receiverId: targetUser.id,
+        status: 'pending'
+      }
+    });
+
+    res.status(201).json(friendship);
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ error: 'Failed to send friend request' });
+  }
+});
+
+app.get('/api/friends', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    // Get all accepted friendships where the user is either sender or receiver
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        OR: [
+          { senderId: userId, status: 'accepted' },
+          { receiverId: userId, status: 'accepted' }
+        ]
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            rank: true
+          }
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            rank: true
+          }
+        }
+      }
+    });
+
+    // Format the response
+    const friends = friendships.map(friendship => {
+      const friend = friendship.senderId === userId 
+        ? friendship.receiver 
+        : friendship.sender;
+      
+      return {
+        friendshipId: friendship.id,
+        userId: friend.id,
+        username: friend.username,
+        rank: friend.rank
+      };
+    });
+
+    res.json(friends);
+  } catch (error) {
+    console.error('Error getting friends:', error);
+    res.status(500).json({ error: 'Failed to get friends' });
+  }
+});
+
+app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    // Get all pending friend requests received by the user
+    const friendRequests = await prisma.friendship.findMany({
+      where: {
+        receiverId: userId,
+        status: 'pending'
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            rank: true
+          }
+        }
+      }
+    });
+
+    // Format the response
+    const requests = friendRequests.map(request => ({
+      requestId: request.id,
+      from: {
+        userId: request.sender.id,
+        username: request.sender.username,
+        rank: request.sender.rank
+      },
+      createdAt: request.createdAt
+    }));
+
+    res.json(requests);
+  } catch (error) {
+    console.error('Error getting friend requests:', error);
+    res.status(500).json({ error: 'Failed to get friend requests' });
+  }
+});
+
+app.post('/api/friends/respond', isAuthenticated, async (req, res) => {
+  try {
+    const { requestId, action } = req.body;
+    const userId = req.session.userId;
+
+    if (!['accept', 'reject'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+
+    // Find the request
+    const request = await prisma.friendship.findUnique({
+      where: { id: parseInt(requestId) }
+    });
+
+    if (!request) {
+      return res.status(404).json({ error: 'Friend request not found' });
+    }
+
+    // Verify the user is the receiver of this request
+    if (request.receiverId !== userId) {
+      return res.status(403).json({ error: 'Not authorized to respond to this request' });
+    }
+
+    // Update the request
+    const updatedRequest = await prisma.friendship.update({
+      where: { id: parseInt(requestId) },
+      data: { status: action === 'accept' ? 'accepted' : 'rejected' }
+    });
+
+    res.json(updatedRequest);
+  } catch (error) {
+    console.error('Error responding to friend request:', error);
+    res.status(500).json({ error: 'Failed to respond to friend request' });
+  }
+});
+
+app.delete('/api/friends/:friendshipId', isAuthenticated, async (req, res) => {
+  try {
+    const { friendshipId } = req.params;
+    const userId = req.session.userId;
+
+    // Find the friendship
+    const friendship = await prisma.friendship.findUnique({
+      where: { id: parseInt(friendshipId) }
+    });
+
+    if (!friendship) {
+      return res.status(404).json({ error: 'Friendship not found' });
+    }
+
+    // Check if user is part of this friendship
+    if (friendship.senderId !== userId && friendship.receiverId !== userId) {
+      return res.status(403).json({ error: 'Not authorized to remove this friendship' });
+    }
+
+    // Delete the friendship
+    await prisma.friendship.delete({
+      where: { id: parseInt(friendshipId) }
+    });
+
+    res.json({ message: 'Friend removed successfully' });
+  } catch (error) {
+    console.error('Error removing friend:', error);
+    res.status(500).json({ error: 'Failed to remove friend' });
+  }
+});
+
+// Friend duel API route
+app.post('/api/friends/duel', isAuthenticated, async (req, res) => {
+  try {
+    const { friendId } = req.body;
+    const userId = req.session.userId;
+
+    // Verify the friendship exists and is accepted
+    const friendship = await prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: parseInt(friendId), status: 'accepted' },
+          { senderId: parseInt(friendId), receiverId: userId, status: 'accepted' }
+        ]
+      }
+    });
+
+    if (!friendship) {
+      return res.status(404).json({ error: 'This person is not your friend' });
+    }
+
+    // Create a new room for the duel
+    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // Return the room ID to redirect the user
+    res.json({ roomId });
+  } catch (error) {
+    console.error('Error initiating friend duel:', error);
+    res.status(500).json({ error: 'Failed to initiate duel' });
+  }
+});
+
+// Open pairing system API endpoints
+app.post('/api/pairing/join', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const { eloMin, eloMax } = req.body;
+    
+    // Check if user is already in queue
+    const existingQueue = await prisma.pairingQueue.findUnique({
+      where: { userId }
+    });
+    
+    if (existingQueue) {
+      return res.status(400).json({ error: 'You are already in the matchmaking queue' });
+    }
+    
+    // Add user to queue
+    const queue = await prisma.pairingQueue.create({
+      data: {
+        userId,
+        eloMin: eloMin ? parseInt(eloMin) : null,
+        eloMax: eloMax ? parseInt(eloMax) : null
+      }
+    });
+    
+    // Try to find a match
+    await tryMatchmaking(userId);
+    
+    res.status(201).json({ message: 'Joined matchmaking queue' });
+  } catch (error) {
+    console.error('Error joining matchmaking queue:', error);
+    res.status(500).json({ error: 'Failed to join matchmaking queue' });
+  }
+});
+
+app.delete('/api/pairing/leave', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    // Remove from queue
+    await prisma.pairingQueue.deleteMany({
+      where: { userId }
+    });
+    
+    res.json({ message: 'Left matchmaking queue' });
+  } catch (error) {
+    console.error('Error leaving matchmaking queue:', error);
+    res.status(500).json({ error: 'Failed to leave matchmaking queue' });
+  }
+});
+
+app.get('/api/pairing/status', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    // Check if in queue
+    const queueEntry = await prisma.pairingQueue.findUnique({
+      where: { userId }
+    });
+    
+    if (!queueEntry) {
+      return res.json({ inQueue: false });
+    }
+    
+    res.json({
+      inQueue: true,
+      joinedAt: queueEntry.joinedAt,
+      eloMin: queueEntry.eloMin,
+      eloMax: queueEntry.eloMax
+    });
+  } catch (error) {
+    console.error('Error checking queue status:', error);
+    res.status(500).json({ error: 'Failed to check queue status' });
+  }
+});
+
+// Function to try matchmaking for a user
+async function tryMatchmaking(userId) {
+  try {
+    // Get user's queue entry and ELO
+    const userQueue = await prisma.pairingQueue.findUnique({
+      where: { userId },
+      include: { user: true }
+    });
+    
+    if (!userQueue) return null;
+    
+    const userElo = userQueue.user.elo;
+    
+    // Find potential match based on ELO and time in queue
+    const potentialMatches = await prisma.pairingQueue.findMany({
+      where: {
+        userId: { not: userId },
+        // Apply ELO filters if specified by either user
+        ...(userQueue.eloMin !== null && {
+          user: { elo: { gte: userQueue.eloMin }}
+        }),
+        ...(userQueue.eloMax !== null && {
+          user: { elo: { lte: userQueue.eloMax }}
+        })
+      },
+      include: { user: true },
+      orderBy: { joinedAt: 'asc' }
+    });
+    
+    // Filter matches further based on matched user's ELO preferences
+    const compatibleMatches = potentialMatches.filter(match => {
+      const matchEloMin = match.eloMin;
+      const matchEloMax = match.eloMax;
+      
+      // Check if this user's ELO falls within the match's ELO range (if specified)
+      const withinMatchMinElo = matchEloMin === null || userElo >= matchEloMin;
+      const withinMatchMaxElo = matchEloMax === null || userElo <= matchEloMax;
+      
+      return withinMatchMinElo && withinMatchMaxElo;
+    });
+    
+    if (compatibleMatches.length === 0) {
+      return null; // No matches found
+    }
+    
+    // Get the first compatible match (oldest in queue)
+    const match = compatibleMatches[0];
+    
+    // Create a game room
+    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    // Create match record
+    await prisma.match.create({
+      data: {
+        player1Id: userId,
+        player2Id: match.userId,
+        completed: false
+      }
+    });
+    
+    // Remove both users from the queue
+    await prisma.pairingQueue.deleteMany({
+      where: {
+        userId: { in: [userId, match.userId] }
+      }
+    });
+    
+    return {
+      roomId,
+      player1: {
+        id: userId,
+        elo: userElo
+      },
+      player2: {
+        id: match.userId,
+        elo: match.user.elo
+      }
+    };
+  } catch (error) {
+    console.error('Error in matchmaking:', error);
+    return null;
+  }
+}
+
+// Admin ban/unban API
+app.post('/api/admin/users/:id/ban', isAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Don't allow banning admins or self
+    if (existingUser.role === "ADMIN" || userId === req.session.userId) {
+      return res.status(400).json({ error: 'Cannot ban administrators or yourself' });
+    }
+    
+    // Ban user
+    await prisma.user.update({
+      where: { id: userId },
+      data: { banStatus: "BANNED" }
+    });
+    
+    res.json({ message: 'User banned successfully' });
+  } catch (error) {
+    console.error('Ban user error:', error);
+    res.status(500).json({ error: 'Failed to ban user' });
+  }
+});
+
+app.post('/api/admin/users/:id/unban', isAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Unban user
+    await prisma.user.update({
+      where: { id: userId },
+      data: { banStatus: "CLEAR" }
+    });
+    
+    res.json({ message: 'User unbanned successfully' });
+  } catch (error) {
+    console.error('Unban user error:', error);
+    res.status(500).json({ error: 'Failed to unban user' });
+  }
+});
+
+// Google OAuth routes
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login.html?error=google-login-failed' }),
+  (req, res) => {
+    // On successful authentication, set session
+    if (req.user) {
+      req.session.userId = req.user.id;
+    }
+    // Redirect to dashboard on success
+    res.redirect('/dashboard.html');
+  }
+);
+
+// Route for linking existing account with Google
+app.get('/auth/google/link', isAuthenticated, (req, res) => {
+  // Store the user ID in the session to connect after Google auth
+  req.session.linkGoogleToUserId = req.session.userId;
+  // Redirect to Google auth with a special 'link' parameter
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    state: 'linking-account'
+  })(req, res);
+});
+
+// Callback for account linking - use the same callback URL
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/dashboard.html?error=google-link-failed' }),
+  (req, res) => {
+    // Check if this is a linking attempt
+    if (req.session.linkGoogleToUserId) {
+      // Clear the linking session var
+      delete req.session.linkGoogleToUserId;
+      
+      // Make sure the user ID is in the session
+      if (req.user) {
+        req.session.userId = req.user.id;
+      }
+      
+      // Redirect to dashboard with success message
+      return res.redirect('/dashboard.html?success=google-linked');
+    }
+    
+    // Normal login flow
+    if (req.user) {
+      req.session.userId = req.user.id;
+    }
+    // Redirect to dashboard on success
+    res.redirect('/dashboard.html');
+  }
+);
+
+// Check Google authentication status
+app.get('/api/auth/google/status', (req, res) => {
+  res.json({
+    isAuthenticated: !!req.user,
+    user: req.user ? {
+      id: req.user.id,
+      username: req.user.username,
+      role: req.user.role
+    } : null
+  });
+});
+
+// Unlink Google account
+app.post('/api/auth/google/unlink', isAuthenticated, async (req, res) => {
+  try {
+    // Update user to remove Google ID
+    await prisma.user.update({
+      where: { id: req.session.userId },
+      data: { 
+        googleId: null,
+        email: null  // Optionally remove the email too if it came from Google
+      }
+    });
+    
+    res.json({ success: true, message: 'Google account unlinked successfully' });
+  } catch (error) {
+    console.error('Error unlinking Google account:', error);
+    res.status(500).json({ error: 'Failed to unlink Google account' });
+  }
+});
+
 // Serve the index.html file
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Add a new API endpoint to get the current user count
+app.get('/api/users/count', (req, res) => {
+    res.json({ count: onlineUserCount });
 });
 
 // Initialize database and start server
@@ -1042,5 +1855,96 @@ async function startServer() {
     process.exit(1);
   }
 }
+
+// ELO rating system utilities
+const EloRating = {
+  // Default K-factor
+  K: 32,
+  
+  // Calculate expected score
+  getExpectedScore: function(playerRating, opponentRating) {
+    return 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
+  },
+  
+  // Calculate new rating
+  getNewRating: function(playerRating, opponentRating, score, kFactor = this.K) {
+    const expectedScore = this.getExpectedScore(playerRating, opponentRating);
+    return Math.round(playerRating + kFactor * (score - expectedScore));
+  },
+  
+  // Update ratings after a match
+  updateRatings: async function(winner, loser) {
+    // Get current ratings
+    const winnerUser = await prisma.user.findUnique({ where: { id: winner } });
+    const loserUser = await prisma.user.findUnique({ where: { id: loser } });
+    
+    if (!winnerUser || !loserUser) return;
+    
+    // Calculate new ratings
+    const winnerNewRating = this.getNewRating(winnerUser.elo, loserUser.elo, 1);
+    const loserNewRating = this.getNewRating(loserUser.elo, winnerUser.elo, 0);
+    
+    // Update ratings in database
+    await prisma.user.update({
+      where: { id: winner },
+      data: { elo: winnerNewRating }
+    });
+    
+    await prisma.user.update({
+      where: { id: loser },
+      data: { elo: loserNewRating }
+    });
+    
+    return {
+      winner: {
+        oldRating: winnerUser.elo,
+        newRating: winnerNewRating,
+        change: winnerNewRating - winnerUser.elo
+      },
+      loser: {
+        oldRating: loserUser.elo,
+        newRating: loserNewRating,
+        change: loserNewRating - loserUser.elo
+      }
+    };
+  },
+  
+  // Handle draw
+  updateRatingsDraw: async function(player1, player2) {
+    // Get current ratings
+    const player1User = await prisma.user.findUnique({ where: { id: player1 } });
+    const player2User = await prisma.user.findUnique({ where: { id: player2 } });
+    
+    if (!player1User || !player2User) return;
+    
+    // For a draw, both players get a score of 0.5
+    const player1NewRating = this.getNewRating(player1User.elo, player2User.elo, 0.5);
+    const player2NewRating = this.getNewRating(player2User.elo, player1User.elo, 0.5);
+    
+    // Update ratings in database
+    await prisma.user.update({
+      where: { id: player1 },
+      data: { elo: player1NewRating }
+    });
+    
+    await prisma.user.update({
+      where: { id: player2 },
+      data: { elo: player2NewRating }
+    });
+    
+    return {
+      player1: {
+        oldRating: player1User.elo,
+        newRating: player1NewRating,
+        change: player1NewRating - player1User.elo
+      },
+      player2: {
+        oldRating: player2User.elo,
+        newRating: player2NewRating,
+        change: player2NewRating - player2User.elo
+      }
+    };
+  }
+};
 
 startServer();

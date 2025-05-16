@@ -14,8 +14,64 @@ model User {
   id        Int      @id @default(autoincrement())
   username  String   @unique
   password  String
-  rank      Int      @default(0)
+  googleId  String?  @unique  // Google OAuth ID for authentication
+  email     String?  @unique  // User's email from Google
+  role      String   @default("PLAYER") // "ADMIN" or "PLAYER"
+  elo       Int      @default(1200)
+  banStatus String   @default("CLEAR") // "CLEAR" or "BANNED"
   lastRoom  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Friend system relations
+  sentFriendRequests     Friendship[] @relation("sender")
+  receivedFriendRequests Friendship[] @relation("receiver")
+  
+  // Match relations
+  matchesAsPlayer1 Match[] @relation("player1")
+  matchesAsPlayer2 Match[] @relation("player2")
+  matchesWon      Match[] @relation("winner")
+  
+  // Pairing queue
+  pairingQueue    PairingQueue?
+}
+
+model Friendship {
+  id         Int      @id @default(autoincrement())
+  senderId   Int
+  receiverId Int
+  status     String   @default("pending") // pending, accepted, rejected
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sender   User @relation("sender", fields: [senderId], references: [id])
+  receiver User @relation("receiver", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+model Match {
+  id           Int      @id @default(autoincrement())
+  player1Id    Int
+  player2Id    Int
+  player1Score Int      @default(0)
+  player2Score Int      @default(0)
+  winnerId     Int?
+  completed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  player1 User @relation("player1", fields: [player1Id], references: [id])
+  player2 User @relation("player2", fields: [player2Id], references: [id])
+  winner  User? @relation("winner", fields: [winnerId], references: [id])
+}
+
+model PairingQueue {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  joinedAt  DateTime @default(now())
+  eloMin    Int?     // Minimum ELO for matching (optional)
+  eloMax    Int?     // Maximum ELO for matching (optional)
+  
+  user      User     @relation(fields: [userId], references: [id])
 } 
