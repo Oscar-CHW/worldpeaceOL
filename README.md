@@ -1,6 +1,23 @@
 # 天下太平 Online
 
-A web application that displays the title "天下太平" (Peace Under Heaven) with a user account system.
+A real-time multiplayer strategy game where players compete to achieve dominance through resource management and tactical unit deployment. The title "天下太平" means "Peace Under Heaven" in Chinese.
+
+## Project Status
+
+**Current Status:** In development - Addressing multiplayer socket connection issues
+
+### Recent Progress
+- Fixed critical socket connection issues where players couldn't properly join game rooms
+- Resolved "user is not defined" reference error in the checkRoom handler
+- Improved matchmaking system to properly update player socket IDs and join them to rooms
+- Added auto-retry mechanism for ready status toggling
+- Added diagnostic tools for debugging socket connection issues
+- Enhanced room joining logic to better handle reconnections
+
+### Known Issues
+- Some socket event handlers may still be defined outside proper scope
+- Client-side code accidentally included in server.js in some places
+- Room association issues with multiple browser tabs/clients
 
 ## Features
 
@@ -12,6 +29,14 @@ A web application that displays the title "天下太平" (Peace Under Heaven) wi
 - Google Authentication integration
 - Real-time multiplayer game modes
 - ELO ranking system
+- Friend system with direct challenging
+- Advanced matchmaking with ELO-based pairing
+
+## Game Modes
+
+- **Classic** - Standard game mode with balanced gameplay
+- **Insane** - Fast-paced chaos with powerful units and rapid resource generation
+- **Beta** - Experimental features and unique gameplay elements
 
 ## Technologies Used
 
@@ -75,3 +100,4 @@ npm start
 - Create custom rooms or join existing ones by ID
 - Use matchmaking for automatic pairing
 - Track your ELO ranking on the dashboard
+- Add friends and challenge them directly to matches
