@@ -73,6 +73,201 @@
             font-size: 10px;
             white-space: nowrap;
         }
+        
+        /* Add styles for ready status indicator */
+        .player-ready {
+            color: #2ecc71;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .player-not-ready {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        #ready-btn.active {
+            background-color: #2ecc71;
+        }
+        
+        #ready-btn:not(.active) {
+            background-color: #e74c3c;
+        }
+        
+        #start-game-btn.disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        /* Ensure room-actions buttons have proper spacing and visibility */
+        .room-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .room-actions button {
+            min-width: 100px;
+            padding: 10px 15px;
+        }
+        
+        /* Game status styling */
+        .game-status {
+            background-color: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 15px 0;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-message {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .countdown {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+        
+        /* Add styles for player name obfuscation */
+        .player-name {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .player-name.obfuscated::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, #f0f0f0);
+        }
+        
+        /* Ensure player list is always visible with a minimum height */
+        .player-list {
+            min-height: 100px;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .player-list ul {
+            min-height: 50px;
+        }
+        
+        /* Make sure it appears when the list is empty */
+        .player-list ul:empty::after {
+            content: "等待玩家加入...";
+            color: #888;
+            font-style: italic;
+            display: block;
+            padding: 10px 0;
+        }
+        
+        /* Player ELO display */
+        .player-elo {
+            display: inline-block;
+            font-size: 0.9em;
+            color: #555;
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+        
+        /* Game results modal */
+        .results-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .results-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .results-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .elo-change {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .elo-change.winner {
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .elo-change.loser {
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .player-name-result {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .elo-change-value {
+            font-weight: bold;
+        }
+        
+        .elo-change-value.positive {
+            color: #2ecc71;
+        }
+        
+        .elo-change-value.negative {
+            color: #e74c3c;
+        }
+        
+        .close-results {
+            margin-top: 20px;
+            padding: 8px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .close-results:hover {
+            background-color: #2980b9;
+        }
     </style>
 </head>
 <body>
@@ -110,8 +305,14 @@
         </div>
         
         <div class="room-actions">
-            <button id="start-game-btn" class="action-button start" data-i18n="start_game">开始游戏</button>
+            <button id="ready-btn" class="action-button ready" data-i18n="ready">准备</button>
             <button id="leave-room-btn" class="action-button leave" data-i18n="leave_room">离开房间</button>
+        </div>
+        
+        <!-- Add game status area to show auto-start countdown -->
+        <div id="game-status" class="game-status" style="display: none;">
+            <div class="status-message"></div>
+            <div class="countdown"></div>
         </div>
 
         <!-- Game container that appears when game starts -->
@@ -175,6 +376,30 @@
                 <!-- Units will be dynamically populated based on game mode -->
             </div>
         </div>
+        
+        <!-- Game results modal -->
+        <div id="results-modal" class="results-modal">
+            <div class="results-content">
+                <h2 class="results-title" data-i18n="game_results">Game Results</h2>
+                <div class="elo-change winner">
+                    <span class="player-name-result" id="winner-name"></span>
+                    <div>
+                        <span data-i18n="elo_change">ELO Change</span>: 
+                        <span class="elo-change-value positive" id="winner-elo-change"></span>
+                        (<span id="winner-old-elo"></span> → <span id="winner-new-elo"></span>)
+                    </div>
+                </div>
+                <div class="elo-change loser">
+                    <span class="player-name-result" id="loser-name"></span>
+                    <div>
+                        <span data-i18n="elo_change">ELO Change</span>: 
+                        <span class="elo-change-value negative" id="loser-elo-change"></span>
+                        (<span id="loser-old-elo"></span> → <span id="loser-new-elo"></span>)
+                    </div>
+                </div>
+                <button class="close-results" data-i18n="close">Close</button>
+            </div>
+        </div>
     </div>
     
     <script src="js/common.js"></script>
@@ -224,6 +449,124 @@
         document.addEventListener('DOMContentLoaded', () => {
             i18n.init();
             createLanguageSelector('language-selector');
+            
+            // Initialize socket connection
+            window.socket = io();
+            const socket = window.socket;
+            
+            // Check if socket is connected
+            socket.on('connect', () => {
+                console.log('Connected to server with socket ID:', socket.id);
+                
+                // Get the room ID from the URL - check both parameter formats
+                const urlParams = new URLSearchParams(window.location.search);
+                let roomId = urlParams.get('room') || urlParams.get('roomId');
+                
+                if (roomId) {
+                    // Set the room ID display
+                    document.getElementById('room-id').textContent = roomId;
+                    
+                    // Check if the room exists on the server
+                    console.log('Checking if room exists:', roomId);
+                    socket.emit('checkRoom', { roomId });
+                } else {
+                    console.error('No room ID provided in URL');
+                    alert('No room ID provided. Please use a valid room link.');
+                }
+            });
+            
+            // Handle room check result
+            socket.on('roomCheckResult', (data) => {
+                console.log('Room check result:', data);
+                if (!data.exists) {
+                    const reason = data.reason || data.error || 'Unknown reason';
+                    console.error(`Room does not exist or has expired. Reason: ${reason}`);
+                    alert(`Room does not exist or has expired. Reason: ${reason}`);
+                    // Redirect to home page after a short delay
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                    return;
+                }
+                
+                // Room exists but we haven't been auto-joined
+                // Try to join manually
+                const urlParams = new URLSearchParams(window.location.search);
+                let roomId = urlParams.get('room') || urlParams.get('roomId');
+                if (roomId) {
+                    console.log('Room exists, trying to join:', roomId);
+                    
+                    // Get username if provided
+                    const username = urlParams.get('username');
+                    const joinData = { roomId };
+                    if (username) {
+                        joinData.username = username;
+                    }
+                    
+                    socket.emit('joinRoom', joinData);
+                }
+            });
+            
+            // Handle roomJoined event
+            socket.on('roomJoined', (data) => {
+                console.log('Joined room:', data);
+                
+                // Update the UI to show we've joined a room
+                const roomIdElement = document.getElementById('room-id');
+                if (roomIdElement) {
+                    roomIdElement.textContent = data.roomId;
+                }
+                
+                // Show/hide host controls if needed
+                if (data.isHost) {
+                    // If this user is the host, show host controls
+                    document.getElementById('game-mode-selector').style.display = 'block';
+                } else {
+                    // Hide host controls for non-hosts
+                    document.getElementById('game-mode-selector').style.display = 'none';
+                }
+                
+                // If this was an auto-join, display a message
+                if (data.autoJoined) {
+                    console.log('Auto-joined to room');
+                }
+            });
+            
+            // Initialize ready button
+            const readyBtn = document.getElementById('ready-btn');
+            let isReady = false;
+            
+            // Set up ready button
+            readyBtn.addEventListener('click', () => {
+                // Disable the button immediately to prevent multiple clicks
+                readyBtn.disabled = true;
+                readyBtn.classList.add('locked');
+                
+                // Add debug logging
+                console.log('Ready button clicked, sending toggleReady event to server');
+                
+                // Send ready status to server
+                socket.emit('toggleReady');
+                
+                // Update button text to show locked state
+                readyBtn.textContent = i18n.translate('ready_locked') || '已准备';
+                
+                // Add a fallback timer to re-enable button if server doesn't respond
+                setTimeout(() => {
+                    if (readyBtn.disabled) {
+                        console.log('Server did not respond to ready status, re-enabling button');
+                        readyBtn.disabled = false;
+                        readyBtn.classList.remove('locked');
+                        readyBtn.textContent = i18n.translate('ready') || '准备';
+                    }
+                }, 5000);
+            });
+            
+            // Set up leave room button
+            document.getElementById('leave-room-btn').addEventListener('click', () => {
+                socket.emit('leaveRoom');
+                window.location.href = '/';
+            });
             
             // Show the game mode banner for hosts
             const checkIfHost = () => {
@@ -324,6 +667,244 @@
                 updateGameModeBanner,
                 updateUnitSelection
             };
+            
+            // Update player list handling to show ready status
+            socket.on('playerList', (data) => {
+                console.log('Received playerList event with data:', data);
+                
+                const playersList = document.getElementById('players');
+                const playerCount = document.getElementById('player-count');
+                const readyBtn = document.getElementById('ready-btn');
+                
+                // Clear current list
+                playersList.innerHTML = '';
+                
+                // Update count
+                playerCount.textContent = data.players.length;
+                
+                // Variable to track if this client is host
+                let isClientHost = false;
+                let isClientInList = false;
+                let isClientReady = false;
+                
+                // Add each player
+                data.players.forEach(player => {
+                    const listItem = document.createElement('li');
+                    
+                    // Create obfuscated player name span
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'player-name obfuscated';
+                    nameSpan.textContent = player.username;
+                    
+                    // Add ELO display if available
+                    if (player.elo) {
+                        const eloSpan = document.createElement('span');
+                        eloSpan.className = 'player-elo';
+                        eloSpan.textContent = player.elo;
+                        nameSpan.appendChild(eloSpan);
+                    }
+                    
+                    // Host badge
+                    if (player.isHost) {
+                        listItem.classList.add('host');
+                        nameSpan.innerHTML = `${player.username} <span class="host-badge" data-i18n="host">主持人</span>`;
+                        
+                        // Re-add ELO display if it was overwritten
+                        if (player.elo) {
+                            const eloSpan = document.createElement('span');
+                            eloSpan.className = 'player-elo';
+                            eloSpan.textContent = player.elo;
+                            nameSpan.appendChild(eloSpan);
+                        }
+                    }
+                    
+                    // Add the player name to the list item
+                    listItem.appendChild(nameSpan);
+                    
+                    // Ready status
+                    if (player.ready) {
+                        const readySpan = document.createElement('span');
+                        readySpan.className = 'player-ready';
+                        readySpan.textContent = i18n.translate('ready_status') || '准备就绪';
+                        listItem.appendChild(readySpan);
+                    } else if (!player.isHost) { // Only show not ready for non-hosts
+                        const notReadySpan = document.createElement('span');
+                        notReadySpan.className = 'player-not-ready';
+                        notReadySpan.textContent = i18n.translate('not_ready_status') || '未准备';
+                        listItem.appendChild(notReadySpan);
+                    }
+                    
+                    // Mark current player
+                    if (socket.id === player.socketId) {
+                        listItem.classList.add('current-player');
+                        isClientInList = true;
+                        isClientReady = player.ready;
+                        
+                        // Remove obfuscation from current player's name
+                        nameSpan.classList.remove('obfuscated');
+                        
+                        // Check if client is host
+                        if (player.isHost) {
+                            isClientHost = true;
+                        }
+                        
+                        // Update ready button state and visibility
+                        if (!player.isHost) {
+                            // Make sure ready button is visible for non-host players
+                            readyBtn.style.display = 'inline-block';
+                            
+                            if (player.ready) {
+                                // Lock the ready button when player is ready
+                                readyBtn.classList.add('active');
+                                readyBtn.classList.add('locked');
+                                readyBtn.disabled = true;
+                                readyBtn.textContent = i18n.translate('ready_locked') || '已准备';
+                            } else {
+                                readyBtn.classList.remove('active');
+                                readyBtn.classList.remove('locked');
+                                readyBtn.disabled = false;
+                                readyBtn.textContent = i18n.translate('ready') || '准备';
+                            }
+                        } else {
+                            // Host doesn't need to ready up
+                            readyBtn.style.display = 'none';
+                        }
+                    }
+                    
+                    playersList.appendChild(listItem);
+                });
+                
+                // Always show ready button for non-hosts if they're in the game
+                if (isClientInList && !isClientHost) {
+                    readyBtn.style.display = 'inline-block';
+                }
+                
+                // Show/hide start button based on host status
+                if (isClientHost) {
+                    // Add a descriptive message about waiting for players to ready up
+                    const allReady = data.players.every(p => p.isHost || p.ready);
+                    if (!allReady && data.players.length > 1) {
+                        readyBtn.classList.add('disabled');
+                        readyBtn.disabled = true;
+                        readyBtn.title = i18n.translate('waiting_for_players') || '等待所有玩家准备就绪';
+                    } else if (data.players.length < 2) {
+                        readyBtn.classList.add('disabled');
+                        readyBtn.disabled = true;
+                        readyBtn.title = i18n.translate('need_more_players') || '需要至少2名玩家';
+                    } else {
+                        readyBtn.classList.remove('disabled');
+                        readyBtn.disabled = false;
+                        readyBtn.title = '';
+                    }
+                } else {
+                    readyBtn.style.display = 'none';
+                }
+                
+                // Apply translations to newly created elements
+                i18n.applyTranslations();
+            });
+            
+            // Handle all players ready status
+            socket.on('allPlayersReady', (data) => {
+                if (data.ready) {
+                    readyBtn.classList.remove('disabled');
+                    readyBtn.disabled = false;
+                    
+                    // Show game status area with auto-start message
+                    const gameStatus = document.getElementById('game-status');
+                    const statusMessage = gameStatus.querySelector('.status-message');
+                    statusMessage.textContent = i18n.translate('all_players_ready') || '所有玩家已准备就绪';
+                    gameStatus.style.display = 'block';
+                } else {
+                    readyBtn.classList.add('disabled');
+                    readyBtn.disabled = true;
+                    
+                    // Hide game status area
+                    document.getElementById('game-status').style.display = 'none';
+                }
+            });
+            
+            // Handle auto-start countdown from server
+            socket.on('autoStartCountdown', (data) => {
+                const gameStatus = document.getElementById('game-status');
+                const statusMessage = gameStatus.querySelector('.status-message');
+                const countdown = gameStatus.querySelector('.countdown');
+                
+                statusMessage.textContent = i18n.translate('game_starting_soon') || '游戏即将开始';
+                countdown.textContent = data.seconds;
+                gameStatus.style.display = 'block';
+                
+                // Play a sound if available
+                if (window.gameSound && window.gameSound.playCountdown) {
+                    window.gameSound.playCountdown();
+                }
+            });
+            
+            // Handle game results and ELO changes
+            socket.on('gameResults', (data) => {
+                console.log('Received game results:', data);
+                
+                // Populate the results modal
+                document.getElementById('winner-name').textContent = data.winner.username;
+                document.getElementById('winner-elo-change').textContent = `+${data.winner.change}`;
+                document.getElementById('winner-old-elo').textContent = data.winner.oldElo;
+                document.getElementById('winner-new-elo').textContent = data.winner.newElo;
+                
+                document.getElementById('loser-name').textContent = data.loser.username;
+                document.getElementById('loser-elo-change').textContent = data.loser.change;
+                document.getElementById('loser-old-elo').textContent = data.loser.oldElo;
+                document.getElementById('loser-new-elo').textContent = data.loser.newElo;
+                
+                // Show the modal
+                const resultsModal = document.getElementById('results-modal');
+                resultsModal.style.display = 'flex';
+                
+                // Add close button handler
+                document.querySelector('.close-results').addEventListener('click', () => {
+                    resultsModal.style.display = 'none';
+                    
+                    // Redirect to dashboard or homepage after closing
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                });
+            });
+            
+            // Handle errors
+            socket.on('error', (data) => {
+                if (data.message === 'not_all_players_ready') {
+                    alert(i18n.translate('error_not_all_ready') || '还有玩家未准备，无法开始游戏');
+                } else if (data.message === 'ready_locked') {
+                    // If server rejects ready toggle (already locked), update UI accordingly
+                    readyBtn.disabled = true;
+                    readyBtn.classList.add('locked');
+                }
+                // ... other error handling ...
+            });
+            
+            // Handle retryReady event from server when socket room association is fixed
+            socket.on('retryReady', () => {
+                console.log('Received retryReady event, retrying ready status toggle');
+                setTimeout(() => {
+                    // Re-enable the button first
+                    readyBtn.disabled = false;
+                    readyBtn.classList.remove('locked');
+                    
+                    // Simulate a click
+                    readyBtn.click();
+                }, 100);
+            });
+            
+            // Add a style for the locked ready button
+            const style = document.createElement('style');
+            style.textContent = `
+                #ready-btn.locked {
+                    opacity: 0.8;
+                    cursor: not-allowed;
+                    background-color: #27ae60;
+                }
+            `;
+            document.head.appendChild(style);
         });
     </script>
     <script type="module" src="js/pages/game-room.js"></script>
