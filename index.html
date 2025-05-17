@@ -129,14 +129,14 @@
         }
         
         .matchmaking-card h4 {
-            color: #f39c12;
+            color: #242c57;
             margin-top: 0;
             margin-bottom: 10px;
         }
         
         .matchmaking-card p {
             font-size: 13px;
-            color: #bdc3c7;
+            color: #242c57;
         }
         
         .matchmaking-icon {
@@ -195,28 +195,32 @@
         <div class="title-container" tabindex="0">
             <span class="game-badge" aria-label="Beta version">BETA</span>
             <h1 class="title-glow">天下太平</h1>
-            <p>World Peace Online</p>
             <div class="player-count" aria-live="polite">
                 <span id="player-count">-</span> players online
             </div>
             <p class="game-quote">"The art of war is of vital importance to the State." — Sun Tzu</p>
+            <p class="game-quote">“War is peace. Freedom is slavery. Ignorance is strength.”― George Orwell, 1984</p>
+
             
-            <div class="game-modes" role="tablist" aria-label="Game modes">
+            <!-- <div class="game-modes" role="tablist" aria-label="Game modes">
                 <button class="game-mode active" id="mode-classic" role="tab" aria-selected="true" tabindex="0">Classic</button>
                 <button class="game-mode" id="mode-insane" role="tab" aria-selected="false" tabindex="-1">Insane</button>
                 <button class="game-mode" id="mode-beta" role="tab" aria-selected="false" tabindex="-1">Beta</button>
-            </div>
+            </div> -->
             
             <div class="game-mode-description" id="mode-description">
                 The original strategy game experience. Build armies, collect resources, and work toward world peace.
             </div>
-        </div>
+        
+        <!-- <div class="matchmaking-options">
+                    <h3 class="matchmaking-title">Custom Game</h3>
 
         <div class="room-buttons" id="room-buttons" style="display: none;">
+
             <button class="room-button create" id="create-btn" aria-label="Create a new game room">Create Room</button>
             <button class="room-button join" id="join-btn" aria-label="Join an existing game room">Join Room</button>
         </div>
-        
+        </div> -->
         <div class="last-room-prompt" id="last-room-prompt" style="display: none;">
             <p>You have an active room:</p>
             <p id="last-room-id"></p>
@@ -225,7 +229,7 @@
         
         <!-- Matchmaking Options -->
         <div class="matchmaking-options">
-            <h3 class="matchmaking-title">Choose Your Matchmaking Method</h3>
+            <h3 class="matchmaking-title">Matchmaking</h3>
             <div class="matchmaking-methods">
                 <div class="matchmaking-card" id="quick-match">
                     <div class="matchmaking-icon">⚡</div>
@@ -244,6 +248,7 @@
                     <h4>Custom Room</h4>
                     <p>Create a room with customized settings and rules</p>
                 </div>
+            </div>
             </div>
         </div>
     </div>
