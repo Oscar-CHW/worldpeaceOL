@@ -191,7 +191,7 @@
                     html += `
                         <div class="friend-request">
                             <div>
-                                <strong>${request.from.username}</strong> (Rank: ${request.from.rank})
+                                <strong>${request.from.username}</strong> (ELO: ${request.from.elo})
                             </div>
                             <div class="friend-actions">
                                 <button onclick="respondToRequest(${request.requestId}, 'accept')" class="btn btn-accept">Accept</button>
@@ -229,7 +229,7 @@
                     html += `
                         <div class="friend-item">
                             <div>
-                                <strong>${friend.username}</strong> (Rank: ${friend.rank})
+                                <strong>${friend.username}</strong> (ELO: ${friend.elo})
                             </div>
                             <div class="friend-actions">
                                 <button onclick="initiateDuel(${friend.userId})" class="btn btn-duel">Duel</button>
