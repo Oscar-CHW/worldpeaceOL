@@ -4,172 +4,396 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="friends">好友 - 天下太平</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous">
+    <!-- NES.css -->
+    <link href="https://unpkg.com/nes.css@latest/css/nes.min.css" rel="stylesheet" />
+    <!-- Foundation Grid -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/css/foundation-float.min.css" crossorigin="anonymous">
+    <!-- Main CSS -->
     <link rel="stylesheet" href="styles.css">
-    <meta name="theme-color" content="#4a69bd">
+    <meta name="theme-color" content="#0f172a">
     <!-- Preload critical assets -->
     <link rel="preload" href="js/ui-enhancement.js" as="script">
+    <!-- Favicon -->
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
 </head>
-<body class="loading">
+<body class="loading friends-page">
     <a href="#main-content" class="skip-link">Skip to main content</a>
-    <div id="language-selector" class="glass"></div>
     
-    <div class="header glass">
-        <a href="/" class="site-title" data-i18n="title">天下太平</a>
-        <div class="nav-links">
-            <a href="/dashboard.html" data-i18n="dashboard">控制台</a>
-            <a href="/friends.html" data-i18n="friends" class="active">好友</a>
-            <a href="/pairing.html" data-i18n="matchmaking">匹配</a>
-        </div>
-        <div class="auth-links">
-            <a href="#" id="logout-btn" data-i18n="logout">登出</a>
-        </div>
+    <!-- Theme Switcher -->
+    <div class="theme-switcher">
+        <div class="theme-toggle standard-theme active" id="standard-theme">Modern</div>
+        <div class="theme-toggle nes-theme" id="nes-theme">Retro</div>
+    </div>
+
+    <!-- Language Selector -->
+    <div class="language-selector">
+        <button class="language-btn active" data-lang="zh">中文</button>
+        <button class="language-btn" data-lang="en">EN</button>
     </div>
     
-    <div class="container content-medium" id="main-content">
-        <div class="friends-container card">
-            <div class="friends-header">
-                <h2 data-i18n="friends">好友</h2>
+    <header class="header">
+        <div class="container">
+            <div class="flex justify-between items-center">
+                <div class="site-title-wrapper">
+                    <a href="/" class="site-title" data-i18n="title">天下太平</a>
+                </div>
+                <button class="nav-toggle show-for-small-only" id="nav-toggle">☰</button>
+                <div class="nav-links hide-for-small-only">
+                    <a href="/" class="home-btn standard-only">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/" class="home-btn nes-btn nes-only">
+                        <i class="nes-icon is-small star"></i> Home
+                    </a>
+                    <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+                    <a href="/friends.html" data-i18n="friends" class="active standard-only">好友</a>
+                    <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+                    
+                    <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+                    <a href="/friends.html" data-i18n="friends" class="nes-btn is-primary nes-only">好友</a>
+                    <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+                </div>
+                <div class="auth-links hide-for-small-only">
+                    <div class="user-welcome" id="user-welcome">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <span class="username" id="username-display">Username</span>
+                        <a href="#" id="logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
+                        <a href="#" id="logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
+                    </div>
+                </div>
             </div>
-            
-            <div class="add-friend-section glass">
-                <h3 data-i18n="add_friend">添加好友</h3>
-                <form id="add-friend-form" class="add-friend-form">
-                    <div class="form-group">
-                        <label for="friend-username" data-i18n="username">用户名</label>
-                        <div class="friend-input-container">
-                            <input type="text" id="friend-username" data-i18n-placeholder="enter_username" required>
-                            <button type="submit" class="primary-button" data-i18n="add">添加</button>
+        </div>
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav" id="mobile-nav">
+            <div class="nav-links">
+                <a href="/" class="home-btn standard-only">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="/" class="home-btn nes-btn nes-only">
+                    <i class="nes-icon is-small star"></i> Home
+                </a>
+                <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+                <a href="/friends.html" data-i18n="friends" class="active standard-only">好友</a>
+                <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+                
+                <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+                <a href="/friends.html" data-i18n="friends" class="nes-btn is-primary nes-only">好友</a>
+                <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+            </div>
+            <div class="auth-links">
+                <div class="user-welcome" id="mobile-user-welcome">
+                    <div class="user-avatar" id="mobile-user-avatar">U</div>
+                    <span class="username" id="mobile-username-display">Username</span>
+                    <a href="#" id="mobile-logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
+                    <a href="#" id="mobile-logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="grid-container" id="main-content">
+        <div class="grid-x grid-margin-x align-center">
+            <div class="cell small-12 medium-10 large-8">
+                <!-- NES Theme Content -->
+                <div class="friends-container nes-container is-rounded with-title nes-only">
+                    <p class="title" data-i18n="friends">好友</p>
+                    
+                    <div class="add-friend-section nes-container is-rounded margin-vertical-1">
+                        <h3 class="nes-text" data-i18n="add_friend">添加好友</h3>
+                        <form id="add-friend-form" class="add-friend-form">
+                            <div class="grid-x grid-margin-x align-middle">
+                                <div class="cell small-12 medium-8">
+                                    <div class="nes-field">
+                                        <label for="friend-username" data-i18n="username">用户名</label>
+                                        <input type="text" id="friend-username" class="nes-input" data-i18n-placeholder="enter_username" data-sync-input="friend-username-standard" required>
+                                    </div>
+                                </div>
+                                <div class="cell small-12 medium-4 text-center medium-text-right">
+                                    <button type="submit" class="nes-btn is-primary" data-i18n="add">添加</button>
+                                </div>
+                            </div>
+            </form>
+                        <div id="friend-add-result" class="message nes-text hidden" data-sync="friend-add-result-standard"></div>
+        </div>
+
+                    <div class="tabs-container nes-container is-rounded margin-vertical-1">
+                        <ul class="tabs grid-x" data-tabs id="friends-tabs" role="tablist">
+                            <li class="tabs-title cell small-6 text-center is-active" role="presentation">
+                                <a href="#friends-panel" class="nes-text" data-i18n="my_friends" role="tab" aria-controls="friends-panel">我的好友</a>
+                            </li>
+                            <li class="tabs-title cell small-6 text-center" role="presentation">
+                                <a href="#requests-panel" class="nes-text" data-i18n="friend_requests" role="tab" aria-controls="requests-panel">好友请求</a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tabs-content" data-tabs-content="friends-tabs">
+                            <div class="tabs-panel is-active" id="friends-panel" role="tabpanel" aria-labelledby="friends-panel-label">
+                                <div class="friend-filter grid-x grid-margin-x align-middle margin-vertical-1">
+                                    <div class="cell small-12 medium-8">
+                                        <div class="search-container nes-field">
+                                            <label for="friend-search" class="nes-text">Search Friends</label>
+                                            <input type="text" id="friend-search" data-i18n-placeholder="search_friends" class="nes-input" placeholder="Search friends" data-sync-input="friend-search-standard">
+                                        </div>
+                                    </div>
+                                    <div class="cell small-12 medium-4">
+                                        <label class="filter-label">
+                                            <input type="checkbox" class="nes-checkbox" id="online-only" data-sync-checkbox="online-only-standard">
+                                            <span data-i18n="online_only">只显示在线</span>
+                                        </label>
+            </div>
+        </div>
+
+                                <div class="friends-list" id="friends-list">
+                                    <div class="loading-indicator text-center">
+                                        <i class="nes-icon is-medium star is-half"></i>
+                                        <span class="nes-text" data-i18n="loading_friends">加载好友列表...</span>
+            </div>
+        </div>
+    </div>
+
+                            <div class="tabs-panel" id="requests-panel">
+                                <div class="requests-list" id="requests-list">
+                                    <div class="loading-indicator text-center">
+                                        <i class="nes-icon is-medium star is-half"></i>
+                                        <span class="nes-text" data-i18n="loading_requests">加载好友请求...</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </form>
-                <div id="friend-add-result" class="message hidden"></div>
-            </div>
-            
-            <div class="tabs-container">
-                <div class="tabs">
-                    <button class="tab active" id="friends-tab" data-i18n="my_friends">我的好友</button>
-                    <button class="tab" id="requests-tab" data-i18n="friend_requests">好友请求</button>
                 </div>
                 
-                <div class="tab-content">
-                    <div id="friends-content" class="tab-pane active">
-                        <div class="friend-filter">
-                            <div class="search-container">
-                                <input type="text" id="friend-search" data-i18n-placeholder="search_friends" class="search-input">
-                                <span class="search-icon" aria-label="Search" role="button" tabindex="0">🔍</span>
+                <!-- Standard Theme Content -->
+                <div class="friends-container container-card standard-only">
+                    <h2 data-i18n="friends">好友</h2>
+                    
+                    <div class="add-friend-section container-card margin-vertical-1">
+                        <h3 data-i18n="add_friend">添加好友</h3>
+                        <form id="add-friend-form-standard" class="add-friend-form">
+                            <div class="grid-x grid-margin-x align-middle">
+                                <div class="cell small-12 medium-8">
+                                    <div class="form-group">
+                                        <label for="friend-username-standard" data-i18n="username">用户名</label>
+                                        <input type="text" id="friend-username-standard" data-i18n-placeholder="enter_username" required>
+                                    </div>
+                                </div>
+                                <div class="cell small-12 medium-4 text-center medium-text-right">
+                                    <button type="submit" class="btn" data-i18n="add">添加</button>
+                                </div>
                             </div>
-                            <div class="filter-options">
-                                <label class="filter-label">
-                                    <input type="checkbox" id="online-only">
-                                    <span data-i18n="online_only">只显示在线</span>
-                                </label>
+                        </form>
+                        <div id="friend-add-result-standard" class="message hidden"></div>
+                    </div>
+                    
+                    <div class="tabs-container container-card margin-vertical-1">
+                        <ul class="tabs grid-x" data-tabs id="friends-tabs-standard" role="tablist">
+                            <li class="tabs-title cell small-6 text-center is-active" role="presentation">
+                                <a href="#friends-panel-standard" role="tab" aria-controls="friends-panel-standard" data-i18n="my_friends">我的好友</a>
+                            </li>
+                            <li class="tabs-title cell small-6 text-center" role="presentation">
+                                <a href="#requests-panel-standard" role="tab" aria-controls="requests-panel-standard" data-i18n="friend_requests">好友请求</a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tabs-content" data-tabs-content="friends-tabs-standard">
+                            <div class="tabs-panel is-active" id="friends-panel-standard" role="tabpanel">
+                                <div class="friend-filter grid-x grid-margin-x align-middle margin-vertical-1">
+                                    <div class="cell small-12 medium-8">
+                                        <div class="search-container">
+                                            <label for="friend-search-standard">Search Friends</label>
+                                            <input type="text" id="friend-search-standard" data-i18n-placeholder="search_friends" placeholder="Search friends">
+                                        </div>
+                                    </div>
+                                    <div class="cell small-12 medium-4">
+                                        <label class="filter-label">
+                                            <input type="checkbox" id="online-only-standard">
+                                            <span data-i18n="online_only">只显示在线</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="friends-list" id="friends-list-standard">
+                                    <div class="loading-indicator text-center">
+                                        <span data-i18n="loading_friends">加载好友列表...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="tabs-panel" id="requests-panel-standard">
+                                <div class="requests-list" id="requests-list-standard">
+                                    <div class="loading-indicator text-center">
+                                        <span data-i18n="loading_requests">加载好友请求...</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="friends-list" id="friends-list">
-                            <div class="loading-indicator">
-                                <div class="spinner"></div>
-                                <span data-i18n="loading_friends">加载好友列表...</span>
+                    </div>
+                </div>
+                
+                <!-- Friend Action Modal -->
+                <div id="friend-action-modal" class="reveal" data-reveal aria-labelledby="friend-action-title" aria-hidden="true">
+                    <!-- NES Theme Modal -->
+                    <div class="nes-container is-rounded with-title nes-only">
+                        <p class="title" id="friend-action-title" data-i18n="friend_actions">好友操作</p>
+                        <button class="close-button" data-close aria-label="Close" type="button">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <div class="modal-body">
+                            <div class="friend-info grid-x align-middle" id="modal-friend-info">
+                                <div class="cell small-3">
+                                    <div class="friend-avatar" id="modal-friend-avatar">
+                                        <i class="nes-icon is-large user"></i>
+                                    </div>
+                                </div>
+                                <div class="cell small-9">
+                                    <div class="friend-details">
+                                        <h4 id="modal-friend-name" class="nes-text" data-sync="modal-friend-name-standard"></h4>
+                                        <div id="modal-friend-status" class="friend-status nes-text" data-sync="modal-friend-status-standard"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="friend-actions grid-x grid-margin-x text-center margin-top-1">
+                                <div class="cell small-12 medium-4">
+                                    <button id="invite-game-btn" class="nes-btn is-primary" data-i18n="invite_to_game" data-sync-click="invite-game-btn-standard">邀请游戏</button>
+                                </div>
+                                <div class="cell small-12 medium-4">
+                                    <button id="view-profile-btn" class="nes-btn is-info" data-i18n="view_profile" data-sync-click="view-profile-btn-standard">查看资料</button>
+                                </div>
+                                <div class="cell small-12 medium-4">
+                                    <button id="remove-friend-btn" class="nes-btn is-error" data-i18n="remove_friend" data-sync-click="remove-friend-btn-standard">删除好友</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div id="requests-content" class="tab-pane">
-                        <div class="requests-list" id="requests-list">
-                            <div class="loading-indicator">
-                                <div class="spinner"></div>
-                                <span data-i18n="loading_requests">加载好友请求...</span>
+                    <!-- Standard Theme Modal -->
+                    <div class="container-card standard-only">
+                        <h3 id="friend-action-title-standard" data-i18n="friend_actions">好友操作</h3>
+                        <button class="close-button" data-close aria-label="Close" type="button">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <div class="modal-body">
+                            <div class="friend-info grid-x align-middle">
+                                <div class="cell small-3">
+                                    <div class="friend-avatar">
+                                        <i class="user-icon">👤</i>
+                                    </div>
+                                </div>
+                                <div class="cell small-9">
+                                    <div class="friend-details">
+                                        <h4 id="modal-friend-name-standard"></h4>
+                                        <div id="modal-friend-status-standard" class="friend-status"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="friend-actions grid-x grid-margin-x text-center margin-top-1">
+                                <div class="cell small-12 medium-4">
+                                    <button id="invite-game-btn-standard" class="btn" data-i18n="invite_to_game">邀请游戏</button>
+                                </div>
+                                <div class="cell small-12 medium-4">
+                                    <button id="view-profile-btn-standard" class="btn" data-i18n="view_profile">查看资料</button>
+                                </div>
+                                <div class="cell small-12 medium-4">
+                                    <button id="remove-friend-btn-standard" class="btn" data-i18n="remove_friend">删除好友</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Friend Action Modal -->
-        <div id="friend-action-modal" class="modal" aria-labelledby="friend-action-title" aria-hidden="true">
-            <div class="modal-content glass">
-                <div class="modal-header">
-                    <h3 id="friend-action-title" data-i18n="friend_actions">好友操作</h3>
-                    <span class="close-modal" aria-label="Close">&times;</span>
+                
+                <!-- Offline notifications -->
+                <div id="offline-notification" class="nes-container is-rounded is-error hidden nes-only offline-notification">
+                    <i class="nes-icon is-small warning"></i> You are currently offline. Some features may be limited.
                 </div>
-                <div class="modal-body">
-                    <div class="friend-info" id="modal-friend-info">
-                        <div class="friend-avatar" id="modal-friend-avatar"></div>
-                        <div class="friend-details">
-                            <h4 id="modal-friend-name"></h4>
-                            <div id="modal-friend-status" class="friend-status"></div>
-                        </div>
-                    </div>
-                    <div class="friend-actions">
-                        <button id="invite-game-btn" class="action-button invite" data-i18n="invite_to_game">邀请游戏</button>
-                        <button id="view-profile-btn" class="action-button profile" data-i18n="view_profile">查看资料</button>
-                        <button id="remove-friend-btn" class="action-button remove" data-i18n="remove_friend">删除好友</button>
-                    </div>
+                
+                <div id="offline-notification-standard" class="container-card hidden standard-only offline-notification">
+                    You are currently offline. Some features may be limited.
                 </div>
             </div>
-        </div>
-        
-        <!-- Add offline support notification -->
-        <div id="offline-notification" class="hidden">
-            You are currently offline. Some features may be limited.
         </div>
     </div>
     
+    <!-- Foundation JS -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/js/foundation.min.js"></script>
+    <script>$(document).foundation();</script>
     <script src="js/common.js"></script>
     <script type="module" src="js/pages/friends.js"></script>
     <script src="js/ui-enhancement.js"></script>
+    <!-- Add theme switcher -->
+    <script src="js/theme-switcher.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Offline detection
-            window.addEventListener('online', function() {
-                document.getElementById('offline-notification').classList.add('hidden');
+            // Initialize Foundation
+            $(document).foundation();
+            
+            // Sync form submissions
+            document.getElementById('add-friend-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addFriend(document.getElementById('friend-username').value);
             });
             
-            window.addEventListener('offline', function() {
-                document.getElementById('offline-notification').classList.remove('hidden');
+            document.getElementById('add-friend-form-standard').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addFriend(document.getElementById('friend-username-standard').value);
             });
             
-            // Check initial state
-            if (!navigator.onLine) {
-                document.getElementById('offline-notification').classList.remove('hidden');
+            // Friend action modal
+            window.openFriendActionModal = function(friendId, friendName, status) {
+                document.getElementById('modal-friend-name').textContent = friendName;
+                document.getElementById('modal-friend-status').textContent = status;
+                $('#friend-action-modal').foundation('open');
+            };
+            
+            // Handle checkbox syncing for online-only filter
+            document.getElementById('online-only').addEventListener('change', function() {
+                document.getElementById('online-only-standard').checked = this.checked;
+                filterFriends();
+            });
+            
+            document.getElementById('online-only-standard').addEventListener('change', function() {
+                document.getElementById('online-only').checked = this.checked;
+                filterFriends();
+            });
+            
+            // Sync logout buttons
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            document.getElementById('logout-btn-standard').addEventListener('click', logout);
+            document.getElementById('mobile-logout-btn').addEventListener('click', logout);
+            document.getElementById('mobile-logout-btn-standard').addEventListener('click', logout);
+            
+            function logout() {
+                // Implement logout functionality
+                console.log('Logging out...');
+                // For now, just redirect to login page
+                window.location.href = '/login.html';
             }
             
-            // Tab functionality
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-pane');
+            function addFriend(username) {
+                // Implement add friend functionality
+                console.log('Adding friend:', username);
+                // Show result message
+                const resultMessage = `Friend request sent to ${username}`;
+                document.getElementById('friend-add-result').textContent = resultMessage;
+                document.getElementById('friend-add-result').classList.remove('hidden');
+                
+                // Clear the form
+                document.getElementById('friend-username').value = '';
+                document.getElementById('friend-username-standard').value = '';
+            }
             
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Remove active class from all tabs
-                    tabs.forEach(t => t.classList.remove('active'));
-                    // Add active class to clicked tab
-                    this.classList.add('active');
-                    
-                    // Hide all tab content
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    
-                    // Show corresponding tab content
-                    const contentId = this.id.replace('-tab', '-content');
-                    document.getElementById(contentId).classList.add('active');
-                });
-            });
-            
-            // Modal functionality
-            const modal = document.getElementById('friend-action-modal');
-            const closeModal = modal.querySelector('.close-modal');
-            
-            closeModal.addEventListener('click', function() {
-                modal.style.display = 'none';
-                modal.setAttribute('aria-hidden', 'true');
-            });
-            
-            window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                    modal.setAttribute('aria-hidden', 'true');
-                }
-            });
+            function filterFriends() {
+                // Implement friend filtering functionality
+                const onlineOnly = document.getElementById('online-only').checked;
+                const searchText = document.getElementById('friend-search').value.toLowerCase();
+                console.log('Filtering friends:', { onlineOnly, searchText });
+                // This would typically filter the friends list
+            }
         });
     </script>
 </body>
