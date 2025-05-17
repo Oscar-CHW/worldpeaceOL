@@ -30,19 +30,21 @@ router.post('/register', async (req, res) => {
         }
         
         // Check if username already exists
-        const existingUser = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    { username: username },
-                    { email: email || null }
-                ]
-            }
+        const userByUsername = await prisma.user.findUnique({
+            where: { username }
         });
         
-        if (existingUser) {
-            if (existingUser.username === username) {
-                return res.status(400).json({ error: 'Username already exists' });
-            } else {
+        if (userByUsername) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+        
+        // Only check email uniqueness if email is provided
+        if (email) {
+            const userByEmail = await prisma.user.findUnique({
+                where: { email }
+            });
+            
+            if (userByEmail) {
                 return res.status(400).json({ error: 'Email already exists' });
             }
         }
@@ -56,9 +58,7 @@ router.post('/register', async (req, res) => {
                 username,
                 password: hashedPassword,
                 email,
-                eloRating: DEFAULT_RATING,
-                wins: 0,
-                losses: 0
+                elo: DEFAULT_RATING
             }
         });
         
@@ -70,7 +70,7 @@ router.post('/register', async (req, res) => {
             id: user.id,
             username: user.username,
             email: user.email,
-            eloRating: user.eloRating
+            eloRating: user.elo
         });
     } catch (error) {
         log(`Registration error: ${error.message}`, 'error', 'AUTH_EVENTS');
@@ -147,7 +147,7 @@ router.post('/logout', (req, res) => {
 // Get current user info
 router.get('/me', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.session.userId;
+        const userId = parseInt(req.session.userId, 10);
         
         const user = await prisma.user.findUnique({
             where: { id: userId },
@@ -155,11 +155,9 @@ router.get('/me', isAuthenticated, async (req, res) => {
                 id: true,
                 username: true,
                 email: true,
-                eloRating: true,
-                wins: true,
-                losses: true,
+                elo: true,
                 createdAt: true,
-                lastRoomId: true,
+                lastRoom: true,
                 role: true
             }
         });
@@ -169,7 +167,13 @@ router.get('/me', isAuthenticated, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        res.json(user);
+        // For backward compatibility, remap some fields
+        const responseUser = {
+            ...user,
+            eloRating: user.elo
+        };
+        
+        res.json(responseUser);
     } catch (error) {
         log(`Error getting user info: ${error.message}`, 'error', 'AUTH_EVENTS');
         res.status(500).json({ error: 'Could not get user info' });
@@ -177,17 +181,57 @@ router.get('/me', isAuthenticated, async (req, res) => {
 });
 
 // Google OAuth login routes
-router.get('/google', passport.authenticate('google', {
-    scope: ['profile', 'email'],
-    prompt: 'select_account' // Force user to select account
-}));
+router.get('/google', (req, res) => {
+    passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        prompt: 'select_account' // Force user to select account
+    })(req, res);
+});
 
 router.get('/google/callback', passport.authenticate('google', {
-    failureRedirect: '/login.html?error=google-auth-failed'
+    failureRedirect: '/login.html?error=google-auth-failed',
+    scope: ['profile', 'email']
 }), (req, res) => {
     // Successful authentication
-    log(`User logged in via Google: ${req.user.id}`, 'info', 'AUTH_EVENTS');
-    res.redirect('/dashboard.html');
+    if (req.user) {
+        // Set session userId explicitly
+        req.session.userId = req.user.id;
+        
+        // Save session before redirecting
+        req.session.save(err => {
+            if (err) {
+                log(`Session save error: ${err.message}`, 'error');
+                return res.redirect('/login.html?error=session-error');
+            }
+            log(`User logged in via Google: ${req.user.id}`, 'info', 'AUTH_EVENTS');
+            res.redirect('/dashboard.html');
+        });
+    } else {
+        log('Google auth failed - no user object', 'error');
+        res.redirect('/login.html?error=google-auth-failed');
+    }
+});
+
+// Check Google authentication status
+router.get('/google/status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = parseInt(req.session.userId, 10);
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { googleId: true }
+        });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json({
+            isAuthenticated: !!user.googleId
+        });
+    } catch (error) {
+        log(`Error checking Google auth status: ${error.message}`, 'error');
+        res.status(500).json({ error: 'Could not check Google authentication status' });
+    }
 });
 
 // Link Google account to existing account
@@ -198,6 +242,22 @@ router.get('/google/link', isAuthenticated, (req, res) => {
         scope: ['profile', 'email'],
         prompt: 'select_account'
     })(req, res);
+});
+
+// Unlink Google account
+router.post('/google/unlink', isAuthenticated, async (req, res) => {
+    try {
+        const userId = parseInt(req.session.userId, 10);
+        await prisma.user.update({
+            where: { id: userId },
+            data: { googleId: null }
+        });
+        
+        res.json({ success: true });
+    } catch (error) {
+        log(`Error unlinking Google account: ${error.message}`, 'error');
+        res.status(500).json({ error: 'Could not unlink Google account' });
+    }
 });
 
 module.exports = {

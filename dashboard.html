@@ -100,7 +100,7 @@
                 <div class="connection-status" id="google-connection-status">
                     <div class="status-indicator status-disconnected"></div>
                     <span data-i18n="not_connected">未关联</span>
-                    <a href="/auth/google/link" class="connection-action" data-i18n="connect">关联</a>
+                    <a href="/api/auth/google/link" class="connection-action" data-i18n="connect">关联</a>
                 </div>
             </div>
         </div>
@@ -227,29 +227,35 @@
                     }
                     
                     // Check Google authentication status
-                    const googleStatusResponse = await fetch('/api/auth/google/status');
-                    const googleStatusData = await googleStatusResponse.json();
-                    
-                    const googleStatusElement = document.getElementById('google-connection-status');
-                    if (googleStatusData.isAuthenticated) {
-                        googleStatusElement.innerHTML = `
-                            <div class="status-indicator status-connected"></div>
-                            <span data-i18n="connected">已关联</span>
-                            <a href="#" class="connection-action" id="unlink-google" data-i18n="disconnect">解除关联</a>
-                        `;
-                        
-                        // Add unlink functionality if needed
-                        document.getElementById('unlink-google').addEventListener('click', async (e) => {
-                            e.preventDefault();
-                            try {
-                                await fetch('/api/auth/google/unlink', {
-                                    method: 'POST'
+                    try {
+                        const googleStatusResponse = await fetch('/api/auth/google/status');
+                        if (googleStatusResponse.ok) {
+                            const googleStatusData = await googleStatusResponse.json();
+                            
+                            const googleStatusElement = document.getElementById('google-connection-status');
+                            if (googleStatusData.isAuthenticated) {
+                                googleStatusElement.innerHTML = `
+                                    <div class="status-indicator status-connected"></div>
+                                    <span data-i18n="connected">已关联</span>
+                                    <a href="#" class="connection-action" id="unlink-google" data-i18n="disconnect">解除关联</a>
+                                `;
+                                
+                                // Add unlink functionality if needed
+                                document.getElementById('unlink-google').addEventListener('click', async (e) => {
+                                    e.preventDefault();
+                                    try {
+                                        await fetch('/api/auth/google/unlink', {
+                                            method: 'POST'
+                                        });
+                                        window.location.reload();
+                                    } catch (error) {
+                                        console.error('Failed to unlink Google account', error);
+                                    }
                                 });
-                                window.location.reload();
-                            } catch (error) {
-                                console.error('Failed to unlink Google account', error);
                             }
-                        });
+                        }
+                    } catch (error) {
+                        console.error('Failed to check Google connection status', error);
                     }
                 } else {
                     showMessage(data.error || i18n.translate('system_error'), 'error');

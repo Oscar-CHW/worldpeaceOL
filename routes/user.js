@@ -14,17 +14,31 @@ const router = express.Router();
 // Get user profile
 router.get('/user/:userId', async (req, res) => {
     try {
-        const { userId } = req.params;
+        let { userId } = req.params;
+        
+        // Special case for "me" endpoint
+        if (userId === "me") {
+            if (!req.session || !req.session.userId) {
+                return res.status(401).json({ error: 'Not authenticated' });
+            }
+            userId = parseInt(req.session.userId, 10);
+        } else {
+            // Convert userId to integer
+            userId = parseInt(userId, 10);
+            if (isNaN(userId)) {
+                return res.status(400).json({ error: 'Invalid user ID' });
+            }
+        }
         
         const user = await prisma.user.findUnique({
             where: { id: userId },
             select: {
                 id: true,
                 username: true,
-                displayName: true,
-                eloRating: true,
-                wins: true,
-                losses: true,
+                email: true,
+                elo: true,
+                role: true,
+                disconnectCount: true,
                 createdAt: true
             }
         });
@@ -33,12 +47,23 @@ router.get('/user/:userId', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         
+        // For backward compatibility, map elo to eloRating
+        const userProfile = {
+            ...user,
+            eloRating: user.elo
+        };
+        
         // Calculate additional stats
-        const totalGames = user.wins + user.losses;
-        const winRate = totalGames > 0 ? Math.round((user.wins / totalGames) * 100) : 0;
+        // Match counts need to be fetched from relationships in a real implementation
+        const wins = 0; // Placeholder
+        const losses = 0; // Placeholder
+        const totalGames = wins + losses;
+        const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
         
         res.json({
-            ...user,
+            ...userProfile,
+            wins,
+            losses,
             totalGames,
             winRate
         });
@@ -51,23 +76,23 @@ router.get('/user/:userId', async (req, res) => {
 // Get current user's last room
 router.get('/user/last-room', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.session.userId;
+        const userId = parseInt(req.session.userId, 10);
         
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { lastRoomId: true }
+            select: { lastRoom: true }
         });
         
-        if (!user || !user.lastRoomId) {
+        if (!user || !user.lastRoom) {
             return res.json({ hasLastRoom: false });
         }
         
         // Check if room still exists
-        const roomExists = rooms.has(user.lastRoomId);
+        const roomExists = rooms.has(user.lastRoom);
         
         res.json({
             hasLastRoom: roomExists,
-            roomId: roomExists ? user.lastRoomId : null
+            roomId: roomExists ? user.lastRoom : null
         });
     } catch (error) {
         log(`Error getting last room: ${error.message}`, 'error');
@@ -78,10 +103,24 @@ router.get('/user/last-room', isAuthenticated, async (req, res) => {
 // Get user match history
 router.get('/user/:userId/matches', async (req, res) => {
     try {
-        const { userId } = req.params;
+        let { userId } = req.params;
         const { page = 1, limit = 10 } = req.query;
         const pageNum = parseInt(page, 10);
         const limitNum = Math.min(parseInt(limit, 10), 50); // Cap at 50
+        
+        // Handle "me" endpoint
+        if (userId === "me") {
+            if (!req.session || !req.session.userId) {
+                return res.status(401).json({ error: 'Not authenticated' });
+            }
+            userId = parseInt(req.session.userId, 10);
+        } else {
+            // Convert userId to integer
+            userId = parseInt(userId, 10);
+            if (isNaN(userId)) {
+                return res.status(400).json({ error: 'Invalid user ID' });
+            }
+        }
         
         // Get total count
         const totalMatches = await prisma.match.count({

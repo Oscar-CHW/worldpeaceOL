@@ -72,7 +72,9 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
     try {
-        const user = await prisma.user.findUnique({ where: { id } });
+        // Convert id to integer to match Prisma schema
+        const userId = parseInt(id, 10);
+        const user = await prisma.user.findUnique({ where: { id: userId } });
         done(null, user);
     } catch (error) {
         done(error, null);
@@ -99,7 +101,7 @@ passport.use(new GoogleStrategy({
             }
             
             const existingUser = await prisma.user.findUnique({
-                where: { id: req.session.linkGoogleToUserId }
+                where: { id: parseInt(req.session.linkGoogleToUserId, 10) }
             });
             
             if (!existingUser) {
@@ -147,10 +149,9 @@ passport.use(new GoogleStrategy({
                         googleId: profile.id,
                         username,
                         email: profile.emails ? profile.emails[0].value : null,
-                        displayName: profile.displayName,
-                        eloRating: DEFAULT_RATING,
-                        wins: 0,
-                        losses: 0
+                        elo: DEFAULT_RATING,
+                        // Ensure we have a password field, even if it's a placeholder
+                        password: Math.random().toString(36).slice(-10)
                     }
                 });
                 
@@ -170,6 +171,54 @@ passport.use(new GoogleStrategy({
 app.use('/api', authRouter); // Keep for backward compatibility
 app.use('/api/auth', authRouter);
 
+// Add explicit redirect for /auth/google to /api/auth/google for compatibility
+app.get('/auth/google', (req, res, next) => {
+    passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        prompt: 'select_account' // Force user to select account
+    })(req, res, next);
+});
+
+// Add explicit redirect for /auth/google/callback to /api/auth/google/callback
+app.get('/auth/google/callback', (req, res, next) => {
+    passport.authenticate('google', {
+        failureRedirect: '/login.html?error=google-auth-failed',
+        scope: ['profile', 'email']
+    }, (err, user, info) => {
+        if (err) {
+            log(`Google auth error: ${err.message}`, 'error');
+            return res.redirect('/login.html?error=google-login-error');
+        }
+        
+        if (!user) {
+            const errorMsg = info?.message || 'Unknown authentication failure';
+            log(`Google auth failed: ${errorMsg}`, 'warn');
+            return res.redirect(`/login.html?error=${encodeURIComponent(errorMsg)}`);
+        }
+        
+        // Log in the user by setting the session
+        req.login(user, (loginErr) => {
+            if (loginErr) {
+                log(`Login error after Google auth: ${loginErr.message}`, 'error');
+                return res.redirect('/login.html?error=session-error');
+            }
+            
+            // Set session userId
+            req.session.userId = user.id;
+            log(`Google auth successful for user ID: ${user.id}`, 'info');
+            
+            // Redirect to dashboard
+            res.redirect('/dashboard.html');
+        });
+    })(req, res, next);
+});
+
+// Add explicit redirect for /api/signup to /api/register for compatibility
+app.post('/api/signup', (req, res) => {
+    req.url = '/register';
+    authRouter(req, res);
+});
+
 // User routes
 app.use('/api/user', userRouter);
 app.use('/api', userRouter); // For /api/users/count 
@@ -180,10 +229,10 @@ app.use('/api/room', roomRouter);
 // Additional endpoints for backward compatibility
 app.post('/api/user/clear-last-room', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.session.userId;
+        const userId = parseInt(req.session.userId, 10);
         await prisma.user.update({
             where: { id: userId },
-            data: { lastRoomId: null }
+            data: { lastRoom: null }
         });
         res.json({ success: true });
     } catch (error) {
@@ -199,8 +248,9 @@ const isAdmin = async (req, res, next) => {
             return res.status(401).json({ error: 'Not authenticated' });
         }
         
+        const userId = parseInt(req.session.userId, 10);
         const user = await prisma.user.findUnique({
-            where: { id: req.session.userId },
+            where: { id: userId },
             select: { role: true }
         });
         
