@@ -1,1614 +1,1742 @@
-/* CSS Variables for consistent theming */
+/* Base Styles */
 :root {
-    /* Color palette */
-    --primary-color: #4a69bd;
-    --primary-dark: #3c58a8;
-    --secondary-color: #fdcb6e;
-    --secondary-dark: #f0b74d;
-    --success-color: #55efc4;
-    --success-dark: #41d6af;
-    --danger-color: #ff7675;
-    --danger-dark: #e74c3c;
-    --text-color: #333;
-    --light-text: #f0f0f0;
-    --bg-color: #f3f3f3;
-    --card-bg: rgba(255, 255, 255, 0.9);
-    --header-bg: rgba(248, 249, 250, 0.95);
-    --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-heavy: 0 6px 10px rgba(0, 0, 0, 0.15);
-    
-    /* Spacing */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2rem;
-    --space-xxl: 3rem;
-    
-    /* Font sizes */
-    --text-xs: 0.75rem;
-    --text-sm: 0.875rem;
-    --text-md: 1rem;
-    --text-lg: 1.25rem;
-    --text-xl: 1.5rem;
-    --text-xxl: 2rem;
-    --text-huge: 4.5rem;
-    
-    /* Border radius */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 10px;
-    --radius-round: 50%;
-    
-    /* Transitions */
-    --transition-fast: 0.2s ease;
-    --transition-normal: 0.3s ease;
-    --transition-slow: 0.5s ease;
-    
-    /* Z-index layers */
-    --z-background: -1;
-    --z-normal: 1;
-    --z-overlay: 10;
-    --z-dropdown: 100;
-    --z-modal: 1000;
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --secondary: #f97316;
+  --secondary-dark: #ea580c;
+  --background: #0f172a;
+  --card: #1e293b;
+  --text: #f8fafc;
+  --text-muted: #cbd5e1;
+  --text-dark: #0f172a;
+  --header-height: 70px;
+  --header-height-mobile: 160px;
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --nes-text: #209CEE; /* Add NES.css primary blue color as a variable */
+  --nes-bg: #212529; /* NES background color */
+  --nes-border: #ffffff; /* NES border color */
 }
 
-/* Dark mode variables */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --card-bg: rgba(30, 30, 30, 0.9);
-        --text-color: #f0f0f0;
-        --header-bg: rgba(30, 30, 30, 0.95);
-        --bg-color: #121212;
-        --primary-color: #5a79cd;
-        --primary-dark: #4c68b8;
-    }
+/* Reset & Base Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* General styles */
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-size: 16px;
+}
+
 body {
-    font-family: 'Arial', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    background-color: var(--bg-color);
-    background-image: 
-        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-        url('images/bg.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    color: var(--text-color);
-    line-height: 1.5;
-    overflow-x: hidden;
-    transition: background-color var(--transition-normal), color var(--transition-normal);
+  background-color: var(--background);
+  color: var(--text);
+  background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)), url(images/bg.png);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
-/* Accessibility focus styles */
-:focus {
-    outline: 3px solid var(--primary-color);
-    outline-offset: 2px;
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
 }
 
-/* Skip to content link for screen readers */
-.skip-link {
-    position: absolute;
-    top: -40px;
-    left: 0;
-    background: var(--primary-color);
-    color: white;
-    padding: var(--space-sm);
-    z-index: var(--z-overlay);
-    transition: top var(--transition-normal);
+a:hover {
+  color: #60a5fa; /* primary-400 - lighter for better visibility */
+  text-decoration: underline;
 }
 
-.skip-link:focus {
-    top: 0;
-}
-
-/* Language selector styles */
-#language-selector {
-    position: fixed;
-    right: var(--space-xl);
-    bottom: var(--space-xl);
-    z-index: var(--z-dropdown);
-    background: rgba(255,255,255,0.95);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-light);
-    padding: var(--space-sm) var(--space-md);
-    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-}
-
-#language-selector:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-medium);
-}
-
-.language-selector-wrapper {
-    display: flex;
-    align-items: center;
-}
-
-.language-label {
-    margin-right: var(--space-sm);
-    margin-top: var(--space-sm);
-    font-size: var(--text-sm);
-    white-space: nowrap;
-}
-
-.language-select {
-    padding: 4px var(--space-sm);
-    border: 1px solid #ddd;
-    border-radius: var(--radius-sm);
-    background-color: white;
-    font-size: var(--text-sm);
-    transition: border-color var(--transition-fast);
-}
-
-.language-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
-
-/* Home page styles */
-.title-container {
-    text-align: center;
-    padding: var(--space-xl);
-    background-color: var(--card-bg);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-medium);
-    cursor: pointer;
-    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-    margin: var(--space-lg);
-    max-width: 90vw;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-}
-
-.title-container:hover,
-.title-container:focus {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-heavy);
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold;
+  line-height: 1.2;
+  margin-bottom: 0.5em;
+  color: var(--text);
 }
 
 h1 {
-    font-size: var(--text-huge);
-    color: #fff;
-    margin: 0;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    font-weight: bold;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity var(--transition-slow), transform var(--transition-slow), text-shadow var(--transition-fast);
+  font-size: 2rem;
 }
 
-/* Header styles */
-.header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-md) var(--space-xl);
-    background-color: var(--header-bg);
-    box-shadow: var(--shadow-light);
-    z-index: var(--z-dropdown);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+h2 {
+  font-size: 1.5rem;
 }
 
-.site-title {
-    font-size: var(--text-xl);
-    font-weight: bold;
-    color: var(--text-color);
-    text-decoration: none;
-    transition: color var(--transition-normal);
-    margin: 0;
-}
-
-.site-title:hover,
-.site-title:focus {
-    color: var(--primary-color);
-}
-
-.auth-links {
-    display: flex;
-    gap: var(--space-md);
-    flex-wrap: wrap;
-}
-
-.auth-links a {
-    display: inline-block;
-    margin-left: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: var(--radius-sm);
-    text-decoration: none;
-    color: var(--text-color);
-    font-weight: bold;
-    transition: all var(--transition-normal);
-}
-
-.auth-links a:hover,
-.auth-links a:focus {
-    background-color: var(--primary-color);
-    color: white;
-    text-decoration: none;
-    transform: translateY(-2px);
-}
-
-/* Room buttons styles */
-.room-buttons {
-    display: flex;
-    justify-content: center;
-    gap: var(--space-lg);
-    margin-top: var(--space-xxl);
-    flex-wrap: wrap;
-}
-
-.room-button {
-    padding: var(--space-md) var(--space-xl);
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: var(--text-lg);
-    font-weight: bold;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-light);
-    min-width: 140px;
-    margin-bottom: var(--space-md);
-    position: relative;
-    overflow: hidden;
-}
-
-.room-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.7s;
-}
-
-.room-button:hover::before {
-    left: 100%;
-}
-
-.room-button:hover,
-.room-button:focus {
-    background-color: var(--primary-dark);
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-medium);
-}
-
-.room-button.create {
-    background-color: var(--success-color);
-    color: #333;
-}
-
-.room-button.create:hover,
-.room-button.create:focus {
-    background-color: var(--success-dark);
-}
-
-.room-button.join {
-    background-color: var(--secondary-color);
-    color: #333;
-}
-
-.room-button.join:hover,
-.room-button.join:focus {
-    background-color: var(--secondary-dark);
-}
-
-.room-button.rejoin {
-    background-color: #3498db;
-    color: white;
-}
-
-.room-button.rejoin:hover,
-.room-button.rejoin:focus {
-    background-color: #2980b9;
-}
-
-/* Auth form styles */
-.auth-form {
-    max-width: 400px;
-    width: 90%;
-    margin: 80px auto 20px;
-    background-color: var(--card-bg);
-    padding: var(--space-xl);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-medium);
-    text-align: center;
-    transform: translateY(20px);
-    opacity: 0;
-    animation: fadeInUp 0.6s forwards;
-}
-
-@keyframes fadeInUp {
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.form-group {
-    margin-bottom: var(--space-lg);
-    text-align: left;
-}
-
-label {
-    display: block;
-    margin-bottom: var(--space-sm);
-    color: var(--text-color);
-    font-weight: bold;
-    text-align: left;
-}
-
-input, select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: var(--radius-sm);
-    font-size: var(--text-md);
-    transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
-    box-sizing: border-box;
-    background-color: rgba(255, 255, 255, 0.8);
-}
-
-input:focus, select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.2);
+h3 {
+  font-size: 1.25rem;
 }
 
 button {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: var(--text-md);
-    font-weight: bold;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    text-align: center;
-    width: 100%;
-    max-width: 250px;
-    position: relative;
-    overflow: hidden;
+  cursor: pointer;
 }
 
-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    border-radius: 100%;
-    transform: scale(1, 1) translate(-50%);
-    transform-origin: 50% 50%;
+/* Accessibility & Focus Styles */
+:focus {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
 }
 
-button:active::after {
-    animation: ripple 1s ease-out;
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: white;
+  padding: 0.5rem;
+  z-index: 100;
+  transition: top var(--transition-normal);
 }
 
-@keyframes ripple {
-    0% {
-        transform: scale(0, 0);
-        opacity: 0.5;
-    }
-    100% {
-        transform: scale(20, 20);
-        opacity: 0;
-    }
+.skip-link:focus {
+  top: 0;
 }
 
-.auth-form button {
-    margin-top: var(--space-md);
-    width: 100%;
-}
-
-button:hover,
-button:focus {
-    background-color: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-light);
-}
-
-.form-footer {
-    margin-top: var(--space-md);
-    text-align: center;
-}
-
-/* Mobile-specific styles */
-@media (max-width: 768px) {
-    :root {
-        /* Adjust spacing for mobile */
-        --space-xl: 1.5rem;
-        --space-xxl: 2rem;
-    }
-    
-    h1 {
-        font-size: 2.5rem;
-    }
-
-    .header {
-        padding: 0.75rem 1rem;
-        flex-wrap: wrap;
-    }
-
-    .auth-links {
-        margin-top: 0.5rem;
-    }
-    
-    .auth-links a {
-        margin-left: 0.5rem;
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
-    }
-    
-    input, select, button {
-        font-size: 16px; /* Prevent zoom on iOS */
-    }
-    
-    button, .room-button, .auth-links a, input[type="checkbox"], input[type="radio"] {
-        min-height: 44px;
-        min-width: 44px;
-    }
-    
-    .title-container {
-        margin: var(--space-md);
-        padding: var(--space-lg);
-    }
-}
-
-/* Tablet-specific styles */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .dashboard-container, .auth-form {
-        width: 85%;
-    }
-}
-
-/* Add smooth scrolling for better UX */
-html {
-    scroll-behavior: smooth;
-}
-
-/* Load content with a fade-in effect */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.fadeIn {
-    animation: fadeIn 0.6s ease forwards;
-}
-
-/* Add smooth loading transition for images */
-img {
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-img.loaded {
-    opacity: 1;
-}
-
-/* Add custom scrollbar */
-::-webkit-scrollbar {
-    width: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-dark);
-}
-
-/* Additional responsive design for all containers */
+/* Layout */
 .container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--space-md);
-    transition: all var(--transition-normal);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-/* Loading state for app-wide transitions */
-body.loading {
-    opacity: 0;
-}
-
-body.loaded {
-    opacity: 1;
-    transition: opacity 0.6s ease;
-}
-
-/* Page transition effect */
-body.page-transition {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-/* Fixed height container using CSS variables for better mobile experience */
-.full-height {
-    height: 100vh; /* Fallback */
-    height: calc(var(--vh, 1vh) * 100);
-}
-
-/* Ripple effect for buttons */
-.ripple {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
-    transform: scale(0);
-    animation: ripple 0.6s linear;
-    pointer-events: none;
-}
-
-@keyframes ripple {
-    to {
-        transform: scale(4);
-        opacity: 0;
-    }
-}
-
-/* Improved form field states with subtle animations */
-input:focus, select:focus, textarea:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.2);
-    transform: translateY(-1px);
-}
-
-/* Enhanced placeholder styles */
-::placeholder {
-    color: #999;
-    transition: all 0.3s ease;
-}
-
-input:focus::placeholder {
-    opacity: 0.7;
-    transform: translateX(5px);
-}
-
-/* Improved button states */
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* Add loading state for buttons */
-button.loading {
-    position: relative;
-    color: transparent !important;
-    pointer-events: none;
-}
-
-button.loading::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Screen-reader only class for accessibility */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-}
-
-/* Improved card design with subtle hover effects */
-.card {
-    background-color: var(--card-bg);
-    border-radius: var(--radius-md);
-    padding: var(--space-lg);
-    margin-bottom: var(--space-lg);
-    box-shadow: var(--shadow-light);
-    transition: all var(--transition-normal);
-    transform: translateZ(0); /* Enable hardware acceleration */
-}
-
-.card:hover {
-    box-shadow: var(--shadow-medium);
-    transform: translateY(-3px);
-}
-
-/* Enhanced typography with responsive line heights */
-h1, h2, h3, h4, h5, h6 {
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: var(--space-md);
-    color: var(--text-color);
-    transition: color var(--transition-normal);
-}
-
-p {
-    margin-top: 0;
-    margin-bottom: var(--space-md);
-    line-height: 1.6;
-}
-
-/* Content loading skeleton animation */
-.skeleton {
-    background: linear-gradient(90deg, 
-        rgba(255, 255, 255, 0.1), 
-        rgba(255, 255, 255, 0.2), 
-        rgba(255, 255, 255, 0.1)
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: var(--radius-sm);
-    height: 1em;
-    margin-bottom: 0.5em;
-}
-
-@keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Height variants for skeleton loaders */
-.skeleton.skeleton-title {
-    height: 1.8em;
-    margin-bottom: 1em;
-    max-width: 80%;
-}
-
-.skeleton.skeleton-text {
-    height: 1em;
-    margin-bottom: 0.5em;
-}
-
-.skeleton.skeleton-button {
-    height: 2.5em;
-    max-width: 200px;
-    margin: 1em 0;
-}
-
-.skeleton.skeleton-avatar {
-    height: 50px;
-    width: 50px;
-    border-radius: 50%;
-}
-
-/* Print styles for better paper output */
-@media print {
-    body {
-        background: none;
-        color: black;
-    }
-    
-    .header, .footer, .nav, #language-selector, #theme-toggle {
-        display: none !important;
-    }
-    
-    .container {
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-    
-    a {
-        text-decoration: underline;
-        color: black;
-    }
-    
-    h1, h2, h3 {
-        page-break-after: avoid;
-    }
-    
-    img {
-        max-width: 100% !important;
-    }
-    
-    @page {
-        margin: 2cm;
-    }
-}
-
-/* Content width limiters for readability */
-.content-narrow {
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.content-medium {
-    max-width: 900px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.content-wide {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* Grid layout system for modern browsers */
 .grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: var(--space-md);
+  display: grid;
+  gap: 1.5rem;
 }
 
-@media (max-width: 768px) {
-    .grid {
-        grid-template-columns: repeat(6, 1fr);
-    }
+.flex {
+  display: flex;
 }
 
-@media (max-width: 480px) {
-    .grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
+.flex-col {
+  flex-direction: column;
 }
 
-/* Enhanced modal with backdrop blur */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: var(--z-modal);
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    animation: modalFadeIn 0.3s ease;
+.items-center {
+  align-items: center;
 }
 
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        backdrop-filter: blur(0);
-        -webkit-backdrop-filter: blur(0);
-    }
-    to {
-        opacity: 1;
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-    }
+.justify-center {
+  justify-content: center;
 }
 
-.modal-content {
-    background-color: var(--card-bg);
-    margin: 10% auto;
-    padding: var(--space-lg);
-    border-radius: var(--radius-lg);
-    width: 90%;
-    max-width: 500px;
-    box-shadow: var(--shadow-heavy);
-    transform: translateY(20px);
-    opacity: 0;
-    animation: modalContentFadeIn 0.3s ease 0.1s forwards;
+.justify-between {
+  justify-content: space-between;
 }
 
-@keyframes modalContentFadeIn {
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+.gap-2 {
+  gap: 0.5rem;
 }
 
-/* Performance optimizations */
-.optimize-gpu {
-    will-change: transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
+.gap-4 {
+  gap: 1rem;
 }
 
-/* Subtle parallax effect for background */
-.parallax-bg {
-    background-attachment: fixed;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    transition: background-position 0.1s ease-out;
+.gap-6 {
+  gap: 1.5rem;
 }
 
-/* Tooltip enhancement */
-[data-tooltip] {
-    position: relative;
-    cursor: help;
+/* Theme Switcher */
+.theme-switcher {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background-color: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 0.25rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 45;
 }
 
-[data-tooltip]::before {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-5px);
-    background-color: var(--text-color);
-    color: var(--card-bg);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    visibility: hidden;
-    transition: all var(--transition-fast);
-    z-index: var(--z-dropdown);
+.theme-toggle {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  color: var(--text);
 }
 
-[data-tooltip]:hover::before,
-[data-tooltip]:focus::before {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
+.theme-toggle.active {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 500;
 }
 
-/* Content placeholders while loading */
-.content-placeholder {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    width: 100%;
-}
-
-/* Additional mobile optimizations */
-@media (max-width: 480px) {
-    :root {
-        --space-md: 0.75rem;
-        --space-lg: 1.25rem;
-        --space-xl: 1.5rem;
-        --text-huge: 2.5rem;
-    }
-    
-    .container {
-        padding: var(--space-sm);
-    }
-    
-    .auth-form {
-        padding: var(--space-lg);
-    }
-    
-    .modal-content {
-        width: 95%;
-        margin: 5% auto;
-        padding: var(--space-md);
-    }
-    
-    .room-button {
-        width: 100%;
-    }
-    
-    .hidden-mobile {
-        display: none !important;
-    }
-}
-
-/* Improved error handling UI */
-.error-boundary {
-    padding: var(--space-lg);
-    border: 1px solid var(--danger-color);
-    border-radius: var(--radius-md);
-    background-color: rgba(255, 118, 117, 0.1);
-    margin-bottom: var(--space-lg);
-}
-
-.error-boundary h3 {
-    color: var(--danger-color);
-    margin-top: 0;
-}
-
-.error-boundary pre {
-    overflow-x: auto;
-    background-color: rgba(0, 0, 0, 0.05);
-    padding: var(--space-sm);
-    border-radius: var(--radius-sm);
-}
-
-/* Add glass morphism effect for modern browsers */
-.glass {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-}
-
-.no-backdrop-filter .glass {
-    background: rgba(255, 255, 255, 0.8);
-}
-
-/* CSS for browsers that don't support backdrop-filter */
-.no-backdrop-filter .header {
-    background-color: rgba(248, 249, 250, 0.95);
-}
-
-/* Enhanced matchmaking cards */
-.matchmaking-methods {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-lg);
-    margin: var(--space-lg) 0;
-}
-
-.matchmaking-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: var(--space-lg);
-    border-radius: var(--radius-md);
-    width: 230px;
-    text-align: center;
-    transition: all var(--transition-normal);
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    position: relative;
-    overflow: hidden;
-}
-
-.matchmaking-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, 
-        var(--primary-color), 
-        var(--secondary-color),
-        var(--success-color)
-    );
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.3s ease;
-}
-
-.matchmaking-card:hover::before {
-    transform: scaleX(1);
-}
-
-.matchmaking-icon {
-    font-size: 32px;
-    margin-bottom: var(--space-md);
-    background: rgba(255, 255, 255, 0.2);
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all var(--transition-normal);
-}
-
-.matchmaking-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-medium);
-}
-
-.matchmaking-card:hover .matchmaking-icon {
-    transform: scale(1.1);
-}
-
-.matchmaking-card h4 {
-    color: white;
-    margin-top: 0;
-    margin-bottom: var(--space-sm);
-    font-size: var(--text-lg);
-}
-
-.matchmaking-card p {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: var(--text-sm);
-    margin: 0;
-}
-
-/* Custom card variations */
-#quick-match .matchmaking-icon {
-    background-color: rgba(255, 152, 0, 0.2);
-    color: #ff9800;
-}
-
-#friend-battle .matchmaking-icon {
-    background-color: rgba(76, 175, 80, 0.2);
-    color: #4caf50;
-}
-
-#custom-room .matchmaking-icon {
-    background-color: rgba(33, 150, 243, 0.2);
-    color: #2196f3;
-}
-
-/* Offline notification */
-#offline-notification {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background-color: var(--danger-color);
-    color: white;
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-medium);
-    z-index: var(--z-overlay);
-    animation: slideIn 0.3s ease forwards;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateY(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* Improve centering for various elements */
-.text-center {
-    text-align: center;
-}
-
-/* Improved container centering */
-.content-narrow,
-.content-medium,
-.content-wide {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: calc(100vh - 80px); /* Account for header */
-}
-
-/* Center auth forms better */
-.auth-form {
-    margin: auto;
-    position: relative;
-    top: 0;
-    transform: none;
-}
-
-/* Enhanced visibility with improved contrast */
-.card {
-    background-color: var(--card-bg);
-    color: var(--text-color);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Ensure all glass elements have consistent style */
-.glass {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-}
-
-/* Improved contrast for dark mode */
-@media (prefers-color-scheme: dark) {
-    .glass {
-        background: rgba(30, 30, 30, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    
-    .card {
-        background-color: rgba(30, 30, 30, 0.8);
-    }
-    
-    a, button, .site-title {
-        color: var(--light-text);
-    }
-    
-    input, select, textarea {
-        background-color: rgba(50, 50, 50, 0.8);
-        color: var(--light-text);
-        border-color: rgba(255, 255, 255, 0.2);
-    }
-    
-    ::placeholder {
-        color: rgba(255, 255, 255, 0.6);
-    }
-}
-
-/* Better button visibility */
-.room-button, 
-button[type="submit"],
-.primary-button,
-.secondary-button {
-    min-width: 120px;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Higher contrast for button states */
-button:hover, 
-.room-button:hover,
-.auth-links a:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-medium);
-    filter: brightness(1.1);
-}
-
-/* Improved visibility for navigation */
+/* Header and Navigation - IMPROVED FOR ALL PAGES */
 .header {
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1.5rem;
-    position: sticky;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: rgba(8, 10, 30, 0.97); /* Darker blue/black */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(30, 60, 100, 0.5);
+  z-index: 40;
+  transition: transform var(--transition-normal);
+  height: var(--header-height);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* Improved header container to ensure alignment across pages */
+.header .container {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header .flex {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Enhanced site title styling for better visibility */
+.site-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--primary);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
+
+.site-title:hover {
+  color: #60a5fa;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+/* Center navigation links */
+.all-pages-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Navigation links styling */
 .nav-links {
-    display: flex;
-    gap: var(--space-md);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
 }
 
-.nav-links a, 
-.auth-links a {
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-normal);
+.nav-links a {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  background-color: rgba(30, 41, 59, 0.7);
+  color: var(--text);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  font-weight: 500;
+  min-width: 80px;
+  text-align: center;
+}
+
+.nav-links a:hover {
+  background-color: var(--card);
+  color: white;
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-links a.active {
-    background-color: var(--primary-color);
-    color: white;
+  background-color: var(--primary);
+  color: white;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
 }
 
-/* Improved form element alignment and sizing */
-.form-group {
-    margin-bottom: 1.5rem;
-    width: 100%;
+/* Auth links section - positioned on the right */
+.auth-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-input, select, textarea {
-    width: 100%;
-    min-height: 44px; /* Larger tap targets for better accessibility */
-    padding: 8px 12px;
+/* Improved user welcome component */
+.user-welcome {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(30, 41, 59, 0.6);
+  border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all var(--transition-fast);
 }
 
-/* Responsive centering improvements */
+/* Theme toggle specific adjustments */
+.theme-toggle.active {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 500;
+}
+
+/* Fix for Retro theme header text */
+.nes-theme .site-title {
+  color: var(--nes-text);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.8rem; /* Adjusted size for better fit */
+  letter-spacing: 0; /* Remove letter spacing for pixel font */
+}
+
+.nes-theme .header {
+  background-color: rgba(8, 10, 30, 0.97);
+  border-bottom: 2px solid var(--nes-text);
+}
+
+/* Enhanced nav links with better spacing and visibility */
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Home button styling */
+.nav-links .home-btn {
+  background-color: var(--primary);
+  color: white;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-links .home-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.nav-links .home-btn i {
+  font-size: 1rem;
+}
+
+/* NES theme home button */
+.nes-theme .nav-links .home-btn.nes-btn {
+  background-color: var(--nes-text) !important;
+  color: white !important;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.6rem;
+  image-rendering: pixelated;
+}
+
+.nes-theme .nav-links .home-btn.nes-btn:hover {
+  transform: scale(1.03);
+  animation: pulse 1s infinite;
+}
+
+/* Hide beta badge from main page */
+body:not(.pairing-page):not(.game-room):not(.friends-page):not(.dashboard-page) .game-badge {
+  display: none;
+}
+
+/* Realign buttons */
+.button-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.button-container .btn,
+.button-container .nes-btn {
+  min-width: 120px;
+  text-align: center;
+}
+
+/* Improve spacing for navigation on all pages */
+.site-title-wrapper {
+  display: flex;
+  align-items: center;
+  margin-right: 2rem; /* Added spacing between title and nav links */
+}
+
+/* Adjust header structure for better spacing */
+.header .container {
+  width: 100%;
+}
+
+.header .flex {
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Nav for all pages */
+.all-pages-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Mobile navigation for home button */
 @media (max-width: 768px) {
-    .container {
-        padding: var(--space-sm);
-        width: 100%;
-    }
-    
-    .header {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .site-title {
-        flex-basis: 100%;
-        text-align: center;
-        margin-bottom: 0.5rem;
-    }
-    
-    .nav-links, .auth-links {
-        justify-content: center;
-    }
-    
-    .game-container {
-        flex-direction: column;
-    }
-    
-    .stats-container {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .stat-card {
-        min-width: 120px;
-    }
-    
-    .auth-form {
-        width: 95%;
-        max-width: none;
-    }
-    
-    .modal-content {
-        width: 95%;
-        max-width: none;
-        margin: 5% auto;
-    }
-}
-
-/* Game mode selection on pairing page */
-.game-modes-container {
-    margin: var(--space-lg) 0;
-    padding: var(--space-lg);
-    border-radius: var(--radius-md);
-}
-
-.game-modes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-lg);
+  .mobile-nav .nav-links .home-btn {
+    width: 80%;
+    margin: 0.25rem 0;
     justify-content: center;
-    margin-top: var(--space-md);
+  }
+  
+  .nes-theme .mobile-nav .nav-links .home-btn.nes-btn {
+    margin: 0.5rem 0;
+    width: 80%;
+  }
+  
+  /* Move beta badge to better position on mobile */
+  .game-badge {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin: 0.5rem auto;
+  }
 }
 
-.game-mode-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: var(--space-lg);
-    border-radius: var(--radius-md);
-    width: 180px;
-    text-align: center;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid transparent;
-    transition: all var(--transition-normal);
+/* Page-specific navigation highlighting */
+.index-page .nav-links a[href="/"],
+.dashboard-page .nav-links a[href="/dashboard.html"],
+.friends-page .nav-links a[href="/friends.html"],
+.pairing-page .nav-links a[href="/pairing.html"] {
+  background-color: var(--primary);
+  color: white;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
 }
 
-.game-mode-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-medium);
-    background: rgba(255, 255, 255, 0.15);
+.nes-theme.index-page .nav-links a[href="/"].nes-btn,
+.nes-theme.dashboard-page .nav-links a[href="/dashboard.html"].nes-btn,
+.nes-theme.friends-page .nav-links a[href="/friends.html"].nes-btn,
+.nes-theme.pairing-page .nav-links a[href="/pairing.html"].nes-btn {
+  background-color: var(--nes-text) !important;
+  color: white !important;
 }
 
-.game-mode-card.active {
-    border-color: var(--primary-color);
-    background: rgba(74, 105, 189, 0.2);
-    transform: translateY(-3px);
+/* Enhanced mobile navigation for all pages */
+.mobile-nav {
+  display: none;
+  width: 100%;
+  padding: 0.75rem 0;
+  background-color: rgba(30, 41, 59, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0 0 0.5rem 0.5rem;
+  box-shadow: var(--shadow-md); /* Added shadow for depth */
+  position: absolute;
+  top: var(--header-height);
+  left: 0;
+  z-index: 39;
 }
 
-.mode-icon {
-    font-size: 32px;
-    margin-bottom: var(--space-sm);
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
+.mobile-nav.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.game-mode-card:hover .mode-icon {
-    transform: scale(1.1);
+/* Improved user welcome component across all pages */
+.user-welcome:hover {
+  background-color: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.game-mode-card h4 {
-    margin: var(--space-sm) 0;
-    color: white;
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.75rem;
+  box-shadow: var(--shadow);
 }
 
-.game-mode-card p {
-    font-size: var(--text-sm);
-    color: rgba(255, 255, 255, 0.8);
-    margin: 0;
+.username {
+  color: var(--text);
+  font-weight: 500;
+  margin-right: 1rem;
+  white-space: nowrap; /* Prevent username from wrapping */
+  max-width: 120px; /* Limit width for long usernames */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Add ellipsis for long usernames */
 }
 
-/* Matchmaking controls */
-.matchmaking-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    justify-content: center;
-    align-items: center;
-    margin: var(--space-lg) 0;
+/* Improved NES theme user welcome for all pages */
+.nes-theme .user-welcome {
+  background-color: var(--nes-bg);
+  border: 2px solid var(--nes-text);
+  padding: 0.25rem 0.5rem;
+  margin-right: 0.5rem;
+  border-image-source: none !important;
 }
 
-.queue-status {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
-    background: rgba(0, 0, 0, 0.2);
+.nes-theme .user-avatar {
+  background-color: var(--nes-text);
+  image-rendering: pixelated;
+  border: 2px solid white;
+  width: 32px;
+  height: 32px;
 }
 
-.status-indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #f44336;
+.nes-theme .username {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.6rem;
+  color: white;
 }
 
-.queue-status.active .status-indicator {
-    background-color: #4CAF50;
+/* Main content adjustment for all pages to match pairing page */
+.main-content {
+  padding-top: calc(var(--header-height) + 3rem);
+  padding-bottom: 2rem;
+  min-height: 100vh;
+  max-width: 1200px; /* Match container max-width */
+  margin: 0 auto;
 }
 
-/* Queue timer animation */
-.queue-timer {
-    margin: var(--space-lg) 0;
-    text-align: center;
+/* Cards */
+.card {
+  background-color: var(--card);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
+  color: var(--text);
 }
 
-.timer-value {
-    font-size: var(--text-xl);
-    font-weight: bold;
-    margin: var(--space-sm) 0;
+.card:hover {
+  box-shadow: var(--shadow-xl);
 }
 
-.queue-animation {
-    display: flex;
-    justify-content: center;
-    gap: var(--space-sm);
-    margin: var(--space-md) 0;
+.container-card {
+  background-color: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text);
 }
 
-.searching-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--primary-color);
-    animation: searching-dot 1.5s infinite ease-in-out;
+.title-container {
+  text-align: center;
+  padding: 2rem;
+  margin: 1.5rem auto;
+  max-width: 90vw;
 }
 
-.searching-dot:nth-child(2) {
-    animation-delay: 0.2s;
+.section-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: var(--primary);
 }
 
-.searching-dot:nth-child(3) {
-    animation-delay: 0.4s;
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  background-color: var(--primary);
+  color: white;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: none;
+  text-decoration: none;
+  min-width: 100px; /* Added to make buttons more visible */
+  margin: 0 0.25rem; /* Added to space buttons */
 }
 
-@keyframes searching-dot {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-    50% {
-        transform: scale(1.5);
-        opacity: 1;
-    }
+.btn:hover {
+  background-color: var(--primary-dark);
+  text-decoration: none;
+  transform: translateY(-1px);
 }
 
-/* Stats in dashboard */
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--secondary-dark);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+.btn-outline:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* Form elements */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.375rem;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* Game quotes and descriptions */
+.game-quotes {
+  margin-bottom: 1.5rem;
+}
+
+.game-quote {
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.game-mode-description {
+  color: var(--text);
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  background-color: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  border-left: 3px solid var(--primary);
+}
+
+/* Beta badge - FIXED for both themes */
+.game-badge {
+  display: inline-block;
+  background-color: var(--secondary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.nes-theme .game-badge {
+  background-color: #e59400; /* NES warning color */
+  border: 2px solid white;
+  border-radius: 4px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.65rem;
+  padding: 0.2rem 0.4rem;
+  color: black;
+  text-shadow: none;
+}
+
+.player-count {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.player-count span {
+  color: var(--primary);
+  font-weight: bold;
+}
+
+/* Game-specific elements */
+.matchmaking-options {
+  margin: 2rem 0;
+}
+
+.matchmaking-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.matchmaking-card {
+  text-align: center;
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  margin-bottom: 1rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text);
+  background-color: rgba(30, 41, 59, 0.7);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.matchmaking-card:hover {
+  transform: translateY(-0.25rem);
+  box-shadow: var(--shadow-lg);
+  background-color: rgba(30, 41, 59, 0.9);
+}
+
+.matchmaking-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  margin: 0 auto 0.5rem;
+  background-color: rgba(59, 130, 246, 0.2);
+  color: var(--primary);
+  transition: all var(--transition-normal);
+}
+
+.matchmaking-card:hover .matchmaking-icon {
+  transform: scale(1.1);
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+/* NES theme matchmaking cards */
+.nes-theme .matchmaking-card {
+  border: 4px solid white;
+  background-color: var(--nes-bg);
+  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(33,37,41)" /></svg>');
+  border-image-repeat: stretch;
+  border-image-width: 2;
+  border-image-slice: 2;
+  border-image-outset: 2;
+  padding: 1.5rem;
+  image-rendering: pixelated;
+}
+
+.nes-theme .matchmaking-icon {
+  background-color: rgba(32, 156, 238, 0.2);
+  border: 2px solid var(--nes-text);
+}
+
 .stats-container {
-    display: flex;
-    gap: var(--space-md);
-    margin: var(--space-lg) 0;
-    justify-content: space-between;
+  margin: 1.5rem 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
 }
 
 .stat-card {
-    flex: 1;
-    padding: var(--space-md);
-    border-radius: var(--radius-md);
-    text-align: center;
-    min-width: 100px;
+  text-align: center;
+  height: 100%;
+  background-color: rgba(30, 41, 59, 0.7);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1rem;
 }
 
 .stat-title {
-    font-size: var(--text-sm);
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
 }
 
 .stat-value {
-    font-size: var(--text-lg);
-    font-weight: bold;
-    color: white;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--text);
 }
 
-/* Create room form styles */
-.room-settings-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-    width: 100%;
+/* Ensure all NES text is visible */
+.nes-theme .nes-text {
+  color: var(--nes-text) !important;
 }
 
-.form-section {
-    padding: var(--space-lg);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-md);
+.nes-theme .nes-text.is-primary {
+  color: #209CEE !important;
 }
 
-.form-actions {
-    display: flex;
-    justify-content: center;
-    gap: var(--space-md);
-    margin-top: var(--space-lg);
+.nes-theme .title-glow {
+  text-shadow: 0 0 5px #209CEE, 0 0 10px #209CEE;
+  color: #fff !important;
 }
 
-.checkbox-group {
-    display: flex;
-    align-items: center;
+/* Fix for NES containers in retro mode */
+.nes-theme .nes-container {
+  border-image-repeat: stretch !important;
+  border-color: var(--nes-border) !important;
+  color: white !important;
+  background-color: var(--nes-bg) !important;
 }
 
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    cursor: pointer;
+.nes-theme .nes-container.with-title > .title {
+  background-color: var(--nes-bg) !important;
+  color: white !important;
+  padding: 0 0.5rem !important;
 }
 
-.checkbox-label input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    min-height: auto;
+.nes-theme .nes-container.is-rounded {
+  border-radius: 6px !important;
 }
 
-.checkbox-label span {
-    font-weight: normal;
+/* NES mode for h1-h6 headers */
+.nes-theme h1, .nes-theme h2, .nes-theme h3, .nes-theme h4, .nes-theme h5, .nes-theme h6 {
+  font-family: 'Press Start 2P', cursive !important;
+  color: white !important;
+  line-height: 1.4;
 }
 
-/* Friends page styles */
-.tabs-container {
-    margin: var(--space-lg) 0;
+.nes-theme p {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: white;
 }
 
-.tabs {
-    display: flex;
-    gap: var(--space-sm);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: var(--space-lg);
+/* Multilanguage Support */
+[data-i18n] {
+  transition: opacity var(--transition-fast);
 }
 
-.tab {
-    padding: var(--space-sm) var(--space-md);
+.i18n-fade {
+  opacity: 0.5;
+}
+
+/* Language Selector */
+.language-selector {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 30;
+  display: flex;
+  gap: 0.5rem;
+  background-color: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-md);
+}
+
+/* Improved language buttons for all pages */
+.language-btn {
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  min-width: 40px; /* Ensure buttons have consistent width */
+  text-align: center;
+}
+
+.language-btn:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.language-btn.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.nes-theme .language-btn {
+  color: #fff;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  min-width: 45px;
+}
+
+.nes-theme .language-btn.active {
+  background-color: #209CEE;
+  image-rendering: pixelated;
+}
+
+/* Pairing Page Specific - REVAMPED */
+.pairing-page .main-content {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.queue-status {
+  background-color: rgba(30, 41, 59, 0.7);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-left: 4px solid var(--primary);
+  color: var(--text);
+}
+
+.queue-status.searching {
+  border-left-color: var(--secondary);
+  animation: pulse 2s infinite;
+}
+
+.queue-status.matched {
+  border-left-color: #10b981; /* Green */
+}
+
+.queue-status.error {
+  border-left-color: #ef4444; /* Red */
+}
+
+.queue-timer {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 1rem 0;
+  color: var(--text);
+  text-align: center;
+}
+
+.queue-position {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.cancel-search-btn {
+  background-color: #ef4444;
+  color: white;
+}
+
+.cancel-search-btn:hover {
+  background-color: #dc2626;
+}
+
+.nes-theme .queue-status {
+  border: 2px solid var(--nes-text) !important;
+  background-color: var(--nes-bg) !important;
+  border-radius: 4px !important;
+  border-left-width: 4px !important;
+  color: white !important;
+}
+
+.nes-theme .queue-status.searching {
+  border-color: #f5a623 !important;
+}
+
+.nes-theme .queue-status.matched {
+  border-color: #92CC41 !important;
+}
+
+.nes-theme .queue-status.error {
+  border-color: #E76E55 !important;
+}
+
+/* NES mode timer animation */
+.nes-theme .queue-timer {
+  font-family: 'Press Start 2P', cursive;
+  color: #fff;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+/* Fix for game mode buttons */
+.game-mode-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+}
+
+.game-mode-card {
+  background-color: rgba(30, 41, 59, 0.7);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all var(--transition-normal);
+  height: 100%;
+}
+
+.game-mode-card:hover {
+  transform: translateY(-0.25rem);
+  border-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(30, 41, 59, 0.9);
+}
+
+.game-mode-card.active {
+  border-color: var(--primary);
+  border-width: 2px;
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.nes-theme .game-mode-card {
+  border: 4px solid #fff !important;
+  padding: 1rem;
+  background-color: var(--nes-bg);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7rem;
+  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(33,37,41)" /></svg>');
+  border-image-repeat: stretch;
+  border-image-width: 2;
+  border-image-slice: 2;
+  border-image-outset: 2;
+  image-rendering: pixelated;
+}
+
+.nes-theme .game-mode-card.active {
+  border-color: var(--nes-text) !important;
+  background-color: rgba(32, 156, 238, 0.1);
+  border-image: none;
+}
+
+.nes-theme .game-mode-card h3,
+.nes-theme .game-mode-card h4 {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.8rem;
+  color: var(--nes-text) !important;
+  margin-bottom: 0.75rem;
+}
+
+.nes-theme .game-mode-card p {
+  font-size: 0.65rem;
+  line-height: 1.6;
+}
+
+/* Utility classes */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.my-2 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.my-4 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.offline-notification {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 50;
+  background-color: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Loading state */
+body.loading {
+  opacity: 0;
+}
+
+body.loaded {
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+/* NES Theme integration */
+.nes-theme {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.75rem;
+  line-height: 1.7;
+  background-color: #212529;
+  color: #fff;
+}
+
+.nes-only {
+  display: none;
+}
+
+.nes-theme .nes-only {
+  display: block;
+}
+
+.standard-only {
+  display: block;
+}
+
+.nes-theme .standard-only {
+  display: none;
+}
+
+/* Responsive adaptations */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .theme-switcher {
+    top: 0.75rem;
+    right: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .theme-toggle {
+    padding: 0.35rem 0.65rem;
+  }
+
+  .btn {
+    padding: 0.4rem 0.8rem;
+    min-width: 80px;
+    font-size: 0.9rem;
+  }
+
+  .card, .container-card {
+    padding: 1rem;
+  }
+
+  .header {
+    padding: 0.75rem 1rem;
+    height: var(--header-height); /* Ensure consistent height */
+  }
+  
+  .site-title {
+    font-size: 1.1rem;
+  }
+  
+  .nav-toggle {
+    display: block;
+    padding: 0.5rem;
+    font-size: 1.5rem;
     background: transparent;
     border: none;
-    border-bottom: 3px solid transparent;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text);
     cursor: pointer;
-    font-weight: bold;
-    transition: all var(--transition-normal);
-}
-
-.tab:hover {
-    color: white;
-    transform: none;
-}
-
-.tab.active {
-    color: white;
-    border-bottom-color: var(--primary-color);
-}
-
-.tab-pane {
+    transition: transform var(--transition-fast);
+  }
+  
+  .nav-toggle:hover {
+    transform: scale(1.1);
+  }
+  
+  .nav-links {
     display: none;
-}
-
-.tab-pane.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
-
-.friend-filter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
-}
-
-.search-container {
-    position: relative;
-    flex: 1;
-    min-width: 200px;
-}
-
-.search-input {
-    padding-right: 40px;
-}
-
-.search-icon {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.filter-options {
-    display: flex;
-    gap: var(--space-md);
-}
-
-/* Loading indicators */
-.loading-indicator {
+  }
+  
+  .mobile-nav .nav-links {
     display: flex;
     flex-direction: column;
+    width: 100%;
     align-items: center;
-    gap: var(--space-md);
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Primary and secondary buttons */
-.primary-button {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm) var(--space-lg);
-    font-weight: bold;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.primary-button:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-medium);
-}
-
-.secondary-button {
-    background-color: transparent;
-    color: var(--text-color);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm) var(--space-lg);
-    font-weight: bold;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    text-decoration: none;
-    display: inline-flex;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+  
+  .mobile-nav .nav-links a {
+    width: 80%;
+    text-align: center;
+    margin: 0.25rem 0;
+    padding: 0.75rem; /* Larger touch target */
+  }
+  
+  .mobile-nav .auth-links {
+    margin-top: 0.75rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
     align-items: center;
+  }
+  
+  .mobile-nav .user-welcome {
+    width: 80%;
     justify-content: center;
+    padding: 0.75rem;
+    margin: 0.25rem 0;
+  }
+  
+  /* Mobile navigation enhancements */
+  .mobile-nav.active {
+    padding: 0.75rem 0;
+  }
+  
+  .nes-theme .mobile-nav {
+    background-color: rgba(0, 0, 34, 0.95);
+    border-top: 2px solid var(--nes-text);
+  }
+  
+  .nes-theme .mobile-nav .nav-links a {
+    margin: 0.5rem 0;
+    width: 80%;
+  }
+  
+  /* Mobile-specific NES theme improvements */
+  .nes-theme .mobile-nav .nes-btn {
+    margin: 0.5rem 0;
+    width: 80%;
+    font-size: 0.6rem;
+    padding: 0.4rem;
+  }
+  
+  .nes-theme h1 {
+    font-size: 1.2rem;
+  }
+  
+  .nes-theme h2 {
+    font-size: 1rem;
+  }
+  
+  .nes-theme h3, .nes-theme h4 {
+    font-size: 0.8rem;
+  }
+  
+  .nes-theme p {
+    font-size: 0.65rem;
+  }
+  
+  .game-mode-selector {
+    grid-template-columns: 1fr;
+  }
+  
+  .main-content {
+    padding-top: calc(var(--header-height) + 2rem);
+  }
 }
 
-.secondary-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: translateY(-3px);
+/* Fix for NES theme buttons globally */
+.nes-theme .nes-btn {
+  border-image-repeat: stretch !important;
+  color: white !important;
+  margin: 0 0.25rem;
+  image-rendering: pixelated;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  min-width: 90px;
+  line-height: 1.3;
+}
+
+.nes-theme .nes-btn.is-primary {
+  color: white !important;
+  background-color: var(--nes-text) !important;
+}
+
+.nes-theme .nes-btn.is-error {
+  color: white !important;
+}
+
+.nes-theme .nes-btn.is-success {
+  color: white !important;
+}
+
+.nes-theme .nes-btn:hover {
+  transform: scale(1.03);
+  animation: pulse 1s infinite;
+}
+
+/* NES Theme Beta Badge - Improved for all pages */
+.nes-theme .game-badge {
+  display: inline-block;
+  padding: 0 0.4rem;
+  color: #000;
+  background-color: #e59400;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.6rem;
+  margin: 0.5rem;
+  image-rendering: pixelated;
+  line-height: 1.5;
+  border: 2px solid #fff;
+}
+
+/* Enhanced NES container styles for all pages */
+.nes-theme .nes-container {
+  border-image-repeat: stretch !important;
+  border-color: var(--nes-border) !important;
+  color: white !important;
+  background-color: var(--nes-bg) !important;
+  image-rendering: pixelated;
+  padding: 1.5rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.nes-theme .nes-container.with-title > .title {
+  background-color: var(--nes-bg) !important;
+  color: white !important;
+  padding: 0 0.5rem !important;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.75rem;
+  margin: -1.8rem 0 1rem 0;
+}
+
+.nes-theme .nes-container.is-dark {
+  background-color: #000 !important;
+}
+
+.nes-theme .nes-container.is-rounded {
+  border-radius: 6px !important;
+}
+
+/* Add pixelated icon styling for nes theme */
+.nes-theme .nes-icon {
+  image-rendering: pixelated;
+}
+
+/* Ensure h1-h6 headers use pixel font in NES theme */
+.nes-theme h1, 
+.nes-theme h2, 
+.nes-theme h3, 
+.nes-theme h4, 
+.nes-theme h5, 
+.nes-theme h6 {
+  font-family: 'Press Start 2P', cursive !important;
+  color: white !important;
+  line-height: 1.4;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+}
+
+.nes-theme h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.nes-theme h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1.25rem;
+}
+
+.nes-theme h3, .nes-theme h4 {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* Adjusted paragraph text for NES theme */
+.nes-theme p {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+/* NES specific card styling for all pages */
+.nes-theme .card {
+  background-color: var(--nes-bg);
+  border: 4px solid white;
+  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(33,37,41)" /></svg>');
+  border-image-repeat: stretch;
+  border-image-width: 2;
+  border-image-slice: 2;
+  border-image-outset: 2;
+  image-rendering: pixelated;
+  box-shadow: none;
+}
+
+.nes-theme .card:hover {
+  box-shadow: 5px 5px 0px #000;
+  transform: translate(-2px, -2px);
+}
+
+.nes-theme .container-card {
+  background-color: var(--nes-bg);
+  border: 4px solid white;
+  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(33,37,41)" /></svg>');
+  border-image-repeat: stretch;
+  border-image-width: 2;
+  border-image-slice: 2;
+  border-image-outset: 2;
+  image-rendering: pixelated;
+  box-shadow: none;
+  padding: 1.5rem 1rem;
+}
+
+/* Utility classes for NES theme */
+.nes-theme .text-center {
+  text-align: center;
+}
+
+.nes-theme .text-muted {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.6rem;
+}
+
+.nes-theme .font-bold {
+  font-weight: normal; /* Regular weight for pixel fonts */
+  color: var(--nes-text);
+}
+
+/* NES specific list styling */
+.nes-theme ul.nes-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.nes-theme ul.nes-list li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.65rem;
+  line-height: 1.6;
+}
+
+.nes-theme ul.nes-list li::before {
+  content: "►";
+  color: var(--nes-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* NES specific form elements */
+.nes-theme .form-input {
+  background-color: #000;
+  border: 2px solid white;
+  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(33,37,41)" /></svg>');
+  border-image-repeat: stretch;
+  border-image-width: 2;
+  border-image-slice: 2;
+  border-image-outset: 2;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  padding: 0.5rem;
+  color: white;
+  image-rendering: pixelated;
+}
+
+.nes-theme .form-label {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7rem;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+/* Header collapse and visibility functionality */
+.header.collapsed {
+  transform: translateY(-100%);
+}
+
+.header.visible {
+  transform: translateY(0);
+}
+
+/* Auth links section */
+.auth-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Navigation links styling */
+.nav-links a {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background-color: rgba(30, 41, 59, 0.7);
+  color: var(--text);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  font-weight: 500; /* Slightly bolder for better visibility */
+  min-width: 80px; /* Ensure minimum width for buttons */
+  text-align: center; /* Ensure text is centered */
+}
+
+.nav-links a:hover {
+  background-color: var(--card);
+  color: white;
+  text-decoration: none;
+  transform: translateY(-2px); /* Subtle lift effect */
+  box-shadow: var(--shadow-sm); /* Add shadow on hover */
+}
+
+.nav-links a.active {
+  background-color: var(--primary);
+  color: white;
+  font-weight: 500;
+  box-shadow: var(--shadow-md); /* Add shadow for active state */
+}
+
+.nav-links a.active:hover {
+  background-color: var(--primary-dark);
+  text-decoration: none;
+}
+
+/* Improved NES nav styling */
+.nes-theme .nav-links .nes-btn {
+  min-width: 100px;
+  margin: 0 0.25rem;
+  image-rendering: pixelated;
+  font-size: 0.6rem;
+  border-image-repeat: stretch !important;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  background-color: var(--nes-bg) !important;
+  color: white !important;
+}
+
+.nes-theme .nav-links .nes-btn.is-primary {
+  background-color: var(--nes-text) !important;
+  color: white !important;
+}
+
+/* Logout button specific styling */
+.user-welcome .logout-btn {
+  background-color: rgba(239, 68, 68, 0.8);
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.user-welcome .logout-btn:hover {
+  background-color: rgba(239, 68, 68, 1);
+  transform: translateY(-1px);
+}
+
+/* Fix for user welcome on small screens */
+@media (max-width: 1100px) {
+  .all-pages-nav {
+    position: static;
+    transform: none;
+    margin: 0 auto;
+  }
+  
+  .header .container {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .site-title-wrapper {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .auth-links {
+    flex: 1;
+    justify-content: flex-end;
+    min-width: 120px;
+  }
+}
+
+/* Remove beta badge as requested */
+.game-badge {
+  display: none;
+}
+
+/* NES theme navigation improvements */
+.nes-theme .nav-links .nes-btn {
+  min-width: 100px;
+  margin: 0 0.25rem;
+  image-rendering: pixelated;
+  font-size: 0.6rem;
+  border-image-repeat: stretch !important;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  background-color: var(--nes-bg) !important;
+  color: white !important;
+}
+
+.nes-theme .nav-links .nes-btn.is-primary {
+  background-color: var(--nes-text) !important;
+  color: white !important;
+}
+
+.nes-theme .user-welcome {
+  background-color: var(--nes-bg);
+  border: 2px solid var(--nes-text);
+  padding: 0.25rem 0.5rem;
+  margin-right: 0.5rem;
+  border-image-source: none !important;
+}
+
+.nes-theme .theme-toggle {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.6rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.nes-theme .theme-toggle.active {
+  background-color: #209CEE;
+}
+
+/* Mobile Navigation Adjustments */
+@media (max-width: 768px) {
+  .header {
+    padding: 0.5rem;
+  }
+
+  .all-pages-nav {
+    display: none;
+  }
+  
+  .nav-toggle {
+    display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 1rem;
+    z-index: 46;
+  }
+  
+  .mobile-nav {
+    top: 100%;
+    position: absolute;
+    width: 100%;
+    left: 0;
+    background-color: rgba(8, 10, 30, 0.97);
+    z-index: 45;
+  }
+  
+  .mobile-nav .nav-links {
+    flex-direction: column;
+    width: 100%;
+    padding: 0.5rem;
+  }
+  
+  .mobile-nav .nav-links a {
+    width: 90%;
+    margin: 0.25rem auto;
+  }
+  
+  .mobile-nav.active {
+    display: block;
+    padding: 0.5rem 0 1rem 0;
+  }
+  
+  .theme-switcher {
+    position: fixed;
+    top: auto;
+    bottom: 1rem;
+    right: 1rem;
+    transform: none;
+  }
 }
