@@ -12,11 +12,15 @@
     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
     <!-- Apple touch icon for iOS devices -->
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <!-- Add preload for main script -->
+    <link rel="preload" href="js/ui-enhancement.js" as="script">
+    <!-- Add theme color for browser UI -->
+    <meta name="theme-color" content="#4a69bd">
 </head>
-<body>
+<body class="loading">
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
-    <div class="header">
+    <div class="header glass">
         <a href="/" class="site-title">World Peace Online</a>
         <div class="auth-links">
             <div id="auth-buttons">
@@ -66,19 +70,19 @@
         <div class="matchmaking-options">
             <h3 class="matchmaking-title">Matchmaking</h3>
             <div class="matchmaking-methods">
-                <div class="matchmaking-card" id="quick-match">
+                <div class="matchmaking-card glass" id="quick-match">
                     <div class="matchmaking-icon">⚡</div>
                     <h4>Quick Match</h4>
                     <p>Join the queue for instant matchmaking with players of similar skill</p>
                 </div>
                 
-                <div class="matchmaking-card" id="friend-battle">
+                <div class="matchmaking-card glass" id="friend-battle">
                     <div class="matchmaking-icon">👥</div>
                     <h4>Friend Battle</h4>
                     <p>Challenge your friends to a private match</p>
                 </div>
                 
-                <div class="matchmaking-card" id="custom-room">
+                <div class="matchmaking-card glass" id="custom-room">
                     <div class="matchmaking-icon">🔧</div>
                     <h4>Custom Room</h4>
                     <p>Create a room with customized settings and rules</p>
@@ -89,11 +93,11 @@
         </div>
     </div>
 
-    <div id="language-selector"></div>
+    <div id="language-selector" class="glass"></div>
     
     <!-- Join Room Modal -->
     <div id="join-room-modal" class="join-room-modal" aria-labelledby="join-room-title" aria-hidden="true">
-        <div class="join-room-content">
+        <div class="join-room-content glass">
             <div class="join-room-header">
                 <h3 id="join-room-title">Join Room</h3>
                 <span class="join-room-close" aria-label="Close">&times;</span>
@@ -109,5 +113,28 @@
     <script type="module" src="js/pages/index.js"></script>
     <script type="module" src="js/auth-status.js"></script>
     <script src="js/common.js"></script>
+    <!-- Add UI enhancement script -->
+    <script src="js/ui-enhancement.js"></script>
+    
+    <!-- Add offline support notification -->
+    <div id="offline-notification" class="hidden">
+        You are currently offline. Some features may be limited.
+    </div>
+    
+    <script>
+        // Offline detection
+        window.addEventListener('online', function() {
+            document.getElementById('offline-notification').classList.add('hidden');
+        });
+        
+        window.addEventListener('offline', function() {
+            document.getElementById('offline-notification').classList.remove('hidden');
+        });
+        
+        // Check initial state
+        if (!navigator.onLine) {
+            document.getElementById('offline-notification').classList.remove('hidden');
+        }
+    </script>
 </body>
 </html> 
