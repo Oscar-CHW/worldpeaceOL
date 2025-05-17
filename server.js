@@ -1965,9 +1965,16 @@ async function startServer() {
       }, 5000);
     }
     
-    httpServer.listen(PORT, () => {
-      console.clear();
-      console.log(`
+    // Try to start the server with more robust error handling
+    let port = PORT;
+    const maxRetries = 3;
+    let retries = 0;
+    
+    const startHttpServer = () => {
+      return new Promise((resolve, reject) => {
+        const server = httpServer.listen(port, () => {
+          console.clear();
+          console.log(`
 ==================================
     天下太平 Web Server v1.0
 ==================================
@@ -1987,11 +1994,32 @@ async function startServer() {
    ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
                                                    
       `);
-      log(`Server is running on http://localhost:${PORT}`, 'success');
-      log(`Website "天下太平" is now available!`, 'success');
-      log(`Type 'help' for a list of available commands`, 'info');
-      rl.prompt();
-    });
+          log(`Server is running on http://localhost:${port}`, 'success');
+          log(`Website "天下太平" is now available!`, 'success');
+          log(`Type 'help' for a list of available commands`, 'info');
+          rl.prompt();
+          resolve(server);
+        });
+
+        server.on('error', (e) => {
+          if (e.code === 'EADDRINUSE') {
+            log(`Port ${port} is already in use, trying port ${port + 1}...`, 'warn');
+            port += 1;
+            if (retries < maxRetries) {
+              retries++;
+              server.close();
+              resolve(startHttpServer());
+            } else {
+              reject(new Error(`Failed to start server after ${maxRetries} retries. Please check if other applications are using these ports.`));
+            }
+          } else {
+            reject(e);
+          }
+        });
+      });
+    };
+
+    await startHttpServer();
   } catch (error) {
     log(`Failed to start server: ${error}`, 'error');
     process.exit(1);
