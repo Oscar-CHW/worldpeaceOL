@@ -47,6 +47,9 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -534,11 +537,11 @@ body:not(.pairing-page):not(.game-room):not(.friends-page):not(.dashboard-page) 
 
 /* Main content adjustment for all pages to match pairing page */
 .main-content {
+  flex: 1;
+  min-height: calc(100vh - var(--header-height));
   padding-top: calc(var(--header-height) + 3rem);
   padding-bottom: 2rem;
-  min-height: 100vh;
-  max-width: 1200px; /* Match container max-width */
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* Cards */
@@ -1739,4 +1742,415 @@ body.loaded {
     right: 1rem;
     transform: none;
   }
+}
+
+/* Page-specific layout fixes */
+.dashboard-page .main-content,
+.friends-page .main-content {
+  padding-top: calc(var(--header-height) + 2rem);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Fix container alignment */
+.dashboard-page .container,
+.friends-page .container {
+  width: 100%;
+  padding: 0 1rem;
+  margin: 0 auto;
+}
+
+/* Card layout fixes */
+.dashboard-page .card,
+.friends-page .card,
+.dashboard-page .container-card,
+.friends-page .container-card {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+/* Ensure content areas have proper padding */
+.dashboard-page .content-area,
+.friends-page .content-area {
+  padding: 1.5rem;
+  background-color: var(--card);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 1.5rem;
+}
+
+/* Grid layout fixes */
+.dashboard-page .grid,
+.friends-page .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* NES theme specific fixes for these pages */
+.nes-theme.dashboard-page .nes-container,
+.nes-theme.friends-page .nes-container {
+  margin-bottom: 2rem;
+  width: 100%;
+  image-rendering: pixelated;
+}
+
+/* Fix for dashboard stats */
+.dashboard-page .stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Friends list specific styling */
+.friends-page .friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.friends-page .friend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: rgba(30, 41, 59, 0.7);
+  border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.friends-page .friend-item:hover {
+  background-color: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.friends-page .friend-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.friends-page .friend-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.friends-page .friend-name {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.friends-page .friend-status {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.friends-page .friend-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Fix for content overflow */
+.dashboard-page .overflow-auto,
+.friends-page .overflow-auto {
+  overflow: auto;
+  max-height: 500px;
+}
+
+/* NES theme specific friend list */
+.nes-theme.friends-page .friend-item {
+  background-color: var(--nes-bg);
+  border: 4px solid white;
+  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(33,37,41)" /></svg>');
+  border-image-repeat: stretch;
+  border-image-width: 2;
+  border-image-slice: 2;
+  border-image-outset: 2;
+  image-rendering: pixelated;
+}
+
+.nes-theme.friends-page .friend-name {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7rem;
+  color: white;
+}
+
+.nes-theme.friends-page .friend-status {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.6rem;
+  color: var(--nes-text);
+}
+
+.nes-theme.friends-page .friend-avatar {
+  background-color: var(--nes-text);
+  border: 2px solid white;
+}
+
+/* Fix for sections in all pages */
+section {
+  margin-bottom: 2rem;
+}
+
+/* Fix for headings in all pages */
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 1rem;
+}
+
+/* Fix for navigation links display on all pages */
+body:not(.index-page) .all-pages-nav {
+  display: flex !important;
+}
+
+/* Fix for the navigation position */
+.header {
+  position: fixed;
+  z-index: 100;
+}
+
+/* Dashboard tables */
+.dashboard-page table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  background-color: rgba(30, 41, 59, 0.5);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.dashboard-page th,
+.dashboard-page td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-page th {
+  background-color: rgba(15, 23, 42, 0.7);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.dashboard-page tr:hover {
+  background-color: rgba(30, 41, 59, 0.7);
+}
+
+.dashboard-page tr:last-child td {
+  border-bottom: none;
+}
+
+/* NES theme tables */
+.nes-theme.dashboard-page table {
+  background-color: var(--nes-bg);
+  border: 4px solid white;
+  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(33,37,41)" /></svg>');
+  border-image-repeat: stretch;
+  border-image-width: 2;
+  border-image-slice: 2;
+  border-image-outset: 2;
+  image-rendering: pixelated;
+}
+
+.nes-theme.dashboard-page th {
+  background-color: var(--nes-bg);
+  color: var(--nes-text);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7rem;
+  border-bottom: 2px solid var(--nes-text);
+}
+
+.nes-theme.dashboard-page td {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.65rem;
+  padding: 0.5rem;
+  color: white;
+}
+
+/* Fix dashboard and friends page tab styles */
+.tab-container {
+  margin-bottom: 1.5rem;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 0.5rem 1rem;
+  background-color: rgba(30, 41, 59, 0.5);
+  border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tab-button:hover {
+  background-color: rgba(30, 41, 59, 0.7);
+  transform: translateY(-1px);
+}
+
+.tab-button.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* NES theme tabs */
+.nes-theme .tab-button {
+  background-color: var(--nes-bg);
+  border: 2px solid white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  image-rendering: pixelated;
+}
+
+.nes-theme .tab-button.active {
+  background-color: var(--nes-text);
+  color: white;
+  border-color: white;
+}
+
+/* Additional responsive fixes for both pages */
+@media (max-width: 768px) {
+  .dashboard-page .grid,
+  .friends-page .grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .dashboard-page table,
+  .dashboard-page th,
+  .dashboard-page td {
+    font-size: 0.9rem;
+  }
+  
+  .dashboard-page th,
+  .dashboard-page td {
+    padding: 0.5rem;
+  }
+  
+  .tab-buttons {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .tab-button {
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  
+  .friends-page .friend-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .friends-page .friend-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .nes-theme.dashboard-page th,
+  .nes-theme.dashboard-page td {
+    font-size: 0.55rem;
+    padding: 0.4rem;
+  }
+}
+
+/* Home button style */
+.nav-links .home-link {
+  background-color: var(--primary);
+  color: white;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nav-links .home-link:hover {
+  background-color: var(--primary-dark);
+}
+
+.nes-theme .nav-links .home-link.nes-btn {
+  background-color: var(--nes-text) !important;
+}
+
+/* Dashboard and friends page specific fixes */
+.dashboard-page .page-title,
+.friends-page .page-title {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Center align headers and sections */
+.dashboard-page .section-header,
+.friends-page .section-header {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Content boxes alignment */
+.dashboard-page .content-box,
+.friends-page .content-box {
+  background-color: rgba(30, 41, 59, 0.7);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Fix button group alignment */
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.button-group button,
+.button-group a {
+  flex: 0 0 auto;
+}
+
+/* Fix containers for main content areas */
+.dashboard-page .main-content > .container,
+.friends-page .main-content > .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Fix NES containers in these pages */
+.nes-theme.dashboard-page .nes-container,
+.nes-theme.friends-page .nes-container {
+  width: 100%;
+  margin-bottom: 1.5rem;
 }
