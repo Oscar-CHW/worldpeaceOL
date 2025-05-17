@@ -165,10 +165,32 @@ passport.use(new GoogleStrategy({
     }
 }));
 
-// Mount route files
+// Mount API routes
+// Auth routes
+app.use('/api', authRouter); // Keep for backward compatibility
 app.use('/api/auth', authRouter);
+
+// User routes
 app.use('/api/user', userRouter);
+app.use('/api', userRouter); // For /api/users/count 
+
+// Room routes
 app.use('/api/room', roomRouter);
+
+// Additional endpoints for backward compatibility
+app.post('/api/user/clear-last-room', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        await prisma.user.update({
+            where: { id: userId },
+            data: { lastRoomId: null }
+        });
+        res.json({ success: true });
+    } catch (error) {
+        log(`Error clearing last room: ${error.message}`, 'error');
+        res.status(500).json({ error: 'Could not clear last room' });
+    }
+});
 
 // Admin check middleware
 const isAdmin = async (req, res, next) => {
