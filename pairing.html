@@ -817,15 +817,16 @@
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
-    <div class="container" id="main-content">
-        <div class="page-header">
-            <h1>Find a Match</h1>
-            <nav class="nav-links" aria-label="Main navigation">
-                <a href="dashboard.html">Dashboard</a>
-                <a href="friends.html">Friends</a>
-                <a href="index.html">Home</a>
-            </nav>
+    <div class="header">
+        <a href="/" class="site-title">World Peace Online</a>
+        <div class="auth-links">
+            <div id="auth-buttons">
+                <a href="/login.html" aria-label="Log in to your account">Log in</a>
+                <a href="/signup.html" aria-label="Create a new account">Sign up</a>
+            </div>
         </div>
+    </div>
+    <div class="container" id="main-content">
 
         <div id="errorContainer" class="error-message" style="display: none;" role="alert" aria-live="assertive"></div>
         <div id="successContainer" class="success-message" style="display: none;" role="alert" aria-live="assertive"></div>
@@ -904,8 +905,11 @@
             <div id="testResults" class="test-results"></div>
         </div>
     </div>
-
-    <script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module">
+        
+        import i18n from './js/i18n.js';
+        import { createLanguageSelector } from './js/language-selector.js';
         let queueStartTime = null;
         let timerInterval = null;
         let userData = null;
@@ -1204,6 +1208,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            i18n.init();
             // Add loading state
             document.body.setAttribute('aria-busy', 'true');
             
@@ -1323,7 +1328,25 @@
             
             paramsElem.textContent = rangeText;
         }
-
+        function showLoggedInUI(user) {
+            document.getElementById('auth-buttons').innerHTML = `
+                <a href="/dashboard.html" aria-label="View your dashboard">Dashboard</a>
+                <a href="#" id="logout-btn" aria-label="Log out of your account">Log out</a>
+            `;
+            
+            document.getElementById('logout-btn').addEventListener('click', async (e) => {
+                e.preventDefault();
+                
+                try {
+                    await fetch('/api/logout', { method: 'POST' });
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            });
+            
+            document.getElementById('room-buttons').style.display = 'flex';
+        }
         // Check authentication and load user data
         async function checkAuthAndLoadData() {
             try {
@@ -1333,7 +1356,7 @@
                 }
                 
                 userData = await response.json();
-                
+                showLoggedInUI(userData);
                 // Update UI with user data
                 document.getElementById('userName').textContent = userData.username;
                 document.getElementById('userElo').textContent = `ELO: ${userData.elo}`;
