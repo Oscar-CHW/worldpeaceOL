@@ -19,6 +19,51 @@ require('dotenv').config();
 const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 const VERBOSE_LOGGING = process.env.VERBOSE_LOGGING === 'true';
 
+// Server data structures
+const rooms = new Map(); // Store game rooms
+let onlineUserCount = 0; // Track number of connected users
+const connectedUsers = new Set(); // Track connected socket IDs
+const userRooms = new Map(); // Map socket IDs to room IDs
+
+// Game mode configurations
+const gameModes = {
+  classic: {
+    name: "Classic",
+    description: "Standard game mode with balanced gameplay.",
+    initialGold: 500,
+    miningRate: 50,
+    unitStats: {
+      miner: { health: 100, speed: 1.0, cost: 100 },
+      soldier: { health: 200, damage: 10, speed: 1.0, cost: 200 },
+      barrier: { health: 300, cost: 50 }
+    }
+  },
+  insane: {
+    name: "Insane",
+    description: "Fast-paced chaos with powerful units and rapid resource generation.",
+    initialGold: 1000,
+    miningRate: 100,
+    unitStats: {
+      miner: { health: 80, speed: 1.5, cost: 100 },
+      soldier: { health: 250, damage: 20, speed: 1.3, cost: 250 },
+      barrier: { health: 500, cost: 75 },
+      berserker: { health: 180, damage: 40, speed: 1.8, cost: 400 }
+    }
+  },
+  beta: {
+    name: "Beta",
+    description: "Experimental features and unique gameplay elements.",
+    initialGold: 700,
+    miningRate: 65,
+    unitStats: {
+      miner: { health: 120, speed: 1.0, cost: 120 },
+      soldier: { health: 180, damage: 15, speed: 1.0, cost: 220 },
+      barrier: { health: 350, cost: 60 },
+      scout: { health: 90, damage: 5, speed: 2.0, cost: 150 }
+    }
+  }
+};
+
 // Logging category toggles
 const logCategories = {
     CONNECTIONS: true,      // User connections and disconnections
@@ -73,6 +118,289 @@ app.use(session({
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
+
+// Configure Passport
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    passReqToCallback: true
+}, async (req, accessToken, refreshToken, profile, done) => {
+    try {
+        // Try to find a user with this Google ID
+        let user = await prisma.user.findUnique({
+            where: { googleId: profile.id }
+        });
+        
+        // If we're linking to an existing account (via the /auth/google/link route)
+        if (req.session.linkGoogleToUserId) {
+            // If a user with this Google ID already exists
+            if (user) {
+                return done(null, false, { message: 'This Google account is already linked to another user' });
+            }
+            
+            // Get the user from the session
+            const existingUser = await prisma.user.findUnique({
+                where: { id: req.session.linkGoogleToUserId }
+            });
+            
+            if (!existingUser) {
+                return done(null, false, { message: 'User not found' });
+            }
+            
+            // Update the user with Google info
+            user = await prisma.user.update({
+                where: { id: existingUser.id },
+                data: {
+                    googleId: profile.id,
+                    email: profile.emails[0].value
+                }
+            });
+            
+            // Clear the linking flag
+            delete req.session.linkGoogleToUserId;
+            
+            return done(null, user);
+        }
+        
+        // Handle normal login/registration
+        if (user) {
+            // User found, log them in
+            return done(null, user);
+        } else {
+            // No user found with this Google ID, create a new account
+            // Check if a user with this email already exists
+            let existingUserByEmail = null;
+            if (profile.emails && profile.emails.length > 0) {
+                existingUserByEmail = await prisma.user.findUnique({
+                    where: { email: profile.emails[0].value }
+                });
+            }
+            
+            if (existingUserByEmail) {
+                // Update the existing user with Google ID
+                user = await prisma.user.update({
+                    where: { id: existingUserByEmail.id },
+                    data: { googleId: profile.id }
+                });
+            } else {
+                // Create new user
+                // Generate a username based on Google profile
+                let username = profile.displayName.toLowerCase().replace(/\s+/g, '');
+                
+                // Check if username exists and append numbers if needed
+                let usernameExists = true;
+                let counter = 1;
+                let finalUsername = username;
+                
+                while (usernameExists) {
+                    const existingUser = await prisma.user.findUnique({
+                        where: { username: finalUsername }
+                    });
+                    
+                    if (existingUser) {
+                        finalUsername = `${username}${counter}`;
+                        counter++;
+                    } else {
+                        usernameExists = false;
+                    }
+                }
+                
+                // Create the new user
+                user = await prisma.user.create({
+                    data: {
+                        username: finalUsername,
+                        googleId: profile.id,
+                        email: profile.emails[0].value,
+                        password: '!GoogleAuth!', // Placeholder, can't be used to log in
+                        role: "PLAYER",
+                        elo: 1200
+                    }
+                });
+            }
+            
+            return done(null, user);
+        }
+    } catch (error) {
+        log(`Google auth error: ${error}`, 'error');
+        return done(error);
+    }
+}));
+
+// Serialize/deserialize user for sessions
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: Number(id) }
+        });
+        done(null, user);
+    } catch (error) {
+        done(error);
+    }
+});
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Set up Socket.IO for real-time communication
+io.on('connection', (socket) => {
+    // Increment online user count
+    onlineUserCount++;
+    connectedUsers.add(socket.id);
+    
+    log(`User connected: ${socket.id}. Online users: ${onlineUserCount}`, 'info', 'CONNECTIONS');
+    io.emit('userCount', { count: onlineUserCount });
+    
+    // When user disconnects
+    socket.on('disconnect', () => {
+        // Decrement online user count
+        onlineUserCount = Math.max(0, onlineUserCount - 1);
+        connectedUsers.delete(socket.id);
+        
+        // Handle user leaving a room
+        const roomId = userRooms.get(socket.id);
+        if (roomId) {
+            const room = rooms.get(roomId);
+            if (room) {
+                // Find the player
+                const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
+                if (playerIndex !== -1) {
+                    // Mark player as disconnected
+                    room.players[playerIndex].disconnected = true;
+                    room.players[playerIndex].socketId = null;
+                    
+                    // Notify other players in the room
+                    socket.to(roomId).emit('playerList', {
+                        players: room.players.filter(p => !p.disconnected || p.socketId === socket.id)
+                    });
+                    
+                    log(`Player ${socket.id} disconnected from room ${roomId}`, 'info', 'CONNECTIONS');
+                }
+            }
+            
+            // Remove the user from the room mapping
+            userRooms.delete(socket.id);
+        }
+        
+        log(`User disconnected: ${socket.id}. Online users: ${onlineUserCount}`, 'info', 'CONNECTIONS');
+        io.emit('userCount', { count: onlineUserCount });
+    });
+    
+    // Handle joining a room
+    socket.on('joinRoom', async (data) => {
+        try {
+            const { roomId, username } = data;
+            
+            // Validate input
+            if (!roomId) {
+                socket.emit('error', { message: 'Room ID is required' });
+                return;
+            }
+            
+            let userId = null;
+            
+            // Get user ID from session if authenticated
+            if (socket.request.session && socket.request.session.userId) {
+                userId = socket.request.session.userId;
+                
+                const user = await prisma.user.findUnique({
+                    where: { id: userId }
+                });
+                
+                if (user) {
+                    // Update user's lastRoom
+                    await prisma.user.update({
+                        where: { id: userId },
+                        data: { lastRoom: roomId }
+                    });
+                }
+            }
+            
+            // Check if room exists
+            let room = rooms.get(roomId);
+            
+            // Create room if it doesn't exist
+            if (!room) {
+                room = {
+                    Started: false,
+                    gameMode: 'classic', // Default game mode
+                    players: [{
+                        socketId: socket.id,
+                        username: username || 'Player1',
+                        isHost: true,
+                        userId: userId,
+                        disconnected: false
+                    }],
+                    serverGameState: {
+                        started: false,
+                        gold: {},
+                        units: [],
+                        hp: {},
+                        lastUpdateTime: Date.now()
+                    }
+                };
+                
+                rooms.set(roomId, room);
+                log(`Room created: ${roomId}`, 'info', 'ROOM_EVENTS');
+            } else {
+                // Check if player is already in the room
+                const existingPlayer = room.players.find(p => 
+                    p.userId === userId || 
+                    p.socketId === socket.id || 
+                    (username && p.username === username)
+                );
+                
+                if (existingPlayer) {
+                    // Update existing player's socket ID and connection status
+                    existingPlayer.socketId = socket.id;
+                    existingPlayer.disconnected = false;
+                    log(`Player ${username || socket.id} reconnected to room ${roomId}`, 'info', 'ROOM_EVENTS');
+                } else {
+                    // Add new player to the room
+                    room.players.push({
+                        socketId: socket.id,
+                        username: username || `Player${room.players.length + 1}`,
+                        isHost: false,
+                        userId: userId,
+                        disconnected: false
+                    });
+                    log(`Player ${username || socket.id} joined room ${roomId}`, 'info', 'ROOM_EVENTS');
+                }
+            }
+            
+            // Join the socket.io room
+            socket.join(roomId);
+            userRooms.set(socket.id, roomId);
+            
+            // Send room data to all clients in the room
+            io.to(roomId).emit('playerList', {
+                players: room.players.filter(p => !p.disconnected),
+                gameMode: room.gameMode
+            });
+            
+            // Notify the client that they've joined successfully
+            socket.emit('roomJoined', {
+                roomId,
+                isHost: room.players.find(p => p.socketId === socket.id)?.isHost || false,
+                gameMode: room.gameMode
+            });
+            
+            // If the game has already started, notify the client
+            if (room.Started) {
+                socket.emit('gameStarted', { gameState: room.gameState });
+            }
+        } catch (error) {
+            log(`Error joining room: ${error}`, 'error');
+            socket.emit('error', { message: 'Failed to join room' });
+        }
+    });
+    
+    // Handle game-related socket events here
+});
 
 // Console logging utilities
 function log(message, type = 'info', category = null) {
@@ -1448,7 +1776,6 @@ async function tryMatchmaking(userId) {
     
     // Properly initialize room data structure
     const room = {
-      roomId: roomId,
       Started: false,
       gameMode: gameMode,
       players: [
@@ -1480,7 +1807,7 @@ async function tryMatchmaking(userId) {
     // Store room in memory
     rooms.set(roomId, room);
     
-    log(`Match created: ${userQueue.user.username} (${userId}) vs ${match.user.username} (${match.userId})`, 'debug');
+    log(`Match created: ${userQueue.user.username} (${userId}) vs ${match.user.username} (${match.userId})`, 'debug', 'MATCHMAKING');
     
     return {
       roomId,
