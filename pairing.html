@@ -1,1109 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find Match - World Peace Online</title>
+    <title data-i18n="matchmaking">匹配 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
-    <meta name="description" content="Find opponents and join matchmaking in World Peace Online">
-    <script src="/socket.io/socket.io.js"></script>
+    <meta name="theme-color" content="#4a69bd">
+    <!-- Preload critical assets -->
+    <link rel="preload" href="js/ui-enhancement.js" as="script">
 </head>
-<body>
+<body class="loading">
     <a href="#main-content" class="skip-link">Skip to main content</a>
-    <div class="header">
-        <a href="/" class="site-title">World Peace Online</a>
+    <div id="language-selector" class="glass"></div>
+    
+    <div class="header glass">
+        <a href="/" class="site-title" data-i18n="title">天下太平</a>
+        <div class="nav-links">
+            <a href="/dashboard.html" data-i18n="dashboard">控制台</a>
+            <a href="/friends.html" data-i18n="friends">好友</a>
+            <a href="/pairing.html" data-i18n="matchmaking" class="active">匹配</a>
+        </div>
         <div class="auth-links">
-            <div id="auth-buttons">
-                <a href="/login.html" aria-label="Log in to your account">Log in</a>
-                <a href="/signup.html" aria-label="Create a new account">Sign up</a>
-            </div>
+            <a href="#" id="logout-btn" data-i18n="logout">登出</a>
         </div>
     </div>
-    <div class="container" id="main-content">
-
-        <div id="errorContainer" class="error-message hidden" role="alert" aria-live="assertive"></div>
-        <div id="successContainer" class="success-message hidden" role="alert" aria-live="assertive"></div>
-
-        <div class="user-info" aria-labelledby="userName">
-            <div class="user-avatar" id="userAvatar" aria-hidden="true">?</div>
-            <div class="user-stats">
-                <div class="user-name" id="userName">Loading...</div>
-                <div class="user-elo" id="userElo">ELO: ---</div>
-                <div class="elo-info">Your ELO rating determines your skill level and helps match you with players of similar ability.</div>
+    
+    <div class="container content-medium" id="main-content">
+        <div class="pairing-container card">
+            <div class="pairing-header">
+                <h2 data-i18n="matchmaking">匹配</h2>
+                <p class="subtitle" data-i18n="matchmaking_desc">选择游戏模式并与其他玩家配对</p>
             </div>
-        </div>
-
-        <div class="section" id="matchmakingOptions">
-            <h2>Matchmaking Preferences</h2>
             
-            <div class="matchmaking-mode" role="radiogroup" aria-labelledby="modeSelection">
-                <div id="balancedMode" class="mode-option active" tabindex="0" role="radio" aria-checked="true">
-                    <div class="mode-icon">⚖️</div>
-                    <h3>Balanced</h3>
-                    <p>Find opponents within a moderate ELO range for balanced gameplay.</p>
-                </div>
-                
-                <div id="fastMode" class="mode-option" tabindex="0" role="radio" aria-checked="false">
-                    <div class="mode-icon">⚡</div>
-                    <h3>Fast Match</h3>
-                    <p>Find matches quickly with a wider ELO range.</p>
-                </div>
-                
-                <div id="preciseMode" class="mode-option" tabindex="0" role="radio" aria-checked="false">
-                    <div class="mode-icon">🎯</div>
-                    <h3>Close Skill</h3>
-                    <p>Match with players very close to your ELO (may take longer).</p>
+            <div class="game-modes-container glass">
+                <h3 data-i18n="select_mode">选择游戏模式</h3>
+                <div class="game-modes">
+                    <div class="game-mode-card" id="mode-classic">
+                        <div class="mode-icon">🏆</div>
+                        <h4 data-i18n="classic_mode">经典模式</h4>
+                        <p data-i18n="classic_desc">标准规则的比赛，影响ELO评分</p>
+                    </div>
+                    <div class="game-mode-card" id="mode-casual">
+                        <div class="mode-icon">🎮</div>
+                        <h4 data-i18n="casual_mode">休闲模式</h4>
+                        <p data-i18n="casual_desc">标准规则，但不影响ELO评分</p>
+                    </div>
+                    <div class="game-mode-card" id="mode-blitz">
+                        <div class="mode-icon">⚡</div>
+                        <h4 data-i18n="blitz_mode">闪电模式</h4>
+                        <p data-i18n="blitz_desc">快节奏游戏，每回合时间缩短</p>
+                    </div>
                 </div>
             </div>
             
-            <div class="search-controls">
-                <button id="findMatchBtn" type="button">Find Match</button>
-                <button id="cancelSearch" type="button">Cancel</button>
+            <div class="matchmaking-controls">
+                <div class="queue-status" id="queue-status">
+                    <div class="status-indicator"></div>
+                    <span data-i18n="not_in_queue">未在队列中</span>
+                </div>
+                <button id="find-match-btn" class="primary-button" data-i18n="find_match">寻找对手</button>
+                <button id="cancel-match-btn" class="secondary-button hidden" data-i18n="cancel">取消</button>
             </div>
-        </div>
-        
-        <div id="searchingContainer" class="searching-container" aria-live="polite">
-            <div class="searching-animation" aria-hidden="true"></div>
-            <div class="queue-status">Searching for opponents...</div>
-            <div class="queue-time" id="queueTime">Time in queue: 0:00</div>
-            <div class="search-parameters" id="searchParams">Matching with players around your ELO (1200)</div>
-            <div id="notification-permission" class="notification-permission hidden">
-                <p>Get notified when a match is found!</p>
-                <button id="enableNotifications">Enable Notifications</button>
-            </div>
-            <button id="mobileCancelSearch" class="mobile-only">Cancel Search</button>
-        </div>
-        
-        <div id="matchFoundContainer" class="match-found" aria-live="assertive">
-            <h3>Match Found!</h3>
-            <div class="opponent-info">
-                <p>Opponent: <strong id="opponentName">Player</strong></p>
-                <p>ELO Rating: <span id="opponentElo">1200</span></p>
-            </div>
-            <div class="redirect-msg">Redirecting to game room...</div>
-        </div>
-        
-        <div class="section recent-matches">
-            <h2>Recent Matches <span id="matchesLoading" class="matches-loading hidden"></span></h2>
-            <div id="recentMatchesList"></div>
-        </div>
-
-        <!-- Client-side test panel (hidden by default) -->
-        <div id="clientTestPanel" class="client-test-panel hidden">
-            <h3>Client-Side Tests</h3>
-            <div class="test-controls">
-                <button id="runClientTests" class="test-btn">Run Tests</button>
-                <button id="hideTestPanel" class="test-btn test-btn-secondary">Hide Panel</button>
-            </div>
-            <div id="testResults" class="test-results"></div>
-        </div>
-    </div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script type="module">
-        
-        import i18n from './js/i18n.js';
-        import { createLanguageSelector } from './js/language-selector.js';
-        let queueStartTime = null;
-        let timerInterval = null;
-        let userData = null;
-        let matchmakingMode = 'balanced';
-        const socket = io();
-        let currentUserCount = 0;
-        
-        // Add client testing functions
-        const clientTests = {
-            results: {
-                passed: 0,
-                failed: 0,
-                tests: []
-            },
             
-            resetResults() {
-                this.results = {
-                    passed: 0,
-                    failed: 0,
-                    tests: []
-                };
-            },
+            <div class="queue-timer hidden" id="queue-timer">
+                <div class="timer-label" data-i18n="searching_time">搜索时间</div>
+                <div class="timer-value">00:00</div>
+                <div class="queue-animation">
+                    <div class="searching-dot"></div>
+                    <div class="searching-dot"></div>
+                    <div class="searching-dot"></div>
+                </div>
+            </div>
             
-            logResult(name, passed, message) {
-                if (passed) {
-                    this.results.passed++;
-                    console.log(`✅ TEST PASSED: ${name} - ${message}`);
-                } else {
-                    this.results.failed++;
-                    console.error(`❌ TEST FAILED: ${name} - ${message}`);
-                }
-                
-                this.results.tests.push({ name, passed, message });
-                this.updateResultsDisplay();
-            },
+            <div class="estimated-time">
+                <span data-i18n="estimated_wait">预计等待时间</span>: <span id="estimated-wait-time">~1 分钟</span>
+            </div>
             
-            updateResultsDisplay() {
-                const resultsElement = document.getElementById('testResults');
-                if (!resultsElement) return;
-                
-                let html = `
-                    <div class="test-summary">
-                        <div class="test-count ${this.results.failed > 0 ? 'failed' : 'passed'}">
-                            ${this.results.passed} passed, ${this.results.failed} failed
+            <div class="players-online">
+                <span data-i18n="players_online">在线玩家</span>: <span id="online-player-count">-</span>
+            </div>
+        </div>
+        
+        <!-- Match Found Modal -->
+        <div id="match-found-modal" class="modal" aria-labelledby="match-found-title" aria-hidden="true">
+            <div class="modal-content glass">
+                <div class="modal-header">
+                    <h3 id="match-found-title" data-i18n="match_found">找到对手！</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="match-info">
+                        <div class="opponent-info">
+                            <h4 data-i18n="opponent">对手</h4>
+                            <div id="opponent-details">
+                                <div class="opponent-name" id="opponent-name"></div>
+                                <div class="opponent-elo" id="opponent-elo"></div>
+                            </div>
+                        </div>
+                        <div class="mode-info">
+                            <h4 data-i18n="game_mode">游戏模式</h4>
+                            <div id="match-mode"></div>
                         </div>
                     </div>
-                    <div class="test-details">
-                `;
-                
-                this.results.tests.forEach(test => {
-                    html += `
-                        <div class="test-item ${test.passed ? 'passed' : 'failed'}">
-                            <span class="test-icon">${test.passed ? '✅' : '❌'}</span>
-                            <span class="test-name">${test.name}</span>
-                            <span class="test-message">${test.message}</span>
-                        </div>
-                    `;
-                });
-                
-                html += '</div>';
-                resultsElement.innerHTML = html;
-            },
-            
-            async runAllTests() {
-                try {
-                    this.resetResults();
-                    console.log("🧪 Starting client-side tests...");
-                    
-                    await this.testUIElements();
-                    await this.testSocketConnection();
-                    await this.testMatchmakingModeSelection();
-                    await this.testJoinQueueRequest();
-                    
-                    // Add UI feedback test
-                    const uiFeedbackResults = await testUIFeedback();
-                    
-                    // Add results to main results object
-                    this.results.passed += uiFeedbackResults.passed;
-                    this.results.failed += uiFeedbackResults.failed;
-                    this.results.tests = this.results.tests.concat(uiFeedbackResults.tests);
-                    
-                    console.log(`🧪 All tests completed: ${this.results.passed} passed, ${this.results.failed} failed`);
-                    
-                    // Update display
-                    this.updateResultsDisplay();
-                } catch (error) {
-                    console.error("❌ Test execution error:", error);
-                    this.logResult("Test Execution", false, `Unexpected error: ${error.message}`);
-                }
-            },
-            
-            async testUIElements() {
-                try {
-                    // Test all required UI elements exist
-                    const requiredElements = [
-                        { id: 'userElo', name: 'User ELO Display' },
-                        { id: 'findMatchBtn', name: 'Find Match Button' },
-                        { id: 'balancedMode', name: 'Balanced Mode Option' },
-                        { id: 'fastMode', name: 'Fast Mode Option' },
-                        { id: 'preciseMode', name: 'Precise Mode Option' },
-                        { id: 'searchingContainer', name: 'Searching Container' },
-                        { id: 'matchFoundContainer', name: 'Match Found Container' }
-                    ];
-                    
-                    let allElementsExist = true;
-                    let missingElements = [];
-                    
-                    requiredElements.forEach(element => {
-                        const el = document.getElementById(element.id);
-                        if (!el) {
-                            allElementsExist = false;
-                            missingElements.push(element.name);
-                        }
-                    });
-                    
-                    if (allElementsExist) {
-                        this.logResult('UI Elements', true, 'All required UI elements exist');
-                    } else {
-                        this.logResult('UI Elements', false, `Missing elements: ${missingElements.join(', ')}`);
-                    }
-                    
-                    // Test UI state at initialization
-                    const searchingContainer = document.getElementById('searchingContainer');
-                    const matchFoundContainer = document.getElementById('matchFoundContainer');
-                    
-                    if (searchingContainer.style.display === 'none' && matchFoundContainer.style.display === 'none') {
-                        this.logResult('UI Initial State', true, 'UI correctly initialized with hidden containers');
-                    } else {
-                        this.logResult('UI Initial State', false, 'UI incorrectly initialized with visible containers');
-                    }
-                } catch (error) {
-                    this.logResult('UI Elements', false, `Test error: ${error.message}`);
-                }
-            },
-            
-            async testSocketConnection() {
-                try {
-                    // Check if socket is connected
-                    if (socket.connected) {
-                        this.logResult('Socket Connection', true, 'Socket is connected');
-                    } else {
-                        this.logResult('Socket Connection', false, 'Socket is not connected');
-                        return;
-                    }
-                    
-                    // Test event handling by setting up a temporary listener
-                    return new Promise((resolve) => {
-                        // Set timeout to fail if event not received
-                        const timeout = setTimeout(() => {
-                            this.logResult('Socket Event Handling', false, 'Socket event timeout - no response received');
-                            resolve();
-                        }, 2000);
-                        
-                        // Set up one-time event handler
-                        socket.once('testResponse', (data) => {
-                            clearTimeout(timeout);
-                            this.logResult('Socket Event Handling', true, 'Socket event handling working properly');
-                            resolve();
-                        });
-                        
-                        // Emit test event
-                        socket.emit('testRequest', { test: true, timestamp: Date.now() });
-                    });
-                } catch (error) {
-                    this.logResult('Socket Connection', false, `Test error: ${error.message}`);
-                }
-            },
-            
-            async testMatchmakingModeSelection() {
-                try {
-                    // Test mode selection
-                    const modes = ['balanced', 'fast', 'precise'];
-                    let modeSelectionWorking = true;
-                    
-                    // Save original mode
-                    const originalMode = matchmakingMode;
-                    
-                    // Try each mode
-                    for (const mode of modes) {
-                        const modeElement = document.getElementById(`${mode}Mode`);
-                        if (!modeElement) {
-                            this.logResult('Mode Selection', false, `Mode element '${mode}Mode' not found`);
-                            modeSelectionWorking = false;
-                            continue;
-                        }
-                        
-                        // Click the mode option
-                        modeElement.click();
-                        
-                        // Check if matchmakingMode was updated
-                        if (matchmakingMode !== mode) {
-                            this.logResult('Mode Selection', false, `Mode selection failed for ${mode}`);
-                            modeSelectionWorking = false;
-                            break;
-                        }
-                        
-                        // Check if UI was updated
-                        if (!modeElement.classList.contains('active')) {
-                            this.logResult('Mode Selection UI', false, `Mode '${mode}' not marked as active in UI`);
-                            modeSelectionWorking = false;
-                            break;
-                        }
-                    }
-                    
-                    if (modeSelectionWorking) {
-                        this.logResult('Mode Selection', true, 'Matchmaking mode selection working properly');
-                    }
-                    
-                    // Restore original mode
-                    document.getElementById(`${originalMode}Mode`).click();
-                } catch (error) {
-                    this.logResult('Mode Selection', false, `Test error: ${error.message}`);
-                }
-            },
-            
-            async testJoinQueueRequest() {
-                try {
-                    // Mock the fetch API to prevent actual API calls
-                    const originalFetch = window.fetch;
-                    
-                    // Create a temporary test response
-                    const testResponse = {
-                        ok: true,
-                        json: () => Promise.resolve({ 
-                            message: 'Test join successful', 
-                            matched: false 
-                        })
-                    };
-                    
-                    // Replace fetch with mock
-                    window.fetch = function(url, options) {
-                        if (url === '/api/pairing/join') {
-                            return Promise.resolve(testResponse);
-                        }
-                        
-                        // For other requests, use the original fetch
-                        return originalFetch(url, options);
-                    };
-                    
-                    // Store original function to restore later
-                    const originalStartSearchingUI = window.startSearchingUI;
-                    
-                    // Replace with test version
-                    let startSearchingCalled = false;
-                    window.startSearchingUI = function() {
-                        startSearchingCalled = true;
-                    };
-                    
-                    // Call joinMatchmaking
-                    await joinMatchmaking();
-                    
-                    // Restore original functions
-                    window.fetch = originalFetch;
-                    window.startSearchingUI = originalStartSearchingUI;
-                    
-                    if (startSearchingCalled) {
-                        this.logResult('Join Queue', true, 'Join queue request properly triggers UI update');
-                    } else {
-                        this.logResult('Join Queue', false, 'Join queue request did not trigger UI update');
-                    }
-                } catch (error) {
-                    this.logResult('Join Queue', false, `Test error: ${error.message}`);
-                    
-                    // Restore original fetch in case of error
-                    if (window.fetch !== originalFetch) {
-                        window.fetch = originalFetch;
-                    }
-                }
-            }
-        };
+                    <div class="acceptance-timer">
+                        <div data-i18n="accept_countdown">请在以下时间内接受</div>
+                        <div id="accept-timer">15</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="accept-match-btn" class="success-button" data-i18n="accept">接受</button>
+                    <button id="decline-match-btn" class="danger-button" data-i18n="decline">拒绝</button>
+                </div>
+            </div>
+        </div>
         
-        // Function to add the test key shortcut and button handler
-        function setupTestingTools() {
-            // Add keyboard shortcut (Shift+Alt+T) to show test panel
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'T' && e.altKey && e.shiftKey) {
-                    toggleTestPanel();
-                }
-            });
-            
-            // Set up button handlers
-            document.getElementById('runClientTests').addEventListener('click', function() {
-                clientTests.runAllTests();
-            });
-            
-            document.getElementById('hideTestPanel').addEventListener('click', function() {
-                document.getElementById('clientTestPanel').classList.add('hidden');
-            });
-        }
-        
-        function toggleTestPanel() {
-            const panel = document.getElementById('clientTestPanel');
-            if (panel) {
-                panel.classList.toggle('hidden');
-            }
-        }
-
+        <!-- Add offline support notification -->
+        <div id="offline-notification" class="hidden">
+            You are currently offline. Some features may be limited.
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/common.js"></script>
+    <script type="module" src="js/pages/pairing.js"></script>
+    <script src="js/ui-enhancement.js"></script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
-            i18n.init();
-            // Add loading state
-            document.body.setAttribute('aria-busy', 'true');
-            
-            // Setup Socket.IO listeners
-            setupSocketListeners();
-            
-            // Check authentication and load user data
-            checkAuthAndLoadData();
-
-            // Setup matchmaking mode selection
-            setupMatchmakingModes();
-
-            // Matchmaking buttons
-            document.getElementById('findMatchBtn').addEventListener('click', function() {
-                joinMatchmaking();
-            });
-
-            document.getElementById('cancelSearch').addEventListener('click', function() {
-                leaveMatchmaking();
+            // Offline detection
+            window.addEventListener('online', function() {
+                document.getElementById('offline-notification').classList.add('hidden');
             });
             
-            // Mobile-specific cancel button
-            document.getElementById('mobileCancelSearch').addEventListener('click', function() {
-                leaveMatchmaking();
+            window.addEventListener('offline', function() {
+                document.getElementById('offline-notification').classList.remove('hidden');
             });
             
-            // Notification permission button
-            document.getElementById('enableNotifications').addEventListener('click', function() {
-                requestNotificationPermission();
-            });
-            
-            // Check if browser supports notifications
-            if ('Notification' in window) {
-                // Show the notification permission section if notifications aren't enabled
-                if (Notification.permission !== 'granted') {
-                    document.getElementById('notification-permission').classList.remove('hidden');
-                }
+            // Check initial state
+            if (!navigator.onLine) {
+                document.getElementById('offline-notification').classList.remove('hidden');
             }
-
-            // Check if already in queue
-            checkQueueStatus();
             
-            // Load recent matches
-            loadRecentMatches();
+            // Game mode selection
+            const gameModes = document.querySelectorAll('.game-mode-card');
             
-            // Make options keyboard accessible
-            document.querySelectorAll('.mode-option').forEach(option => {
-                option.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        this.click();
-                    }
-                });
-            });
-            
-            // Setup testing tools
-            setupTestingTools();
-            
-            // Add socket test handler for client test
-            socket.on('testResponse', function(data) {
-                console.log('Test response received:', data);
-            });
-        });
-        
-        // Add socket test handler on server side test request
-        socket.on('testRequest', function(data) {
-            // Echo back the data
-            socket.emit('testResponse', { 
-                received: true, 
-                original: data,
-                timestamp: Date.now()
-            });
-        });
-
-        function setupMatchmakingModes() {
-            const modes = document.querySelectorAll('.mode-option');
-            
-            modes.forEach(mode => {
+            gameModes.forEach(mode => {
                 mode.addEventListener('click', function() {
                     // Remove active class from all modes
-                    modes.forEach(m => {
-                        m.classList.remove('active');
-                        m.setAttribute('aria-checked', 'false');
-                    });
-                    
-                    // Add active class to selected mode
+                    gameModes.forEach(m => m.classList.remove('active'));
+                    // Add active class to clicked mode
                     this.classList.add('active');
-                    this.setAttribute('aria-checked', 'true');
-                    
-                    // Set matchmaking mode
-                    matchmakingMode = this.id.replace('Mode', '');
-                    
-                    // Update search parameters display
-                    updateSearchParameters();
                 });
             });
-        }
-        
-        function updateSearchParameters() {
-            const paramsElem = document.getElementById('searchParams');
-            const userElo = userData ? userData.elo : 1200;
             
-            let rangeText = '';
-            switch(matchmakingMode) {
-                case 'balanced':
-                    rangeText = `Matching with players around your ELO (±100-200)`;
-                    break;
-                case 'fast':
-                    rangeText = `Matching with a wide range of players (±300-400)`;
-                    break;
-                case 'precise':
-                    rangeText = `Matching with players very close to your ELO (±50-100)`;
-                    break;
-                default:
-                    rangeText = `Matching with players around your ELO`;
-            }
-            
-            paramsElem.textContent = rangeText;
-        }
-        function showLoggedInUI(user) {
-            document.getElementById('auth-buttons').innerHTML = `
-                <a href="/dashboard.html" aria-label="View your dashboard">Dashboard</a>
-                <a href="#" id="logout-btn" aria-label="Log out of your account">Log out</a>
-            `;
-            
-            document.getElementById('logout-btn').addEventListener('click', async (e) => {
-                e.preventDefault();
-                
-                try {
-                    await fetch('/api/logout', { method: 'POST' });
-                    window.location.reload();
-                } catch (error) {
-                    console.error('Logout error:', error);
-                }
-            });
-            
-            document.getElementById('room-buttons').style.display = 'flex';
-        }
-        // Check authentication and load user data
-        async function checkAuthAndLoadData() {
-            try {
-                const response = await fetch('/api/me');
-                if (!response.ok) {
-                    throw new Error('Authentication failed');
-                }
-                
-                userData = await response.json();
-                showLoggedInUI(userData);
-                // Update UI with user data
-                document.getElementById('userName').textContent = userData.username;
-                document.getElementById('userElo').textContent = `ELO: ${userData.elo}`;
-                document.getElementById('userAvatar').textContent = userData.username.charAt(0).toUpperCase();
-                
-                // Update search parameters display
-                updateSearchParameters();
-                
-                // Announce user data loaded
-                announceToScreenReader(`Welcome, ${userData.username}. Your current ELO is ${userData.elo}`);
-                
-                // Remove loading state
-                document.body.removeAttribute('aria-busy');
-                
-                // Check if user already has a game room
-                const roomResponse = await fetch('/api/user/last-room');
-                if (roomResponse.ok) {
-                    const roomData = await roomResponse.json();
-                    
-                    if (roomData.hasLastRoom && roomData.roomId) {
-                        // Check if the room actually exists via socket
-                        socket.emit('checkRoom', { roomId: roomData.roomId });
-                        
-                        socket.once('roomCheckResult', (checkResult) => {
-                            if (checkResult.exists) {
-                                showSuccess(`You have an active game room. Redirecting...`);
-                                // Directly attempt to join the room
-                                attemptToJoinRoom(roomData.roomId, userData.username);
-                            } else {
-                                // Clear the stale room reference
-                                fetch('/api/user/clear-last-room', { method: 'POST' })
-                                    .catch(err => console.error('Failed to clear last room:', err));
-                            }
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Authentication check failed:', error);
-                showError('Authentication failed. Redirecting to login page.');
-                setTimeout(() => {
-                    window.location.href = "/login.html";
-                }, 2000);
-            }
-        }
-
-        // Setup Socket.IO listeners
-        function setupSocketListeners() {
-            socket.on('connect', () => {
-                console.log('Connected to server');
-            });
-            
-            socket.on('error', (data) => {
-                showError(data.message);
-            });
-            
-            socket.on('matchFound', (data) => {
-                handleMatchFound(data);
-            });
-            
-            socket.on('userCount', (data) => {
-                currentUserCount = data.count;
-                updatePlayerCount(data.count);
-            });
-            
-            // Handle ping event for debugging
-            socket.on('ping', function(data) {
-                console.log('Ping received from server:', data);
-                // Send pong back to server
-                socket.emit('pong', { 
-                    received: true, 
-                    timestamp: Date.now(),
-                    roundTrip: Date.now() - data.timestamp
-                });
-            });
-        }
-
-        // Join matchmaking queue
-        async function joinMatchmaking() {
-            try {
-                // Prepare ELO range based on matchmaking mode
-                let eloMin = null;
-                let eloMax = null;
-                
-                // Only set ELO range for precise matching
-                if (matchmakingMode === 'precise' && userData) {
-                    eloMin = Math.max(userData.elo - 100, 0);
-                    eloMax = userData.elo + 100;
-                }
-                
-                // Join queue via API
-                const response = await fetch('/api/pairing/join', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ eloMin, eloMax })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    if (data.matched) {
-                        // Match found immediately
-                        showSuccess('Match found! Redirecting to game room...');
-                        setTimeout(() => {
-                            window.location.href = `/game-room.html?room=${data.roomId}`;
-                        }, 1500);
-                    } else {
-                        // Start searching UI
-                        startSearchingUI();
-                    }
-                } else {
-                    showError(data.error || 'Failed to join matchmaking');
-                }
-            } catch (error) {
-                console.error('Error joining matchmaking:', error);
-                showError('Failed to connect to matchmaking server');
-            }
-        }
-
-        // Leave matchmaking queue
-        async function leaveMatchmaking() {
-            try {
-                const response = await fetch('/api/pairing/leave', {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    stopSearchingUI();
-                    showSuccess('Left matchmaking queue');
-                } else {
-                    const data = await response.json();
-                    showError(data.error || 'Failed to leave matchmaking');
-                }
-            } catch (error) {
-                console.error('Error leaving matchmaking:', error);
-                showError('Failed to leave matchmaking queue');
-            }
-        }
-
-        // Check queue status
-        async function checkQueueStatus() {
-            try {
-                const response = await fetch('/api/pairing/status');
-                const data = await response.json();
-                
-                if (data.inQueue) {
-                    // Resume searching UI
-                    startSearchingUI(new Date(data.joinedAt));
-                }
-            } catch (error) {
-                console.error('Error checking queue status:', error);
-            }
-        }
-
-        // Start searching UI
-        function startSearchingUI(startTime = null) {
-            // Hide matchmaking options and show searching container
-            document.getElementById('matchmakingOptions').classList.add('hidden');
-            document.getElementById('searchingContainer').classList.remove('hidden');
-            
-            // Update the queue status with the proper message based on matchmaking mode
-            let statusMessage = '';
-            switch(matchmakingMode) {
-                case 'balanced':
-                    statusMessage = 'Finding a balanced match with similar skilled players...';
-                    break;
-                case 'fast':
-                    statusMessage = 'Finding the fastest match possible...';
-                    break;
-                case 'precise':
-                    statusMessage = 'Looking for closely matched opponents...';
-                    break;
-                default:
-                    statusMessage = 'Searching for opponents...';
-            }
-            
-            document.querySelector('.queue-status').textContent = statusMessage;
-            document.querySelector('.queue-status').style.display = 'block';
-            
-            // Hide find match button and show cancel button
-            document.getElementById('findMatchBtn').style.display = 'none';
-            document.getElementById('cancelSearch').style.display = 'block';
-            
-            // Set queue start time
-            queueStartTime = startTime || new Date();
-            
-            // Start timer
-            timerInterval = setInterval(updateQueueTimer, 1000);
-            
-            // Update search parameters display
-            updateSearchParameters();
-            
-            // Announce to screen readers
-            announceToScreenReader('Searching for opponents based on your preferences');
-            
-            // Show the playerCount if available
-            if (currentUserCount > 0) {
-                const countElement = document.createElement('div');
-                countElement.className = 'player-count';
-                countElement.textContent = `${currentUserCount} player${currentUserCount !== 1 ? 's' : ''} online`;
-                document.getElementById('searchingContainer').appendChild(countElement);
-            }
-        }
-
-        // Stop searching UI
-        function stopSearchingUI() {
-            // Show matchmaking options and hide searching container
-            document.getElementById('matchmakingOptions').classList.remove('hidden');
-            document.getElementById('searchingContainer').classList.add('hidden');
-            
-            // Show find match button and hide cancel button
-            document.getElementById('findMatchBtn').style.display = 'block';
-            document.getElementById('cancelSearch').style.display = 'none';
-            
-            // Stop timer
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-            
-            // Reset queue start time
-            queueStartTime = null;
-            
-            // Announce to screen readers
-            announceToScreenReader('Search canceled');
-        }
-
-        // Update queue timer
-        function updateQueueTimer() {
-            if (!queueStartTime) return;
-            
-            const now = new Date();
-            const queueTime = now - queueStartTime;
-            const minutes = Math.floor(queueTime / 60000);
-            const seconds = Math.floor((queueTime % 60000) / 1000);
-            
-            // Format the time with leading zeros
-            const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('queueTime').textContent = `Time in queue: ${formattedTime}`;
-            
-            // After certain thresholds, update the UI to show expanded search range
-            if (minutes >= 1 && matchmakingMode !== 'fast') {
-                document.querySelector('.queue-status').textContent = 'Expanding search range to find opponents...';
-                
-                // Dynamically update the search parameters
-                let expandedText = '';
-                switch(matchmakingMode) {
-                    case 'balanced':
-                        expandedText = `Expanded matching range (±${100 + Math.min(minutes * 50, 300)})`; 
-                        break;
-                    case 'precise':
-                        expandedText = `Expanded matching range (±${50 + Math.min(minutes * 25, 150)})`;
-                        break;
-                    default:
-                        expandedText = 'Expanded matching range';
-                }
-                document.getElementById('searchParams').textContent = expandedText;
-            }
-        }
-
-        // Handle match found
-        function handleMatchFound(data) {
-            // Stop searching UI
-            stopSearchingUI();
-            
-            // Show match found container
-            document.getElementById('matchFoundContainer').classList.remove('hidden');
-            
-            // Update opponent info
-            document.getElementById('opponentName').textContent = data.opponent;
-            document.getElementById('opponentElo').textContent = data.opponentElo;
-            
-            // Add ELO difference display
-            if (data.eloDifference !== undefined) {
-                const eloDiffText = data.eloDifference === 0 ? 
-                    'Perfect ELO match!' : 
-                    `ELO difference: ${data.eloDifference}`;
-                
-                const eloDiffElem = document.createElement('p');
-                eloDiffElem.textContent = eloDiffText;
-                eloDiffElem.className = data.eloDifference < 100 ? 'elo-match-good' : 'elo-match-wide';
-                document.querySelector('.opponent-info').appendChild(eloDiffElem);
-            }
-            
-            // Play a sound to notify the user
-            try {
-                const audio = new Audio('/sounds/match-found.mp3');
-                audio.play().catch(e => console.log('Audio play failed: browser requires user interaction first'));
-            } catch (e) {
-                console.log('Audio not supported');
-            }
-            
-            // Make the window flash or show notification if possible
-            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-                try {
-                    new Notification('Match Found!', {
-                        body: `Your opponent is ${data.opponent} with ELO ${data.opponentElo}`
-                    });
-                } catch (e) {
-                    console.log('Notification failed', e);
-                }
-            }
-            
-            // Announce to screen readers
-            announceToScreenReader(`Match found! Your opponent is ${data.opponent} with an ELO rating of ${data.opponentElo}`);
-            
-            // Show a countdown before redirect
-            let countdown = 3;
-            const redirectMsg = document.querySelector('.redirect-msg');
-            redirectMsg.textContent = `Redirecting to game room in ${countdown}...`;
-            
-            const countdownInterval = setInterval(() => {
-                countdown--;
-                if (countdown <= 0) {
-                    clearInterval(countdownInterval);
-                    window.location.href = `/game-room.html?room=${data.roomId}`;
-                } else {
-                    redirectMsg.textContent = `Redirecting to game room in ${countdown}...`;
-                }
-            }, 1000);
-        }
-
-        // Attempt to join room
-        function attemptToJoinRoom(roomId, username) {
-            setTimeout(() => {
-                window.location.href = `/game-room.html?room=${roomId}`;
-            }, 1500);
-        }
-
-        // Load recent matches
-        async function loadRecentMatches() {
-            try {
-                // Show loading state
-                document.getElementById('matchesLoading').classList.remove('hidden');
-                
-                const response = await fetch('/api/matches/recent');
-                
-                if (response.ok) {
-                    const matches = await response.json();
-                    renderRecentMatches(matches);
-                } else {
-                    console.error('Failed to load recent matches');
-                    document.getElementById('recentMatchesList').innerHTML = 
-                        '<div class="no-matches" role="alert">Could not load match history</div>';
-                }
-                
-                // Hide loading state
-                document.getElementById('matchesLoading').classList.add('hidden');
-            } catch (error) {
-                console.error('Error loading recent matches:', error);
-                document.getElementById('matchesLoading').classList.add('hidden');
-                document.getElementById('recentMatchesList').innerHTML = 
-                    '<div class="no-matches" role="alert">Error loading match history</div>';
-            }
-        }
-
-        // Render recent matches
-        function renderRecentMatches(matches) {
-            const container = document.getElementById('recentMatchesList');
-            
-            if (!matches || matches.length === 0) {
-                container.innerHTML = '<div class="no-matches" role="status">No recent matches found</div>';
-                return;
-            }
-            
-            let html = `
-                <table class="matches-table" aria-label="Recent matches history">
-                    <thead>
-                        <tr>
-                            <th scope="col">Opponent</th>
-                            <th scope="col">Result</th>
-                            <th scope="col">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            matches.forEach(match => {
-                const resultClass = match.result === 'win' ? 'result-win' : 
-                                   match.result === 'loss' ? 'result-loss' : 'result-draw';
-                
-                const eloChangeClass = match.eloChange.startsWith('+') ? 'elo-increase' : 'elo-decrease';
-                
-                const date = new Date(match.date);
-                const formattedDate = date.toLocaleDateString();
-                
-                html += `
-                    <tr>
-                        <td>${match.opponent}</td>
-                        <td>
-                            <span class="${resultClass}">${match.result.toUpperCase()}</span>
-                            <span class="elo-change ${eloChangeClass}">${match.eloChange}</span>
-                        </td>
-                        <td>${formattedDate}</td>
-                    </tr>
-                `;
-            });
-            
-            html += `
-                    </tbody>
-                </table>
-            `;
-            
-            container.innerHTML = html;
-        }
-
-        // Show error message
-        function showError(message) {
-            const errorContainer = document.getElementById('errorContainer');
-            errorContainer.textContent = message;
-            errorContainer.classList.remove('hidden');
-            
-            setTimeout(() => {
-                errorContainer.classList.add('hidden');
-            }, 5000);
-        }
-
-        // Show success message
-        function showSuccess(message) {
-            const successContainer = document.getElementById('successContainer');
-            successContainer.textContent = message;
-            successContainer.classList.remove('hidden');
-            
-            setTimeout(() => {
-                successContainer.classList.add('hidden');
-            }, 5000);
-        }
-        
-        // Announce to screen readers
-        function announceToScreenReader(message) {
-            // You could add an actual live region for this, but we'll use the existing ones
-            const errorContainer = document.getElementById('errorContainer');
-            errorContainer.textContent = message;
-            errorContainer.classList.remove('hidden');
-            
-            setTimeout(() => {
-                errorContainer.classList.add('hidden');
-            }, 5000);
-        }
-
-        // Request notification permission
-        function requestNotificationPermission() {
-            if (!('Notification' in window)) {
-                alert('This browser does not support desktop notification');
-                return;
-            }
-            
-            Notification.requestPermission().then(function(permission) {
-                if (permission === 'granted') {
-                    document.getElementById('notification-permission').classList.add('hidden');
-                    showSuccess('Notifications enabled!');
-                    
-                    // Send a test notification
-                    try {
-                        new Notification('Notifications Enabled', {
-                            body: 'You will be notified when a match is found'
-                        });
-                    } catch (e) {
-                        console.log('Test notification failed', e);
-                    }
-                }
-            });
-        }
-
-        // Add function to test UI state transitions
-        async function testUIFeedback() {
-            console.log('🧪 Testing UI feedback and state transitions...');
-            const results = {
-                passed: 0,
-                failed: 0,
-                tests: []
-            };
-            
-            try {
-                // Save original UI state
-                const searchingDisplay = document.getElementById('searchingContainer').classList.contains('hidden');
-                const matchFoundDisplay = document.getElementById('matchFoundContainer').classList.contains('hidden');
-                const optionsDisplay = document.getElementById('matchmakingOptions').classList.contains('hidden');
-                
-                // Test searching UI
-                console.log('Testing searching UI state...');
-                startSearchingUI();
-                
-                // Verify search UI is shown
-                if (document.getElementById('searchingContainer').classList.contains('hidden') &&
-                    document.getElementById('matchmakingOptions').classList.contains('hidden')) {
-                    console.log('✅ PASS: Searching UI displayed correctly');
-                    results.passed++;
-                    results.tests.push({ name: 'Searching UI', passed: true });
-                } else {
-                    console.error('❌ FAIL: Searching UI not displayed correctly');
-                    results.failed++;
-                    results.tests.push({ name: 'Searching UI', passed: false });
-                }
-                
-                // Test match found UI
-                console.log('Testing match found UI state...');
-                handleMatchFound({
-                    roomId: 'TEST-ROOM',
-                    opponent: 'TestOpponent',
-                    opponentElo: 1200,
-                    eloDifference: 0
-                });
-                
-                // Verify match found UI is shown
-                if (document.getElementById('matchFoundContainer').classList.contains('hidden') &&
-                    document.getElementById('searchingContainer').classList.contains('hidden')) {
-                    console.log('✅ PASS: Match found UI displayed correctly');
-                    results.passed++;
-                    results.tests.push({ name: 'Match Found UI', passed: true });
-                } else {
-                    console.error('❌ FAIL: Match found UI not displayed correctly');
-                    results.failed++;
-                    results.tests.push({ name: 'Match Found UI', passed: false });
-                }
-                
-                // Test countdown display
-                console.log('Testing countdown display...');
-                // Simulate countdown
-                let countdownWorks = true;
-                for (let i = 3; i >= 0; i--) {
-                    document.getElementById('countdown').innerText = i;
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                    if (document.getElementById('countdown').innerText != i.toString()) {
-                        countdownWorks = false;
-                    }
-                }
-                
-                if (countdownWorks) {
-                    console.log('✅ PASS: Countdown display works correctly');
-                    results.passed++;
-                    results.tests.push({ name: 'Countdown Display', passed: true });
-                } else {
-                    console.error('❌ FAIL: Countdown display not working correctly');
-                    results.failed++;
-                    results.tests.push({ name: 'Countdown Display', passed: false });
-                }
-                
-                // Restore original state
-                document.getElementById('searchingContainer').classList.toggle('hidden', searchingDisplay);
-                document.getElementById('matchFoundContainer').classList.toggle('hidden', matchFoundDisplay);
-                document.getElementById('matchmakingOptions').classList.toggle('hidden', optionsDisplay);
-                
-                console.log(`🧪 UI test results: ${results.passed} passed, ${results.failed} failed`);
-                return results;
-            } catch (error) {
-                console.error('❌ Error testing UI feedback:', error);
-                results.failed++;
-                results.tests.push({ name: 'UI Testing', passed: false, error: error.message });
-                return results;
-            }
-        }
+            // Activate classic mode by default
+            document.getElementById('mode-classic').classList.add('active');
+        });
     </script>
 </body>
 </html> 

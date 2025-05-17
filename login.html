@@ -5,43 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="login">登录 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
+    <meta name="theme-color" content="#4a69bd">
+    <!-- Preload critical assets -->
+    <link rel="preload" href="js/ui-enhancement.js" as="script">
 </head>
-<body>
-    <div id="language-selector"></div>
-    <div class="auth-form">
-        <h2 data-i18n="login">登录</h2>
-        <div id="message" class="message hidden"></div>
-        <div id="error-message" class="error-message hidden"></div>
-        <form id="login-form">
-            <div class="form-group">
-                <label for="username" data-i18n="username">用户名</label>
-                <input type="text" id="username" name="username" data-i18n-placeholder="username" required>
+<body class="loading">
+    <div id="language-selector" class="glass"></div>
+    <div class="header glass">
+        <a href="/" class="site-title" data-i18n="title">天下太平</a>
+        <div class="auth-links" id="auth-links">
+            <a href="/login.html" data-i18n="login">登录</a>
+            <a href="/signup.html" data-i18n="signup">注册</a>
+        </div>
+    </div>
+    
+    <div class="container content-narrow">
+        <div class="auth-form card">
+            <h2 data-i18n="login">登录</h2>
+            <div id="message" class="message hidden"></div>
+            <div id="error-message" class="error-message hidden"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username" data-i18n="username">用户名</label>
+                    <input type="text" id="username" name="username" data-i18n-placeholder="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" data-i18n="password">密码</label>
+                    <input type="password" id="password" name="password" data-i18n-placeholder="password" required>
+                </div>
+                <div class="text-center">
+                    <button type="submit" data-i18n="login">登录</button>
+                </div>
+            </form>
+            
+            <div class="social-login">
+                <span class="social-login-text" data-i18n="or">或</span>
             </div>
-            <div class="form-group">
-                <label for="password" data-i18n="password">密码</label>
-                <input type="password" id="password" name="password" data-i18n-placeholder="password" required>
+            
+            <a href="/api/auth/google" class="google-login-btn">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google">
+                <span data-i18n="login_with_google">使用谷歌账号登录</span>
+            </a>
+            
+            <div class="form-footer">
+                <p><span data-i18n="no_account">还没有账号?</span> <a href="/signup.html" data-i18n="signup">注册</a></p>
+                <p><a href="/" data-i18n="back_to_home">返回首页</a></p>
             </div>
-            <button type="submit" data-i18n="login">登录</button>
-        </form>
-        
-        <div class="social-login">
-            <span class="social-login-text" data-i18n="or">或</span>
         </div>
         
-        <a href="/api/auth/google" class="google-login-btn">
-            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google">
-            <span data-i18n="login_with_google">使用谷歌账号登录</span>
-        </a>
-        
-        <div class="form-footer">
-            <p><span data-i18n="no_account">还没有账号?</span> <a href="/signup.html" data-i18n="signup">注册</a></p>
-            <p><a href="/" data-i18n="back_to_home">返回首页</a></p>
+        <!-- Add offline support notification -->
+        <div id="offline-notification" class="hidden">
+            You are currently offline. Some features may be limited.
         </div>
     </div>
 
     <script src="js/common.js"></script>
     <script type="module" src="js/pages/login.js"></script>
     <script type="module" src="js/auth-status.js"></script>
+    <script src="js/ui-enhancement.js"></script>
     <script>
         // Check for Google login errors in URL
         document.addEventListener('DOMContentLoaded', function() {
@@ -52,6 +73,20 @@
                 const errorEl = document.getElementById('error-message');
                 errorEl.textContent = 'Google login failed. Please try again.';
                 errorEl.classList.remove('hidden');
+            }
+            
+            // Offline detection
+            window.addEventListener('online', function() {
+                document.getElementById('offline-notification').classList.add('hidden');
+            });
+            
+            window.addEventListener('offline', function() {
+                document.getElementById('offline-notification').classList.remove('hidden');
+            });
+            
+            // Check initial state
+            if (!navigator.onLine) {
+                document.getElementById('offline-notification').classList.remove('hidden');
             }
         });
     </script>

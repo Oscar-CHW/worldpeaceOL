@@ -3,482 +3,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - 天下太平</title>
+    <title data-i18n="admin_panel">管理员面板 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
-    <meta name="description" content="Admin panel for managing World Peace Online users and game settings">
+    <meta name="theme-color" content="#4a69bd">
+    <!-- Preload critical assets -->
+    <link rel="preload" href="js/ui-enhancement.js" as="script">
 </head>
-<body>
-    <a href="#user-management" class="skip-to-content">Skip to user management</a>
-    <div id="language-selector"></div>
-    <div class="admin-container">
-        <div class="admin-header">
-            <h1 class="admin-title">Admin Panel - 天下太平</h1>
-            <div class="admin-nav">
-                <button id="refresh-btn" class="btn" aria-label="Refresh data">Refresh Data</button>
-                <button id="home-btn" class="btn" aria-label="Go back to home page">Back to Home</button>
-                <button id="dashboard-btn" class="btn" aria-label="Go to dashboard">My Dashboard</button>
-            </div>
+<body class="loading admin-page">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="language-selector" class="glass"></div>
+    
+    <div class="header glass">
+        <a href="/" class="site-title" data-i18n="title">天下太平</a>
+        <div class="nav-links">
+            <a href="/dashboard.html" data-i18n="dashboard">控制台</a>
+            <a href="/admin.html" data-i18n="admin_panel" class="active">管理员面板</a>
         </div>
-        
-        <div id="message" class="message hidden" role="alert" aria-live="assertive"></div>
-        
-        <div class="filter-controls" role="search" aria-label="User filter controls">
-            <div class="filter-group">
-                <label for="filter-role">Role:</label>
-                <select id="filter-role" class="filter-select" aria-label="Filter by role">
-                    <option value="">All Roles</option>
-                    <option value="ADMIN">Admin</option>
-                    <option value="PLAYER">Player</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="filter-ban">Ban Status:</label>
-                <select id="filter-ban" class="filter-select" aria-label="Filter by ban status">
-                    <option value="">All</option>
-                    <option value="BANNED">Banned</option>
-                    <option value="CLEAR">Not Banned</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="search-user">Search:</label>
-                <input type="text" id="search-user" placeholder="Search users..." aria-label="Search users by username">
-            </div>
-        </div>
-        
-        <h2 id="user-management">User Management</h2>
-        <div class="table-wrapper">
-            <div id="loading-indicator" class="loading" role="status">
-                <div class="spinner" aria-hidden="true"></div>
-                <p>Loading user data...</p>
-            </div>
-            <table class="user-table hidden" id="user-table" aria-label="User management table">
-                <thead>
-                    <tr>
-                        <th data-sort="id">ID</th>
-                        <th data-sort="username">Username</th>
-                        <th data-sort="role">Role</th>
-                        <th data-sort="elo">ELO</th>
-                        <th data-sort="banStatus">Ban Status</th>
-                        <th data-sort="createdAt">Created At</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="user-table-body">
-                    <!-- User data will be loaded here -->
-                </tbody>
-            </table>
+        <div class="auth-links">
+            <a href="#" id="logout-btn" data-i18n="logout">登出</a>
         </div>
     </div>
     
-    <!-- Edit User Modal -->
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit User</h3>
-                <span class="modal-close">&times;</span>
+    <div class="container content-wide" id="main-content">
+        <div class="admin-container card">
+            <div class="admin-header">
+                <h2 data-i18n="admin_panel">管理员面板</h2>
+                <div class="server-status">
+                    <span data-i18n="server_status">服务器状态</span>: 
+                    <span id="server-status" class="status-online">在线</span>
+                </div>
             </div>
-            <form id="edit-user-form">
-                <input type="hidden" id="edit-user-id">
-                <div class="form-group">
-                    <label for="edit-username">Username</label>
-                    <input type="text" id="edit-username" required>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab active" id="users-tab" data-i18n="manage_users">用户管理</button>
+                <button class="admin-tab" id="games-tab" data-i18n="manage_games">游戏管理</button>
+                <button class="admin-tab" id="logs-tab" data-i18n="system_logs">系统日志</button>
+                <button class="admin-tab" id="settings-tab" data-i18n="system_settings">系统设置</button>
+            </div>
+            
+            <div class="admin-content">
+                <!-- Users Tab -->
+                <div class="admin-panel active" id="users-panel">
+                    <div class="panel-header glass">
+                        <h3 data-i18n="manage_users">用户管理</h3>
+                        <div class="panel-actions">
+                            <div class="search-container">
+                                <input type="text" id="user-search" data-i18n-placeholder="search_users" class="search-input" placeholder="搜索用户...">
+                                <span class="search-icon" aria-label="Search" role="button" tabindex="0">🔍</span>
+                            </div>
+                            <button id="add-user-btn" class="primary-button" data-i18n="add_user">添加用户</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="users-table" class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="id">ID</th>
+                                    <th data-i18n="username">用户名</th>
+                                    <th data-i18n="elo_rating">Elo评分</th>
+                                    <th data-i18n="role">角色</th>
+                                    <th data-i18n="last_login">最后登录</th>
+                                    <th data-i18n="actions">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <tr>
+                                    <td colspan="6" class="table-loading">
+                                        <div class="loading-indicator">
+                                            <div class="spinner"></div>
+                                            <span data-i18n="loading_users">加载用户数据...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button id="prev-page" class="pagination-btn" disabled>&lt;</button>
+                        <span id="page-info">1 / 1</span>
+                        <button id="next-page" class="pagination-btn" disabled>&gt;</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="edit-role">Role</label>
-                    <select id="edit-role" required>
-                        <option value="PLAYER">Player</option>
-                        <option value="ADMIN">Admin</option>
-                    </select>
+                
+                <!-- Games Tab -->
+                <div class="admin-panel" id="games-panel">
+                    <div class="panel-header glass">
+                        <h3 data-i18n="manage_games">游戏管理</h3>
+                        <div class="panel-actions">
+                            <div class="filter-group">
+                                <label for="game-status-filter" data-i18n="status">状态</label>
+                                <select id="game-status-filter">
+                                    <option value="all" data-i18n="all">全部</option>
+                                    <option value="active" data-i18n="active">活跃</option>
+                                    <option value="completed" data-i18n="completed">已完成</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="games-table" class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="game_id">游戏ID</th>
+                                    <th data-i18n="game_mode">游戏模式</th>
+                                    <th data-i18n="players">玩家</th>
+                                    <th data-i18n="status">状态</th>
+                                    <th data-i18n="created_at">创建时间</th>
+                                    <th data-i18n="actions">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="games-table-body">
+                                <tr>
+                                    <td colspan="6" class="table-loading">
+                                        <div class="loading-indicator">
+                                            <div class="spinner"></div>
+                                            <span data-i18n="loading_games">加载游戏数据...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="edit-elo">ELO Rating</label>
-                    <input type="number" id="edit-elo" min="0" required>
+                
+                <!-- Logs Tab -->
+                <div class="admin-panel" id="logs-panel">
+                    <div class="panel-header glass">
+                        <h3 data-i18n="system_logs">系统日志</h3>
+                        <div class="panel-actions">
+                            <div class="filter-group">
+                                <label for="log-level-filter" data-i18n="level">级别</label>
+                                <select id="log-level-filter">
+                                    <option value="all" data-i18n="all">全部</option>
+                                    <option value="error" data-i18n="error">错误</option>
+                                    <option value="warn" data-i18n="warning">警告</option>
+                                    <option value="info" data-i18n="info">信息</option>
+                                </select>
+                            </div>
+                            <button id="clear-logs-btn" class="danger-button" data-i18n="clear_logs">清除日志</button>
+                        </div>
+                    </div>
+                    
+                    <div class="logs-container glass">
+                        <div id="logs-output" class="logs-output">
+                            <div class="loading-indicator">
+                                <div class="spinner"></div>
+                                <span data-i18n="loading_logs">加载日志数据...</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel btn">Cancel</button>
-                    <button type="submit" class="btn-save btn">Save Changes</button>
+                
+                <!-- Settings Tab -->
+                <div class="admin-panel" id="settings-panel">
+                    <div class="panel-header glass">
+                        <h3 data-i18n="system_settings">系统设置</h3>
+                        <div class="panel-actions">
+                            <button id="save-settings-btn" class="primary-button" data-i18n="save_settings">保存设置</button>
+                        </div>
+                    </div>
+                    
+                    <form id="settings-form" class="settings-form">
+                        <div class="settings-section glass">
+                            <h4 data-i18n="general_settings">一般设置</h4>
+                            <div class="form-group">
+                                <label for="site-name" data-i18n="site_name">网站名称</label>
+                                <input type="text" id="site-name" value="天下太平">
+                            </div>
+                            <div class="form-group">
+                                <label for="maintenance-mode" class="checkbox-label">
+                                    <input type="checkbox" id="maintenance-mode">
+                                    <span data-i18n="maintenance_mode">维护模式</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section glass">
+                            <h4 data-i18n="game_settings">游戏设置</h4>
+                            <div class="form-group">
+                                <label for="max-active-games" data-i18n="max_active_games">最大活跃游戏数</label>
+                                <input type="number" id="max-active-games" value="1000" min="10" max="10000">
+                            </div>
+                            <div class="form-group">
+                                <label for="default-elo" data-i18n="default_elo">默认ELO值</label>
+                                <input type="number" id="default-elo" value="1200" min="1000" max="2000">
+                            </div>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
+        </div>
+        
+        <!-- User Edit Modal -->
+        <div id="user-modal" class="modal" aria-labelledby="user-modal-title" aria-hidden="true">
+            <div class="modal-content glass">
+                <div class="modal-header">
+                    <h3 id="user-modal-title" data-i18n="edit_user">编辑用户</h3>
+                    <span class="close-modal" aria-label="Close">&times;</span>
+                </div>
+                <form id="user-form">
+                    <div class="form-group">
+                        <label for="user-username" data-i18n="username">用户名</label>
+                        <input type="text" id="user-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-role" data-i18n="role">角色</label>
+                        <select id="user-role">
+                            <option value="USER" data-i18n="user">用户</option>
+                            <option value="ADMIN" data-i18n="admin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-elo" data-i18n="elo_rating">Elo评分</label>
+                        <input type="number" id="user-elo" min="1" max="3000">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-password" data-i18n="password">密码</label>
+                        <input type="password" id="user-password" placeholder="Leave blank to keep unchanged">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="primary-button" data-i18n="save">保存</button>
+                        <button type="button" id="cancel-user-edit" class="secondary-button" data-i18n="cancel">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Add offline support notification -->
+        <div id="offline-notification" class="hidden">
+            You are currently offline. Some features may be limited.
         </div>
     </div>
-
-    <script type="module">
-        import i18n from './js/i18n.js';
-        import { createLanguageSelector } from './js/language-selector.js';
-        
-        // Global variables
-        let allUsers = [];
-        let currentSort = { field: 'id', direction: 'asc' };
-        
-        // Initialize translations
-        document.addEventListener('DOMContentLoaded', () => {
-            i18n.init();
-            createLanguageSelector('language-selector');
-            
-            // Check if user is admin
-            checkAdminStatus();
-            
-            // Load user data
-            loadUsers();
-            
-            // Set up navigation buttons
-            document.getElementById('home-btn').addEventListener('click', () => {
-                window.location.href = '/';
+    
+    <script src="js/common.js"></script>
+    <script type="module" src="js/pages/admin.js"></script>
+    <script src="js/ui-enhancement.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Offline detection
+            window.addEventListener('online', function() {
+                document.getElementById('offline-notification').classList.add('hidden');
             });
             
-            document.getElementById('dashboard-btn').addEventListener('click', () => {
-                window.location.href = '/dashboard.html';
+            window.addEventListener('offline', function() {
+                document.getElementById('offline-notification').classList.remove('hidden');
             });
             
-            document.getElementById('refresh-btn').addEventListener('click', () => {
-                loadUsers();
-            });
+            // Check initial state
+            if (!navigator.onLine) {
+                document.getElementById('offline-notification').classList.remove('hidden');
+            }
             
-            // Set up sorting
-            document.querySelectorAll('th[data-sort]').forEach(th => {
-                th.addEventListener('click', () => {
-                    const sortField = th.dataset.sort;
-                    // Toggle direction if same field, or set to asc if new field
-                    const sortDirection = sortField === currentSort.field && currentSort.direction === 'asc' ? 'desc' : 'asc';
+            // Tab functionality
+            const tabs = document.querySelectorAll('.admin-tab');
+            const panels = document.querySelectorAll('.admin-panel');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
                     
-                    // Update sort indicators
-                    document.querySelectorAll('th').forEach(header => {
-                        header.classList.remove('sort-asc', 'sort-desc');
-                    });
-                    th.classList.add(`sort-${sortDirection}`);
+                    // Hide all panels
+                    panels.forEach(panel => panel.classList.remove('active'));
                     
-                    // Update current sort and re-render
-                    currentSort = { field: sortField, direction: sortDirection };
-                    applyFiltersAndSort();
+                    // Show the corresponding panel
+                    const panelId = this.id.replace('-tab', '-panel');
+                    document.getElementById(panelId).classList.add('active');
                 });
             });
             
-            // Set up filtering
-            document.getElementById('filter-role').addEventListener('change', applyFiltersAndSort);
-            document.getElementById('filter-ban').addEventListener('change', applyFiltersAndSort);
-            document.getElementById('search-user').addEventListener('input', applyFiltersAndSort);
+            // Modal functionality
+            const userModal = document.getElementById('user-modal');
+            const closeModal = userModal.querySelector('.close-modal');
+            const cancelBtn = document.getElementById('cancel-user-edit');
             
-            // Set up modal events
-            const modal = document.getElementById('edit-modal');
-            const closeBtn = document.querySelector('.modal-close');
-            const cancelBtn = document.querySelector('.btn-cancel');
-            
-            closeBtn.addEventListener('click', () => {
-                modal.classList.add('hidden');
+            closeModal.addEventListener('click', function() {
+                userModal.style.display = 'none';
+                userModal.setAttribute('aria-hidden', 'true');
             });
             
-            cancelBtn.addEventListener('click', () => {
-                modal.classList.add('hidden');
+            cancelBtn.addEventListener('click', function() {
+                userModal.style.display = 'none';
+                userModal.setAttribute('aria-hidden', 'true');
             });
             
-            window.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
+            window.addEventListener('click', function(event) {
+                if (event.target === userModal) {
+                    userModal.style.display = 'none';
+                    userModal.setAttribute('aria-hidden', 'true');
                 }
             });
             
-            // Set up edit form submission
-            document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
+            // Example function to open user modal (to be called from admin.js)
+            window.openUserModal = function(userData) {
+                document.getElementById('user-modal-title').textContent = userData ? 'Edit User' : 'Add New User';
+                document.getElementById('user-username').value = userData ? userData.username : '';
+                document.getElementById('user-role').value = userData ? userData.role : 'USER';
+                document.getElementById('user-elo').value = userData ? userData.elo : 1200;
+                document.getElementById('user-password').value = '';
                 
-                const userId = document.getElementById('edit-user-id').value;
-                const username = document.getElementById('edit-username').value;
-                const role = document.getElementById('edit-role').value;
-                const elo = document.getElementById('edit-elo').value;
-                
-                try {
-                    const response = await fetch(`/api/admin/users/${userId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ username, role, elo })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        showMessage('User updated successfully', 'success');
-                        modal.classList.add('hidden');
-                        loadUsers();
-                    } else {
-                        showMessage(data.error || 'Failed to update user', 'error');
-                    }
-                } catch (error) {
-                    showMessage('System error', 'error');
-                    console.error(error);
-                }
+                userModal.style.display = 'block';
+                userModal.setAttribute('aria-hidden', 'false');
+                document.getElementById('user-username').focus();
+            };
+            
+            // Add user button click handler
+            document.getElementById('add-user-btn').addEventListener('click', function() {
+                window.openUserModal(null);
             });
         });
-        
-        async function checkAdminStatus() {
-            try {
-                const response = await fetch('/api/me');
-                
-                if (response.status === 401) {
-                    // Not logged in
-                    window.location.href = '/login.html';
-                    return;
-                }
-                
-                const data = await response.json();
-                
-                if (data.role !== "ADMIN") {
-                    // Not an admin
-                    showMessage('You do not have permission to access this page', 'error');
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
-                }
-            } catch (error) {
-                showMessage('System error', 'error');
-                console.error(error);
-            }
-        }
-        
-        async function loadUsers() {
-            try {
-                // Show loading indicator
-                document.getElementById('loading-indicator').classList.remove('hidden');
-                document.getElementById('user-table').classList.add('hidden');
-                
-                const response = await fetch('/api/admin/users');
-                
-                if (response.status === 401 || response.status === 403) {
-                    // Not logged in or not authorized
-                    window.location.href = '/login.html';
-                    return;
-                }
-                
-                const data = await response.json();
-                
-                // Hide loading indicator
-                document.getElementById('loading-indicator').classList.add('hidden');
-                document.getElementById('user-table').classList.remove('hidden');
-                
-                if (response.ok) {
-                    // Store all users for filtering
-                    allUsers = data;
-                    
-                    // Apply initial sort and filters
-                    applyFiltersAndSort();
-                } else {
-                    showMessage(data.error || 'Failed to load users', 'error');
-                }
-            } catch (error) {
-                document.getElementById('loading-indicator').classList.add('hidden');
-                showMessage('System error', 'error');
-                console.error(error);
-            }
-        }
-        
-        function applyFiltersAndSort() {
-            // Get filter values
-            const roleFilter = document.getElementById('filter-role').value;
-            const banFilter = document.getElementById('filter-ban').value;
-            const searchQuery = document.getElementById('search-user').value.toLowerCase();
-            
-            // Apply filters
-            let filteredUsers = allUsers.filter(user => {
-                // Role filter
-                if (roleFilter && user.role !== roleFilter) return false;
-                
-                // Ban status filter
-                if (banFilter && user.banStatus !== banFilter) return false;
-                
-                // Search query
-                if (searchQuery && !user.username.toLowerCase().includes(searchQuery)) return false;
-                
-                return true;
-            });
-            
-            // Apply sorting
-            filteredUsers.sort((a, b) => {
-                let valueA = a[currentSort.field];
-                let valueB = b[currentSort.field];
-                
-                // Handle dates
-                if (currentSort.field === 'createdAt' || currentSort.field === 'updatedAt') {
-                    valueA = new Date(valueA);
-                    valueB = new Date(valueB);
-                }
-                
-                // Compare
-                if (valueA < valueB) return currentSort.direction === 'asc' ? -1 : 1;
-                if (valueA > valueB) return currentSort.direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-            
-            // Render the sorted and filtered users
-            renderUserTable(filteredUsers);
-        }
-        
-        function renderUserTable(users) {
-            const tableBody = document.getElementById('user-table-body');
-            
-            if (users.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="7">No users found</td></tr>';
-                return;
-            }
-            
-            tableBody.innerHTML = '';
-            
-            users.forEach(user => {
-                const row = document.createElement('tr');
-                
-                // Format date
-                const createdAt = new Date(user.createdAt).toLocaleString();
-                
-                // Determine ban status class for styling
-                const banStatusClass = user.banStatus === 'BANNED' ? 'status-banned' : 'status-clear';
-                
-                row.innerHTML = `
-                    <td>${user.id}</td>
-                    <td>${user.username}</td>
-                    <td>${user.role}</td>
-                    <td>${user.elo}</td>
-                    <td><span class="${banStatusClass}">${user.banStatus}</span></td>
-                    <td>${createdAt}</td>
-                    <td class="actions-cell">
-                        <button class="btn btn-edit" data-id="${user.id}">Edit</button>
-                        ${user.role !== 'ADMIN' ? 
-                            (user.banStatus === 'BANNED' ? 
-                                `<button class="btn btn-unban" data-id="${user.id}">Unban</button>` : 
-                                `<button class="btn btn-ban" data-id="${user.id}">Ban</button>`) : 
-                            ''}
-                        <button class="btn btn-delete" data-id="${user.id}">Delete</button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-            
-            // Add event listeners to edit buttons
-            document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    openEditModal(btn.dataset.id);
-                });
-            });
-            
-            // Add event listeners to ban buttons
-            document.querySelectorAll('.btn-ban').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    banUser(btn.dataset.id);
-                });
-            });
-            
-            // Add event listeners to unban buttons
-            document.querySelectorAll('.btn-unban').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    unbanUser(btn.dataset.id);
-                });
-            });
-            
-            // Add event listeners to delete buttons
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    deleteUser(btn.dataset.id);
-                });
-            });
-        }
-        
-        async function openEditModal(userId) {
-            try {
-                const response = await fetch(`/api/admin/users/${userId}`);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('edit-user-id').value = data.id;
-                    document.getElementById('edit-username').value = data.username;
-                    document.getElementById('edit-role').value = data.role;
-                    document.getElementById('edit-elo').value = data.elo;
-                    
-                    document.getElementById('edit-modal').classList.remove('hidden');
-                } else {
-                    showMessage(data.error || 'Failed to load user data', 'error');
-                }
-            } catch (error) {
-                showMessage('System error', 'error');
-                console.error(error);
-            }
-        }
-        
-        async function deleteUser(userId) {
-            if (confirm('Are you sure you want to delete this user?')) {
-                try {
-                    const response = await fetch(`/api/admin/users/${userId}`, {
-                        method: 'DELETE'
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        showMessage('User deleted successfully', 'success');
-                        loadUsers();
-                    } else {
-                        showMessage(data.error || 'Failed to delete user', 'error');
-                    }
-                } catch (error) {
-                    showMessage('System error', 'error');
-                    console.error(error);
-                }
-            }
-        }
-        
-        async function banUser(userId) {
-            if (confirm('Are you sure you want to ban this user?')) {
-                try {
-                    const response = await fetch(`/api/admin/users/${userId}/ban`, {
-                        method: 'POST'
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        showMessage('User banned successfully', 'success');
-                        loadUsers();
-                    } else {
-                        showMessage(data.error || 'Failed to ban user', 'error');
-                    }
-                } catch (error) {
-                    showMessage('System error', 'error');
-                    console.error(error);
-                }
-            }
-        }
-        
-        async function unbanUser(userId) {
-            if (confirm('Are you sure you want to unban this user?')) {
-                try {
-                    const response = await fetch(`/api/admin/users/${userId}/unban`, {
-                        method: 'POST'
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        showMessage('User unbanned successfully', 'success');
-                        loadUsers();
-                    } else {
-                        showMessage(data.error || 'Failed to unban user', 'error');
-                    }
-                } catch (error) {
-                    showMessage('System error', 'error');
-                    console.error(error);
-                }
-            }
-        }
-        
-        function showMessage(text, type) {
-            const messageEl = document.getElementById('message');
-            messageEl.textContent = text;
-            messageEl.className = `message ${type}`;
-            messageEl.classList.remove('hidden');
-            
-            setTimeout(() => {
-                messageEl.classList.add('hidden');
-            }, 5000);
-        }
     </script>
 </body>
 </html> 

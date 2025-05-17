@@ -528,9 +528,6 @@ img.loaded {
     background: var(--primary-dark);
 }
 
-/* Add script to handle image loading and animations */
-}
-
 /* Additional responsive design for all containers */
 .container {
     width: 100%;
@@ -1092,4 +1089,526 @@ p {
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+/* Improve centering for various elements */
+.text-center {
+    text-align: center;
+}
+
+/* Improved container centering */
+.content-narrow,
+.content-medium,
+.content-wide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px); /* Account for header */
+}
+
+/* Center auth forms better */
+.auth-form {
+    margin: auto;
+    position: relative;
+    top: 0;
+    transform: none;
+}
+
+/* Enhanced visibility with improved contrast */
+.card {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure all glass elements have consistent style */
+.glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+/* Improved contrast for dark mode */
+@media (prefers-color-scheme: dark) {
+    .glass {
+        background: rgba(30, 30, 30, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .card {
+        background-color: rgba(30, 30, 30, 0.8);
+    }
+    
+    a, button, .site-title {
+        color: var(--light-text);
+    }
+    
+    input, select, textarea {
+        background-color: rgba(50, 50, 50, 0.8);
+        color: var(--light-text);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    ::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+}
+
+/* Better button visibility */
+.room-button, 
+button[type="submit"],
+.primary-button,
+.secondary-button {
+    min-width: 120px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Higher contrast for button states */
+button:hover, 
+.room-button:hover,
+.auth-links a:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+    filter: brightness(1.1);
+}
+
+/* Improved visibility for navigation */
+.header {
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    position: sticky;
+}
+
+.nav-links {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.nav-links a, 
+.auth-links a {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
+}
+
+.nav-links a.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Improved form element alignment and sizing */
+.form-group {
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+input, select, textarea {
+    width: 100%;
+    min-height: 44px; /* Larger tap targets for better accessibility */
+    padding: 8px 12px;
+}
+
+/* Responsive centering improvements */
+@media (max-width: 768px) {
+    .container {
+        padding: var(--space-sm);
+        width: 100%;
+    }
+    
+    .header {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .site-title {
+        flex-basis: 100%;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-links, .auth-links {
+        justify-content: center;
+    }
+    
+    .game-container {
+        flex-direction: column;
+    }
+    
+    .stats-container {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .stat-card {
+        min-width: 120px;
+    }
+    
+    .auth-form {
+        width: 95%;
+        max-width: none;
+    }
+    
+    .modal-content {
+        width: 95%;
+        max-width: none;
+        margin: 5% auto;
+    }
+}
+
+/* Game mode selection on pairing page */
+.game-modes-container {
+    margin: var(--space-lg) 0;
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+}
+
+.game-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    justify-content: center;
+    margin-top: var(--space-md);
+}
+
+.game-mode-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    width: 180px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid transparent;
+    transition: all var(--transition-normal);
+}
+
+.game-mode-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.game-mode-card.active {
+    border-color: var(--primary-color);
+    background: rgba(74, 105, 189, 0.2);
+    transform: translateY(-3px);
+}
+
+.mode-icon {
+    font-size: 32px;
+    margin-bottom: var(--space-sm);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+}
+
+.game-mode-card:hover .mode-icon {
+    transform: scale(1.1);
+}
+
+.game-mode-card h4 {
+    margin: var(--space-sm) 0;
+    color: white;
+}
+
+.game-mode-card p {
+    font-size: var(--text-sm);
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+/* Matchmaking controls */
+.matchmaking-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    justify-content: center;
+    align-items: center;
+    margin: var(--space-lg) 0;
+}
+
+.queue-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #f44336;
+}
+
+.queue-status.active .status-indicator {
+    background-color: #4CAF50;
+}
+
+/* Queue timer animation */
+.queue-timer {
+    margin: var(--space-lg) 0;
+    text-align: center;
+}
+
+.timer-value {
+    font-size: var(--text-xl);
+    font-weight: bold;
+    margin: var(--space-sm) 0;
+}
+
+.queue-animation {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin: var(--space-md) 0;
+}
+
+.searching-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    animation: searching-dot 1.5s infinite ease-in-out;
+}
+
+.searching-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.searching-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes searching-dot {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 1;
+    }
+}
+
+/* Stats in dashboard */
+.stats-container {
+    display: flex;
+    gap: var(--space-md);
+    margin: var(--space-lg) 0;
+    justify-content: space-between;
+}
+
+.stat-card {
+    flex: 1;
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    text-align: center;
+    min-width: 100px;
+}
+
+.stat-title {
+    font-size: var(--text-sm);
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: var(--space-sm);
+}
+
+.stat-value {
+    font-size: var(--text-lg);
+    font-weight: bold;
+    color: white;
+}
+
+/* Create room form styles */
+.room-settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    width: 100%;
+}
+
+.form-section {
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    min-height: auto;
+}
+
+.checkbox-label span {
+    font-weight: normal;
+}
+
+/* Friends page styles */
+.tabs-container {
+    margin: var(--space-lg) 0;
+}
+
+.tabs {
+    display: flex;
+    gap: var(--space-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: var(--space-lg);
+}
+
+.tab {
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    font-weight: bold;
+    transition: all var(--transition-normal);
+}
+
+.tab:hover {
+    color: white;
+    transform: none;
+}
+
+.tab.active {
+    color: white;
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.friend-filter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.search-container {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-input {
+    padding-right: 40px;
+}
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.filter-options {
+    display: flex;
+    gap: var(--space-md);
+}
+
+/* Loading indicators */
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Primary and secondary buttons */
+.primary-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-lg);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.primary-button:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.secondary-button {
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-lg);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.secondary-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
 }

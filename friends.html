@@ -1,291 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friends - World Peace Online</title>
+    <title data-i18n="friends">好友 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
+    <meta name="theme-color" content="#4a69bd">
+    <!-- Preload critical assets -->
+    <link rel="preload" href="js/ui-enhancement.js" as="script">
 </head>
-<body>
-    <div class="container friends-container">
-        <h1>Friends</h1>
-        <div class="header">
-        <a href="/" class="site-title">World Peace Online</a>
+<body class="loading">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="language-selector" class="glass"></div>
+    
+    <div class="header glass">
+        <a href="/" class="site-title" data-i18n="title">天下太平</a>
+        <div class="nav-links">
+            <a href="/dashboard.html" data-i18n="dashboard">控制台</a>
+            <a href="/friends.html" data-i18n="friends" class="active">好友</a>
+            <a href="/pairing.html" data-i18n="matchmaking">匹配</a>
+        </div>
         <div class="auth-links">
-            <div id="auth-buttons">
-                <a href="/login.html" aria-label="Log in to your account">Log in</a>
-                <a href="/signup.html" aria-label="Create a new account">Sign up</a>
-            </div>
+            <a href="#" id="logout-btn" data-i18n="logout">登出</a>
         </div>
     </div>
-
-        <div id="errorContainer" class="error-message hidden"></div>
-        <div id="successContainer" class="success-message hidden"></div>
-
-        <div class="section">
-            <h2>Add Friend</h2>
-            <form id="addFriendForm" class="search-form">
-                <input type="text" id="usernameInput" placeholder="Enter username" required>
-                <button type="submit" class="btn">Send Request</button>
-            </form>
-        </div>
-
-        <div class="section">
-            <h2>Friend Requests</h2>
-            <div id="friendRequests">
-                <div class="empty-list">No pending friend requests</div>
+    
+    <div class="container content-medium" id="main-content">
+        <div class="friends-container card">
+            <div class="friends-header">
+                <h2 data-i18n="friends">好友</h2>
+            </div>
+            
+            <div class="add-friend-section glass">
+                <h3 data-i18n="add_friend">添加好友</h3>
+                <form id="add-friend-form" class="add-friend-form">
+                    <div class="form-group">
+                        <label for="friend-username" data-i18n="username">用户名</label>
+                        <div class="friend-input-container">
+                            <input type="text" id="friend-username" data-i18n-placeholder="enter_username" required>
+                            <button type="submit" class="primary-button" data-i18n="add">添加</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="friend-add-result" class="message hidden"></div>
+            </div>
+            
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab active" id="friends-tab" data-i18n="my_friends">我的好友</button>
+                    <button class="tab" id="requests-tab" data-i18n="friend_requests">好友请求</button>
+                </div>
+                
+                <div class="tab-content">
+                    <div id="friends-content" class="tab-pane active">
+                        <div class="friend-filter">
+                            <div class="search-container">
+                                <input type="text" id="friend-search" data-i18n-placeholder="search_friends" class="search-input">
+                                <span class="search-icon" aria-label="Search" role="button" tabindex="0">🔍</span>
+                            </div>
+                            <div class="filter-options">
+                                <label class="filter-label">
+                                    <input type="checkbox" id="online-only">
+                                    <span data-i18n="online_only">只显示在线</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="friends-list" id="friends-list">
+                            <div class="loading-indicator">
+                                <div class="spinner"></div>
+                                <span data-i18n="loading_friends">加载好友列表...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="requests-content" class="tab-pane">
+                        <div class="requests-list" id="requests-list">
+                            <div class="loading-indicator">
+                                <div class="spinner"></div>
+                                <span data-i18n="loading_requests">加载好友请求...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="section">
-            <h2>Your Friends</h2>
-            <div id="friendsList">
-                <div class="empty-list">You don't have any friends yet</div>
+        
+        <!-- Friend Action Modal -->
+        <div id="friend-action-modal" class="modal" aria-labelledby="friend-action-title" aria-hidden="true">
+            <div class="modal-content glass">
+                <div class="modal-header">
+                    <h3 id="friend-action-title" data-i18n="friend_actions">好友操作</h3>
+                    <span class="close-modal" aria-label="Close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="friend-info" id="modal-friend-info">
+                        <div class="friend-avatar" id="modal-friend-avatar"></div>
+                        <div class="friend-details">
+                            <h4 id="modal-friend-name"></h4>
+                            <div id="modal-friend-status" class="friend-status"></div>
+                        </div>
+                    </div>
+                    <div class="friend-actions">
+                        <button id="invite-game-btn" class="action-button invite" data-i18n="invite_to_game">邀请游戏</button>
+                        <button id="view-profile-btn" class="action-button profile" data-i18n="view_profile">查看资料</button>
+                        <button id="remove-friend-btn" class="action-button remove" data-i18n="remove_friend">删除好友</button>
+                    </div>
+                </div>
             </div>
+        </div>
+        
+        <!-- Add offline support notification -->
+        <div id="offline-notification" class="hidden">
+            You are currently offline. Some features may be limited.
         </div>
     </div>
-
+    
+    <script src="js/common.js"></script>
+    <script type="module" src="js/pages/friends.js"></script>
+    <script src="js/ui-enhancement.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Check authentication on page load
-            checkAuth();
-
-            // Load friend requests and friend list
-            loadFriendRequests();
-            loadFriends();
-
-            // Add friend form submission
-            document.getElementById('addFriendForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const username = document.getElementById('usernameInput').value.trim();
-                if (username) {
-                    sendFriendRequest(username);
+            // Offline detection
+            window.addEventListener('online', function() {
+                document.getElementById('offline-notification').classList.add('hidden');
+            });
+            
+            window.addEventListener('offline', function() {
+                document.getElementById('offline-notification').classList.remove('hidden');
+            });
+            
+            // Check initial state
+            if (!navigator.onLine) {
+                document.getElementById('offline-notification').classList.remove('hidden');
+            }
+            
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-pane');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all tab content
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Show corresponding tab content
+                    const contentId = this.id.replace('-tab', '-content');
+                    document.getElementById(contentId).classList.add('active');
+                });
+            });
+            
+            // Modal functionality
+            const modal = document.getElementById('friend-action-modal');
+            const closeModal = modal.querySelector('.close-modal');
+            
+            closeModal.addEventListener('click', function() {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            });
+            
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                    modal.setAttribute('aria-hidden', 'true');
                 }
             });
         });
-
-        // Check if the user is authenticated
-        async function checkAuth() {
-            try {
-                const response = await fetch('/api/me');
-                if (!response.ok) {
-                    // If not authenticated, redirect to login
-                    window.location.href = "/login.html";
-                }
-            } catch (error) {
-                console.error('Authentication check failed:', error);
-                window.location.href = "/login.html";
-            }
-        }
-
-        // Load friend requests
-        async function loadFriendRequests() {
-            try {
-                const response = await fetch('/api/friends/requests');
-                if (!response.ok) {
-                    throw new Error('Failed to load friend requests');
-                }
-                const requests = await response.json();
-                
-                const requestsContainer = document.getElementById('friendRequests');
-                
-                if (requests.length === 0) {
-                    requestsContainer.innerHTML = '<div class="empty-list">No pending friend requests</div>';
-                    return;
-                }
-                
-                let html = '';
-                requests.forEach(request => {
-                    html += `
-                        <div class="friend-request">
-                            <div>
-                                <strong>${request.from.username}</strong> (ELO: ${request.from.elo})
-                            </div>
-                            <div class="friend-actions">
-                                <button onclick="respondToRequest(${request.requestId}, 'accept')" class="btn btn-accept">Accept</button>
-                                <button onclick="respondToRequest(${request.requestId}, 'reject')" class="btn btn-reject">Reject</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                requestsContainer.innerHTML = html;
-            } catch (error) {
-                console.error('Error loading friend requests:', error);
-                showError('Could not load friend requests');
-            }
-        }
-
-        // Load friends list
-        async function loadFriends() {
-            try {
-                const response = await fetch('/api/friends');
-                if (!response.ok) {
-                    throw new Error('Failed to load friends');
-                }
-                const friends = await response.json();
-                
-                const friendsContainer = document.getElementById('friendsList');
-                
-                if (friends.length === 0) {
-                    friendsContainer.innerHTML = '<div class="empty-list">You don\'t have any friends yet</div>';
-                    return;
-                }
-                
-                let html = '';
-                friends.forEach(friend => {
-                    html += `
-                        <div class="friend-item">
-                            <div>
-                                <strong>${friend.username}</strong> (ELO: ${friend.elo})
-                            </div>
-                            <div class="friend-actions">
-                                <button onclick="initiateDuel(${friend.userId})" class="btn btn-duel">Duel</button>
-                                <button onclick="removeFriend(${friend.friendshipId})" class="btn btn-remove">Remove</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                friendsContainer.innerHTML = html;
-            } catch (error) {
-                console.error('Error loading friends:', error);
-                showError('Could not load friends list');
-            }
-        }
-
-        // Send a friend request
-        async function sendFriendRequest(username) {
-            try {
-                const response = await fetch('/api/friends/request', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ targetUsername: username })
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to send friend request');
-                }
-                
-                // Clear input and show success message
-                document.getElementById('usernameInput').value = '';
-                showSuccess('Friend request sent successfully');
-                
-            } catch (error) {
-                console.error('Error sending friend request:', error);
-                showError(error.message || 'Could not send friend request');
-            }
-        }
-
-        // Respond to a friend request
-        async function respondToRequest(requestId, action) {
-            try {
-                const response = await fetch('/api/friends/respond', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ requestId, action })
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || `Failed to ${action} request`);
-                }
-                
-                // Refresh lists
-                loadFriendRequests();
-                if (action === 'accept') {
-                    loadFriends();
-                    showSuccess('Friend request accepted');
-                } else {
-                    showSuccess('Friend request rejected');
-                }
-                
-            } catch (error) {
-                console.error(`Error ${action}ing friend request:`, error);
-                showError(error.message || `Could not ${action} request`);
-            }
-        }
-
-        // Remove a friend
-        async function removeFriend(friendshipId) {
-            if (!confirm('Are you sure you want to remove this friend?')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/friends/${friendshipId}`, {
-                    method: 'DELETE'
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to remove friend');
-                }
-                
-                showSuccess('Friend removed successfully');
-                loadFriends();
-                
-            } catch (error) {
-                console.error('Error removing friend:', error);
-                showError(error.message || 'Could not remove friend');
-            }
-        }
-
-        // Initiate a duel with a friend
-        async function initiateDuel(friendId) {
-            try {
-                const response = await fetch('/api/friends/duel', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ friendId })
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to initiate duel');
-                }
-                
-                const result = await response.json();
-                
-                // Redirect to the game room
-                window.location.href = `/game-room.html?room=${result.roomId}`;
-                
-            } catch (error) {
-                console.error('Error initiating duel:', error);
-                showError(error.message || 'Could not initiate duel');
-            }
-        }
-
-        // Show error message
-        function showError(message) {
-            const errorContainer = document.getElementById('errorContainer');
-            errorContainer.textContent = message;
-            errorContainer.classList.remove('hidden');
-            
-            // Hide after 5 seconds
-            setTimeout(() => {
-                errorContainer.classList.add('hidden');
-            }, 5000);
-        }
-
-        // Show success message
-        function showSuccess(message) {
-            const successContainer = document.getElementById('successContainer');
-            successContainer.textContent = message;
-            successContainer.classList.remove('hidden');
-            
-            // Hide after 5 seconds
-            setTimeout(() => {
-                successContainer.classList.add('hidden');
-            }, 5000);
-        }
     </script>
 </body>
 </html> 

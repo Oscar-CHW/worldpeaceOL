@@ -3,240 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="title">天下太平</title>
+    <title data-i18n="create_room">创建房间 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="/socket.io/socket.io.js"></script>
+    <meta name="theme-color" content="#4a69bd">
+    <!-- Preload critical assets -->
+    <link rel="preload" href="js/ui-enhancement.js" as="script">
 </head>
-<body>
-    <div id="language-selector"></div>
-    <div class="header">
+<body class="loading">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="language-selector" class="glass"></div>
+    
+    <div class="header glass">
         <a href="/" class="site-title" data-i18n="title">天下太平</a>
-        <div class="auth-links" id="auth-links">
-            <a href="/login.html" data-i18n="login">登录</a>
-            <a href="/signup.html" data-i18n="signup">注册</a>
+        <div class="nav-links">
+            <a href="/dashboard.html" data-i18n="dashboard">控制台</a>
+            <a href="/friends.html" data-i18n="friends">好友</a>
         </div>
-    </div>
-
-    <div class="create-room-container">
-        <h2 data-i18n="create_room">创建房间</h2>
-        
-        <div class="game-mode-selector">
-            <h3 class="game-mode-title">Select Game Mode</h3>
-            <div class="game-modes">
-                <div class="game-mode-card selected" data-mode="classic">
-                    <div class="game-mode-icon">🏆</div>
-                    <h4>Classic</h4>
-                    <p>Traditional gameplay with balanced units and resources</p>
-                </div>
-                
-                <div class="game-mode-card" data-mode="insane">
-                    <div class="game-mode-icon">🔥</div>
-                    <h4>Insane</h4>
-                    <p>Fast-paced chaos with powerful units</p>
-                </div>
-                
-                <div class="game-mode-card" data-mode="beta">
-                    <div class="game-mode-icon">🧪</div>
-                    <h4>Beta</h4>
-                    <p>Experimental features and new gameplay elements</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="room-type-container">
-            <button class="room-type-button" id="create-room-btn">Create Room</button>
-            <button class="room-type-button" id="join-room-btn">Join Room</button>
-        </div>
-        
-        <div id="join-room-modal" class="join-room-modal" aria-labelledby="join-room-title" aria-hidden="true">
-            <div class="join-room-content">
-                <div class="join-room-header">
-                    <h3 id="join-room-title">Join Room</h3>
-                    <span class="join-room-close" aria-label="Close">&times;</span>
-                </div>
-                <form id="join-room-form" class="join-room-form">
-                    <input type="text" class="room-id-input" id="room-id-input" placeholder="Enter Room ID" aria-label="Room ID" required>
-                    <button type="submit" class="join-button" id="join-submit-btn">Join</button>
-                </form>
-            </div>
-        </div>
-        
-        <div id="error-message" class="message error hidden margin-top-20">
-            请先登录后再创建房间
-        </div>
-        
-        <div class="back-link">
-            <a href="index.html" data-i18n="back_to_home">返回首页</a>
+        <div class="auth-links">
+            <a href="#" id="logout-btn" data-i18n="logout">登出</a>
         </div>
     </div>
     
-    <script type="module">
-        import i18n from './js/i18n.js';
-        import { createLanguageSelector } from './js/language-selector.js';
+    <div class="container content-medium" id="main-content">
+        <div class="create-room-container card">
+            <div class="create-room-header">
+                <h2 data-i18n="create_room">创建房间</h2>
+                <p class="subtitle" data-i18n="create_room_desc">自定义游戏设置并邀请好友</p>
+            </div>
+            
+            <form id="create-room-form" class="room-settings-form">
+                <div class="form-section glass">
+                    <h3 data-i18n="basic_settings">基本设置</h3>
+                    <div class="form-group">
+                        <label for="room-name" data-i18n="room_name">房间名称</label>
+                        <input type="text" id="room-name" data-i18n-placeholder="enter_room_name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="room-type" data-i18n="room_type">房间类型</label>
+                        <select id="room-type">
+                            <option value="public" data-i18n="public">公开</option>
+                            <option value="private" data-i18n="private" selected>私人</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="max-players" data-i18n="max_players">最大玩家数</label>
+                        <select id="max-players">
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-section glass">
+                    <h3 data-i18n="game_settings">游戏设置</h3>
+                    <div class="form-group">
+                        <label for="game-mode" data-i18n="game_mode">游戏模式</label>
+                        <select id="game-mode">
+                            <option value="classic" data-i18n="classic_mode">经典模式</option>
+                            <option value="casual" data-i18n="casual_mode">休闲模式</option>
+                            <option value="blitz" data-i18n="blitz_mode">闪电模式</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="turn-time" data-i18n="turn_time">回合时间</label>
+                        <select id="turn-time">
+                            <option value="30">30 秒</option>
+                            <option value="60" selected>60 秒</option>
+                            <option value="90">90 秒</option>
+                            <option value="120">120 秒</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="ranked-game" checked>
+                            <span data-i18n="ranked_game">计入排名</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="primary-button" data-i18n="create_room">创建房间</button>
+                    <a href="/dashboard.html" class="secondary-button" data-i18n="cancel">取消</a>
+                </div>
+            </form>
+        </div>
         
-        // Initialize the i18n system
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Initialize language system
-            i18n.init();
-            
-            // Create language selector
-            createLanguageSelector('language-selector');
-            
-            // Set up button event listeners
-            const createRoomBtn = document.getElementById('create-room-btn');
-            const joinRoomBtn = document.getElementById('join-room-btn');
-            const joinModal = document.getElementById('join-room-modal');
-            const closeBtn = document.querySelector('.join-room-close');
-            const errorMessage = document.getElementById('error-message');
-            const gameModeCards = document.querySelectorAll('.game-mode-card');
-            let selectedGameMode = 'classic';
-            let currentUser = null;
-            
-            // Set up game mode selection
-            gameModeCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    // Remove selected class from all cards
-                    gameModeCards.forEach(c => c.classList.remove('selected'));
-                    
-                    // Add selected class to clicked card
-                    card.classList.add('selected');
-                    
-                    // Update selected game mode
-                    selectedGameMode = card.dataset.mode;
-                });
+        <!-- Add offline support notification -->
+        <div id="offline-notification" class="hidden">
+            You are currently offline. Some features may be limited.
+        </div>
+    </div>
+    
+    <script src="js/common.js"></script>
+    <script type="module" src="js/pages/create-room.js"></script>
+    <script src="js/ui-enhancement.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Offline detection
+            window.addEventListener('online', function() {
+                document.getElementById('offline-notification').classList.add('hidden');
             });
             
-            // Set up join room modal
-            joinRoomBtn?.addEventListener('click', () => {
-                joinModal.classList.add('active');
-                joinModal.setAttribute('aria-hidden', 'false');
-                document.getElementById('room-id-input').focus();
-                
-                // Trap focus in modal
-                trapFocus(joinModal);
+            window.addEventListener('offline', function() {
+                document.getElementById('offline-notification').classList.remove('hidden');
             });
             
-            closeBtn?.addEventListener('click', () => {
-                joinModal.classList.remove('active');
-                joinModal.setAttribute('aria-hidden', 'true');
-                joinRoomBtn.focus();
-            });
-            
-            document.getElementById('join-room-form')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const roomId = document.getElementById('room-id-input').value;
-                if (roomId.trim()) {
-                    window.location.href = `/game-room.html?room=${roomId}&mode=${selectedGameMode}`;
-                }
-            });
-            
-            // Close modal on escape or outside click
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && joinModal.classList.contains('active')) {
-                    joinModal.classList.remove('active');
-                    joinModal.setAttribute('aria-hidden', 'true');
-                    joinRoomBtn.focus();
-                }
-            });
-            
-            joinModal?.addEventListener('click', (e) => {
-                if (e.target === joinModal) {
-                    joinModal.classList.remove('active');
-                    joinModal.setAttribute('aria-hidden', 'true');
-                    joinRoomBtn.focus();
-                }
-            });
-            
-            try {
-                // Check if user is logged in
-                const response = await fetch('/api/user/me');
-                
-                if (response.status !== 401) {
-                    // User is logged in
-                    const data = await response.json();
-                    currentUser = data;
-                    
-                    // Update auth links
-                    const authLinks = document.getElementById('auth-links');
-                    authLinks.innerHTML = `
-                        <a href="/dashboard.html" id="welcome-user" data-i18n="user_profile"></a>
-                        <a href="#" id="logout-link" data-i18n="logout"></a>
-                    `;
-                    
-                    // Update welcome text
-                    document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${data.username}`;
-                    
-                    // Apply translations to newly created elements
-                    i18n.applyTranslations();
-                    
-                    // Add logout functionality
-                    document.getElementById('logout-link').addEventListener('click', async (e) => {
-                        e.preventDefault();
-                        
-                        try {
-                            await fetch('/api/logout', {
-                                method: 'POST'
-                            });
-                            window.location.reload();
-                        } catch (error) {
-                            console.error('Logout failed', error);
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error('Error checking auth status', error);
+            // Check initial state
+            if (!navigator.onLine) {
+                document.getElementById('offline-notification').classList.remove('hidden');
             }
             
-            // Set up create room button event listener
-            createRoomBtn.addEventListener('click', async () => {
-                try {
-                    // Check login status again when button is clicked
-                    const response = await fetch('/api/user/me');
-                    
-                    if (response.status === 401) {
-                        // Show error message if not logged in
-                        errorMessage.classList.remove('hidden');
-                        return;
-                    }
-                    
-                    // Get user data
-                    const data = await response.json();
-                    currentUser = data;
-                    
-                    // Generate a unique room ID (same format as server)
-                    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-                    
-                    // Redirect to game room page with room ID and game mode
-                    window.location.href = `/game-room.html?roomId=${roomId}&username=${encodeURIComponent(currentUser.username)}&mode=${selectedGameMode}`;
-                    
-                } catch (error) {
-                    console.error('Error creating room:', error);
-                    errorMessage.classList.remove('hidden');
+            // Game mode change handler
+            document.getElementById('game-mode').addEventListener('change', function() {
+                const gameMode = this.value;
+                const rankedCheckbox = document.getElementById('ranked-game');
+                
+                // Casual mode can't be ranked
+                if (gameMode === 'casual') {
+                    rankedCheckbox.checked = false;
+                    rankedCheckbox.disabled = true;
+                } else {
+                    rankedCheckbox.disabled = false;
                 }
             });
-            
-            // Helper function for modal focus trapping
-            function trapFocus(element) {
-                const focusableElements = element.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-                const firstElement = focusableElements[0];
-                const lastElement = focusableElements[focusableElements.length - 1];
-                
-                element.addEventListener('keydown', function(e) {
-                    if (e.key === 'Tab') {
-                        if (e.shiftKey) {
-                            if (document.activeElement === firstElement) {
-                                lastElement.focus();
-                                e.preventDefault();
-                            }
-                        } else {
-                            if (document.activeElement === lastElement) {
-                                firstElement.focus();
-                                e.preventDefault();
-                            }
-                        }
-                    }
-                });
-            }
         });
     </script>
 </body>
