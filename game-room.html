@@ -6,269 +6,6 @@
     <title data-i18n="title">天下太平 - <span data-i18n="one_v_one">1v1</span></title>
     <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
-    <style>
-        .game-mode-banner {
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px;
-            text-align: center;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .game-mode-badge {
-            background-color: #e67e22;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-        
-        .game-mode-badge.insane {
-            background-color: #e74c3c;
-        }
-        
-        .game-mode-badge.beta {
-            background-color: #3498db;
-        }
-        
-        .game-mode-description {
-            font-size: 0.85rem;
-            color: #bdc3c7;
-            flex-grow: 1;
-            margin: 0 15px;
-        }
-        
-        .unit-option {
-            position: relative;
-        }
-        
-        .unit-option .unit-modifier {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background-color: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .unit-option .unit-ability {
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: #2ecc71;
-            border-radius: 8px;
-            padding: 2px 5px;
-            font-size: 10px;
-            white-space: nowrap;
-        }
-        
-        /* Add styles for ready status indicator */
-        .player-ready {
-            color: #2ecc71;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-        
-        .player-not-ready {
-            color: #e74c3c;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-        
-        #ready-btn.active {
-            background-color: #2ecc71;
-        }
-        
-        #ready-btn:not(.active) {
-            background-color: #e74c3c;
-        }
-        
-        #start-game-btn.disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
-        }
-        
-        /* Ensure room-actions buttons have proper spacing and visibility */
-        .room-actions {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        
-        .room-actions button {
-            min-width: 100px;
-            padding: 10px 15px;
-        }
-        
-        /* Game status styling */
-        .game-status {
-            background-color: rgba(52, 152, 219, 0.9);
-            color: white;
-            padding: 15px;
-            text-align: center;
-            border-radius: 8px;
-            margin: 15px 0;
-            animation: pulse 1.5s infinite;
-        }
-        
-        .status-message {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        
-        .countdown {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-        
-        /* Add styles for player name obfuscation */
-        .player-name {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .player-name.obfuscated::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 60%;
-            height: 100%;
-            background: linear-gradient(to right, transparent, #f0f0f0);
-        }
-        
-        /* Ensure player list is always visible with a minimum height */
-        .player-list {
-            min-height: 100px;
-            margin: 20px 0;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-            padding: 10px;
-            background-color: #f9f9f9;
-        }
-        
-        .player-list ul {
-            min-height: 50px;
-        }
-        
-        /* Make sure it appears when the list is empty */
-        .player-list ul:empty::after {
-            content: "等待玩家加入...";
-            color: #888;
-            font-style: italic;
-            display: block;
-            padding: 10px 0;
-        }
-        
-        /* Player ELO display */
-        .player-elo {
-            display: inline-block;
-            font-size: 0.9em;
-            color: #555;
-            background-color: #f0f0f0;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-left: 5px;
-        }
-        
-        /* Game results modal */
-        .results-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .results-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-        
-        .results-title {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .elo-change {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-        }
-        
-        .elo-change.winner {
-            border-left: 4px solid #2ecc71;
-        }
-        
-        .elo-change.loser {
-            border-left: 4px solid #e74c3c;
-        }
-        
-        .player-name-result {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-        
-        .elo-change-value {
-            font-weight: bold;
-        }
-        
-        .elo-change-value.positive {
-            color: #2ecc71;
-        }
-        
-        .elo-change-value.negative {
-            color: #e74c3c;
-        }
-        
-        .close-results {
-            margin-top: 20px;
-            padding: 8px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        .close-results:hover {
-            background-color: #2980b9;
-        }
-    </style>
 </head>
 <body>
     <div id="language-selector"></div>
@@ -283,10 +20,10 @@
     <div class="game-room-container">
         <h2><span data-i18n="one_v_one">1v1</span></h2>
         
-        <div id="game-mode-banner" class="game-mode-banner" style="display: none;">
+        <div id="game-mode-banner" class="game-mode-banner hidden">
             <span id="game-mode-badge" class="game-mode-badge">Classic</span>
             <span id="game-mode-description" class="game-mode-description">Standard game mode with balanced gameplay.</span>
-            <select id="game-mode-selector" style="display: none;">
+            <select id="game-mode-selector" class="game-mode-selector hidden" aria-label="Select game mode">
                 <option value="classic">Classic</option>
                 <option value="insane">Insane</option>
                 <option value="beta">Beta</option>
@@ -310,13 +47,13 @@
         </div>
         
         <!-- Add game status area to show auto-start countdown -->
-        <div id="game-status" class="game-status" style="display: none;">
+        <div id="game-status" class="game-status hidden">
             <div class="status-message"></div>
             <div class="countdown"></div>
         </div>
 
         <!-- Game container that appears when game starts -->
-        <div id="game-container" style="display: none;">
+        <div id="game-container" class="game-container hidden">
             <div class="game-header">
                 <div class="player-info left">
                     <span class="player-name"></span>
@@ -331,7 +68,7 @@
                 </div>
                 <div class="rps-status">
                     <div id="rps-message">Choose rock, paper, or scissors</div>
-                    <div id="rps-timer" style="display: none;">Next round: <span id="timer-count">10</span>s</div>
+                    <div id="rps-timer" class="rps-timer hidden">Next round: <span id="timer-count">10</span>s</div>
                     <div class="player-controls">
                         <div class="rps-controls" id="player-controls">
                             <button class="rps-btn" data-choice="rock">✊</button>
@@ -356,13 +93,13 @@
                 </div>
             </div>
             <div class="game-field">
-                <div class="tower left" style="z-index:2; position:absolute; left:0; top:50%; transform:translateY(-50%);">
-                    <img src="images/tower.png" alt="Left Tower" class="tower-image">
-                    <img src="images/barrier.png" alt="Barrier" class="barrier-image" style="display:none;">
+                <div class="tower left">
+                    <img src="images/tower.png" alt="Tower" class="tower-image">
+                    <img src="images/barrier.png" alt="Barrier" class="barrier-image hidden">
                 </div>
-                <div class="tower right" style="z-index:1; position:absolute; right:0; top:50%; transform:translateY(-50%);">
-                    <img src="images/tower.png" alt="Right Tower" class="tower-image">
-                    <img src="images/barrier.png" alt="Barrier" class="barrier-image" style="display:none;">
+                <div class="tower right">
+                    <img src="images/tower.png" alt="Tower" class="tower-image">
+                    <img src="images/barrier.png" alt="Barrier" class="barrier-image hidden">
                 </div>
                 <!-- Static minerals -->
                 <div class="mineral left">
@@ -520,10 +257,10 @@
                 // Show/hide host controls if needed
                 if (data.isHost) {
                     // If this user is the host, show host controls
-                    document.getElementById('game-mode-selector').style.display = 'block';
+                    document.getElementById('game-mode-selector').classList.remove('hidden');
                 } else {
                     // Hide host controls for non-hosts
-                    document.getElementById('game-mode-selector').style.display = 'none';
+                    document.getElementById('game-mode-selector').classList.add('hidden');
                 }
                 
                 // If this was an auto-join, display a message
@@ -573,11 +310,11 @@
                 const players = document.querySelectorAll('#players li');
                 for (const player of players) {
                     if (player.classList.contains('host') && player.classList.contains('current-player')) {
-                        document.getElementById('game-mode-selector').style.display = 'block';
+                        document.getElementById('game-mode-selector').classList.remove('hidden');
                         return true;
                     }
                 }
-                document.getElementById('game-mode-selector').style.display = 'none';
+                document.getElementById('game-mode-selector').classList.add('hidden');
                 return false;
             };
             
@@ -588,7 +325,7 @@
             const modeDescription = document.getElementById('game-mode-description');
             
             // Show game mode banner
-            modeBanner.style.display = 'flex';
+            modeBanner.classList.remove('hidden');
             
             // Check URL for game mode parameter
             const urlParams = new URLSearchParams(window.location.search);
@@ -751,7 +488,7 @@
                         // Update ready button state and visibility
                         if (!player.isHost) {
                             // Make sure ready button is visible for non-host players
-                            readyBtn.style.display = 'inline-block';
+                            readyBtn.classList.remove('hidden');
                             
                             if (player.ready) {
                                 // Lock the ready button when player is ready
@@ -767,7 +504,7 @@
                             }
                         } else {
                             // Host doesn't need to ready up
-                            readyBtn.style.display = 'none';
+                            readyBtn.classList.add('hidden');
                         }
                     }
                     
@@ -776,7 +513,7 @@
                 
                 // Always show ready button for non-hosts if they're in the game
                 if (isClientInList && !isClientHost) {
-                    readyBtn.style.display = 'inline-block';
+                    readyBtn.classList.remove('hidden');
                 }
                 
                 // Show/hide start button based on host status
@@ -797,7 +534,7 @@
                         readyBtn.title = '';
                     }
                 } else {
-                    readyBtn.style.display = 'none';
+                    readyBtn.classList.add('hidden');
                 }
                 
                 // Apply translations to newly created elements
@@ -814,13 +551,13 @@
                     const gameStatus = document.getElementById('game-status');
                     const statusMessage = gameStatus.querySelector('.status-message');
                     statusMessage.textContent = i18n.translate('all_players_ready') || '所有玩家已准备就绪';
-                    gameStatus.style.display = 'block';
+                    gameStatus.classList.remove('hidden');
                 } else {
                     readyBtn.classList.add('disabled');
                     readyBtn.disabled = true;
                     
                     // Hide game status area
-                    document.getElementById('game-status').style.display = 'none';
+                    document.getElementById('game-status').classList.add('hidden');
                 }
             });
             
@@ -832,7 +569,7 @@
                 
                 statusMessage.textContent = i18n.translate('game_starting_soon') || '游戏即将开始';
                 countdown.textContent = data.seconds;
-                gameStatus.style.display = 'block';
+                gameStatus.classList.remove('hidden');
                 
                 // Play a sound if available
                 if (window.gameSound && window.gameSound.playCountdown) {
@@ -857,11 +594,11 @@
                 
                 // Show the modal
                 const resultsModal = document.getElementById('results-modal');
-                resultsModal.style.display = 'flex';
+                resultsModal.classList.remove('hidden');
                 
                 // Add close button handler
                 document.querySelector('.close-results').addEventListener('click', () => {
-                    resultsModal.style.display = 'none';
+                    resultsModal.classList.add('hidden');
                     
                     // Redirect to dashboard or homepage after closing
                     setTimeout(() => {
@@ -894,17 +631,6 @@
                     readyBtn.click();
                 }, 100);
             });
-            
-            // Add a style for the locked ready button
-            const style = document.createElement('style');
-            style.textContent = `
-                #ready-btn.locked {
-                    opacity: 0.8;
-                    cursor: not-allowed;
-                    background-color: #27ae60;
-                }
-            `;
-            document.head.appendChild(style);
         });
     </script>
     <script type="module" src="js/pages/game-room.js"></script>

@@ -6,337 +6,6 @@
     <title>Admin Panel - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
     <meta name="description" content="Admin panel for managing World Peace Online users and game settings">
-    <style>
-        .admin-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .admin-title {
-            margin: 0;
-        }
-        
-        .admin-nav {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .filter-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-            background-color: #f5f5f5;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 200px;
-        }
-        
-        .user-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            overflow-x: auto;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-        
-        .user-table th {
-            background-color: #4CAF50;
-            color: white;
-            text-align: left;
-            padding: 12px;
-            position: sticky;
-            top: 0;
-            cursor: pointer;
-        }
-        
-        .user-table th:hover,
-        .user-table th:focus {
-            background-color: #3e8e41;
-            outline: none;
-        }
-        
-        .user-table th::after {
-            content: "";
-            margin-left: 5px;
-        }
-        
-        .user-table th.sort-asc::after {
-            content: "▲";
-        }
-        
-        .user-table th.sort-desc::after {
-            content: "▼";
-        }
-        
-        .user-table td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .user-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        
-        .user-table tr:hover {
-            background-color: #f1f1f1;
-        }
-        
-        .actions-cell {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        
-        .actions-cell button {
-            padding: 8px 12px;
-            font-size: 13px;
-            min-width: 60px;
-            min-height: 36px; /* Ensure adequate touch target size */
-        }
-        
-        .status-banned {
-            color: #fff;
-            background-color: #f44336;
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            text-align: center;
-        }
-        
-        .status-clear {
-            color: #fff;
-            background-color: #4CAF50;
-            padding: 3px 6px;
-            border-radius: 4px;
-            text-align: center;
-        }
-        
-        .btn-ban {
-            background-color: #f44336;
-        }
-        
-        .btn-unban {
-            background-color: #4CAF50;
-        }
-        
-        /* Modal improvements */
-        .modal-content {
-            width: 90%;
-            max-width: 500px;
-            border-radius: 8px;
-        }
-        
-        .modal-header {
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px;
-            border-radius: 8px 8px 0 0;
-        }
-        
-        .modal-close {
-            color: white;
-            cursor: pointer;
-            font-size: 24px;
-            font-weight: bold;
-            position: absolute;
-            right: 15px;
-            top: 10px;
-        }
-        
-        .modal-close:hover,
-        .modal-close:focus {
-            color: #f1f1f1;
-            outline: none;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .form-group select, 
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            padding-top: 15px;
-            border-top: 1px solid #ddd;
-        }
-        
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4CAF50;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Skip link for keyboard navigation */
-        .skip-to-content {
-            position: absolute;
-            left: -9999px;
-            top: 0;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-            z-index: 9999;
-            background: #4CAF50;
-            color: white;
-            padding: 10px;
-            border-radius: 0 0 5px 0;
-            text-decoration: none;
-        }
-        
-        .skip-to-content:focus {
-            left: 0;
-            width: auto;
-            height: auto;
-            outline: none;
-        }
-        
-        /* Responsive adjustments */
-        @media screen and (max-width: 768px) {
-            .admin-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .admin-nav {
-                margin-top: 15px;
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .filter-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .filter-group {
-                width: 100%;
-            }
-            
-            .table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-            }
-            
-            .user-table {
-                min-width: 600px;
-            }
-            
-            .actions-cell {
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .actions-cell button {
-                width: 100%;
-            }
-            
-            /* Better touch targets on mobile */
-            button, select, input {
-                font-size: 16px; /* Prevent zoom on iOS */
-                min-height: 44px; /* Better touch targets */
-            }
-            
-            .modal-content {
-                width: 95%;
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-            
-            .modal-close {
-                font-size: 28px; /* Larger touch target */
-                padding: 5px;
-            }
-        }
-        
-        /* Small screen optimizations */
-        @media screen and (max-width: 480px) {
-            .admin-container {
-                padding: 10px;
-            }
-            
-            .filter-controls {
-                padding: 10px;
-            }
-            
-            h3 {
-                font-size: 18px;
-            }
-            
-            .admin-title {
-                font-size: 20px;
-            }
-        }
-        
-        /* High contrast mode support */
-        @media (forced-colors: active) {
-            .user-table th {
-                border: 1px solid;
-            }
-            
-            .user-table td {
-                border: 1px solid;
-            }
-            
-            .status-banned, .status-clear {
-                border: 1px solid;
-            }
-        }
-        
-        /* Focus styles */
-        button:focus, select:focus, input:focus, th:focus {
-            outline: 2px solid #4a69bd;
-            outline-offset: 2px;
-        }
-    </style>
 </head>
 <body>
     <a href="#user-management" class="skip-to-content">Skip to user management</a>
@@ -351,7 +20,7 @@
             </div>
         </div>
         
-        <div id="message" class="message" style="display: none;" role="alert" aria-live="assertive"></div>
+        <div id="message" class="message hidden" role="alert" aria-live="assertive"></div>
         
         <div class="filter-controls" role="search" aria-label="User filter controls">
             <div class="filter-group">
@@ -382,7 +51,7 @@
                 <div class="spinner" aria-hidden="true"></div>
                 <p>Loading user data...</p>
             </div>
-            <table class="user-table" id="user-table" style="display: none;" aria-label="User management table">
+            <table class="user-table hidden" id="user-table" aria-label="User management table">
                 <thead>
                     <tr>
                         <th data-sort="id">ID</th>
@@ -495,16 +164,16 @@
             const cancelBtn = document.querySelector('.btn-cancel');
             
             closeBtn.addEventListener('click', () => {
-                modal.style.display = 'none';
+                modal.classList.add('hidden');
             });
             
             cancelBtn.addEventListener('click', () => {
-                modal.style.display = 'none';
+                modal.classList.add('hidden');
             });
             
             window.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    modal.style.display = 'none';
+                    modal.classList.add('hidden');
                 }
             });
             
@@ -530,7 +199,7 @@
                     
                     if (response.ok) {
                         showMessage('User updated successfully', 'success');
-                        modal.style.display = 'none';
+                        modal.classList.add('hidden');
                         loadUsers();
                     } else {
                         showMessage(data.error || 'Failed to update user', 'error');
@@ -570,8 +239,8 @@
         async function loadUsers() {
             try {
                 // Show loading indicator
-                document.getElementById('loading-indicator').style.display = 'flex';
-                document.getElementById('user-table').style.display = 'none';
+                document.getElementById('loading-indicator').classList.remove('hidden');
+                document.getElementById('user-table').classList.add('hidden');
                 
                 const response = await fetch('/api/admin/users');
                 
@@ -584,8 +253,8 @@
                 const data = await response.json();
                 
                 // Hide loading indicator
-                document.getElementById('loading-indicator').style.display = 'none';
-                document.getElementById('user-table').style.display = 'table';
+                document.getElementById('loading-indicator').classList.add('hidden');
+                document.getElementById('user-table').classList.remove('hidden');
                 
                 if (response.ok) {
                     // Store all users for filtering
@@ -597,7 +266,7 @@
                     showMessage(data.error || 'Failed to load users', 'error');
                 }
             } catch (error) {
-                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('loading-indicator').classList.add('hidden');
                 showMessage('System error', 'error');
                 console.error(error);
             }
@@ -724,7 +393,7 @@
                     document.getElementById('edit-role').value = data.role;
                     document.getElementById('edit-elo').value = data.elo;
                     
-                    document.getElementById('edit-modal').style.display = 'block';
+                    document.getElementById('edit-modal').classList.remove('hidden');
                 } else {
                     showMessage(data.error || 'Failed to load user data', 'error');
                 }
@@ -804,10 +473,10 @@
             const messageEl = document.getElementById('message');
             messageEl.textContent = text;
             messageEl.className = `message ${type}`;
-            messageEl.style.display = 'block';
+            messageEl.classList.remove('hidden');
             
             setTimeout(() => {
-                messageEl.style.display = 'none';
+                messageEl.classList.add('hidden');
             }, 5000);
         }
     </script>

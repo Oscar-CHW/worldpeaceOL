@@ -576,23 +576,10 @@ button:focus {
 }
 
 .room-type-button {
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    background-color: #55efc4;
-    color: #333;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.room-type-button:hover,
-.room-type-button:focus {
-    background-color: #41d6af;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-size: 16px;
+    padding: 12px 30px;
+    margin-top: 20px;
+    margin: 10px;
 }
 
 .back-link {
@@ -616,63 +603,68 @@ button:focus {
 .join-room-modal {
     display: none;
     position: fixed;
-    z-index: 100;
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
 }
 
 .join-room-modal.active {
     display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .join-room-content {
-    background-color: white;
+    background-color: #34495e;
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    padding: 1.5rem;
+    padding: 20px;
     width: 90%;
     max-width: 400px;
-    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .join-room-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
 }
 
 .join-room-header h3 {
     margin: 0;
-    font-size: 1.5rem;
+    color: #ecf0f1;
 }
 
 .join-room-close {
-    font-size: 1.5rem;
-    background: none;
-    border: none;
+    color: #bdc3c7;
+    font-size: 24px;
     cursor: pointer;
-    padding: 0;
-    color: #666;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.join-room-close:hover {
+    color: #e74c3c;
 }
 
 .join-room-form {
-    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .room-id-input {
-    width: 100%;
-    padding: 10px;
+    padding: 12px;
     margin-bottom: 15px;
-    border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 1rem;
-    box-sizing: border-box;
+    border: 1px solid #555;
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    font-size: 16px;
 }
 
 .join-button {
@@ -1341,4 +1333,1015 @@ img {
 /* Add smooth scrolling for better UX */
 html {
     scroll-behavior: smooth;
+}
+
+/* Hidden elements - For elements that need to be hidden by default */
+.hidden {
+    display: none;
+}
+
+/* Game mode specific styles */
+.game-mode-banner.hidden,
+.game-mode-selector.hidden,
+.game-status.hidden,
+.game-container.hidden,
+.rps-timer.hidden,
+.barrier-image.hidden,
+.room-buttons.hidden,
+.last-room-prompt.hidden,
+.error-message.hidden,
+.success-message.hidden,
+.notification-permission.hidden,
+.matches-loading.hidden,
+.client-test-panel.hidden,
+.admin-btn.hidden,
+.message.hidden,
+.user-table.hidden {
+    display: none;
+}
+
+/* Positioning for tower elements */
+.tower.left {
+    z-index: 2;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tower.right {
+    z-index: 1;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Additional styles for ELO markers */
+.elo-marker {
+    position: relative;
+}
+
+.elo-marker-1000 {
+    left: 10%;
+}
+
+.elo-marker-1200 {
+    left: 30%;
+}
+
+.elo-marker-1400 {
+    left: 50%;
+}
+
+.elo-marker-1600 {
+    left: 70%;
+}
+
+.elo-marker-1800 {
+    left: 90%;
+}
+
+/* Additional spacing classes */
+.margin-top-40 {
+    margin-top: 40px;
+}
+
+.margin-top-20 {
+    margin-top: 20px;
+}
+
+.margin-bottom-10 {
+    margin-bottom: 10px;
+}
+
+/* Button color variations */
+.btn-success {
+    background-color: #2ecc71;
+}
+
+/* Hidden elements display state classes */
+.loading-indicator.hidden {
+    display: none;
+}
+
+.loading-indicator {
+    display: flex;
+}
+
+.user-table {
+    display: table;
+}
+
+.user-table.hidden {
+    display: none;
+}
+
+.edit-modal.hidden {
+    display: none;
+}
+
+.edit-modal {
+    display: block;
+}
+
+.match-found-container.hidden {
+    display: none;
+}
+
+.match-found-container {
+    display: block;
+}
+
+.matchmaking-options.hidden {
+    display: none;
+}
+
+.matchmaking-options {
+    display: block;
+}
+
+.searching-container.hidden {
+    display: none;
+}
+
+.searching-container {
+    display: block;
+}
+
+.matches-loading {
+    display: inline-block;
+}
+
+.matches-loading.hidden {
+    display: none;
+}
+
+/* Button visibility */
+.action-button.hidden {
+    display: none;
+}
+
+/* Make sure game-mode-banner displays as flex when visible */
+.game-mode-banner {
+    display: flex;
+}
+
+.game-mode-banner.hidden {
+    display: none;
+}
+
+/* Social login styles */
+.social-login {
+    margin-top: 20px;
+    text-align: center;
+    position: relative;
+}
+
+.social-login:before {
+    content: "";
+    display: block;
+    height: 1px;
+    width: 100%;
+    background-color: #ddd;
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+}
+
+.social-login-text {
+    display: inline-block;
+    padding: 0 10px;
+    background-color: white;
+    position: relative;
+    z-index: 2;
+    color: #777;
+    font-size: 14px;
+}
+
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.google-login-btn img {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+}
+
+.google-login-btn:hover {
+    background-color: #f5f5f5;
+}
+
+/* Make sure error-message is defined if not already */
+.error-message {
+    color: #f44336;
+    margin: 10px 0;
+    text-align: center;
+    font-size: 14px;
+    background-color: #ffebee;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Friends page styles */
+.friends-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.friend-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.friend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.friend-request {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.friend-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-duel {
+    background-color: #ff9800;
+}
+
+.btn-remove {
+    background-color: #f44336;
+}
+
+.btn-accept {
+    background-color: #4CAF50;
+}
+
+.btn-reject {
+    background-color: #f44336;
+}
+
+.empty-list {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-form input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.success-message {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Section styles */
+.section {
+    margin-bottom: 30px;
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* CSS Variables */
+:root {
+    --primary: #4CAF50;
+    --primary-dark: #3e8e41;
+    --secondary: #ff9800;
+    --danger: #f44336;
+    --light-bg: #f5f5f5;
+}
+
+/* Pairing page styles */
+.nav-links {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.nav-links a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a:focus {
+    background-color: var(--light-bg);
+    outline: none;
+    text-decoration: underline;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.user-stats {
+    flex: 1;
+}
+
+.user-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.user-elo {
+    font-size: 18px;
+    color: var(--primary);
+    margin-bottom: 5px;
+    font-weight: bold;
+    background-color: rgba(76, 175, 80, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.elo-info {
+    font-size: 14px;
+    color: #777;
+}
+
+.options-form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.elo-range {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    position: relative;
+    height: 30px;
+}
+
+.elo-range-bar {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background-color: #ddd;
+    border-radius: 3px;
+    transform: translateY(-50%);
+}
+
+.elo-range-selection {
+    position: absolute;
+    top: 50%;
+    height: 6px;
+    background-color: var(--primary);
+    border-radius: 3px;
+    transform: translateY(-50%);
+}
+
+.elo-marker {
+    position: absolute;
+    top: 50%;
+    width: 2px;
+    height: 12px;
+    background-color: #333;
+    transform: translateY(-50%);
+}
+
+.elo-marker.your-elo {
+    width: 4px;
+    background-color: var(--secondary);
+}
+
+.elo-marker::after {
+    content: attr(data-elo);
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.elo-marker.your-elo::after {
+    font-weight: bold;
+    color: var(--secondary);
+}
+
+.queue-status {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    display: none;
+}
+
+.status-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.status-searching {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.status-details {
+    background-color: var(--light-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    text-align: left;
+}
+
+.status-details p {
+    margin: 5px 0;
+}
+
+.time-elapsed {
+    font-size: 32px;
+    font-weight: bold;
+    margin: 20px 0;
+    color: var(--primary);
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px 0;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.btn-large {
+    padding: 12px 20px;
+    font-size: 16px;
+    width: 100%;
+}
+
+.btn-cancel {
+    background-color: var(--danger);
+}
+
+.recent-matches {
+    margin-top: 30px;
+}
+
+.matches-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.matches-table th {
+    background-color: var(--primary);
+    color: white;
+    text-align: left;
+    padding: 12px;
+}
+
+.matches-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.matches-table tr:last-child td {
+    border-bottom: none;
+}
+
+.matches-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.result-win {
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.result-loss {
+    color: var(--danger);
+}
+
+.result-draw {
+    color: #666;
+}
+
+.elo-change {
+    font-size: 12px;
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 5px;
+}
+
+.elo-increase {
+    background-color: #e8f5e9;
+    color: var(--primary);
+}
+
+.elo-decrease {
+    background-color: #ffebee;
+    color: var(--danger);
+}
+
+.no-matches {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+    font-style: italic;
+}
+
+/* More pairing page styles will be added in subsequent updates if needed */
+
+/* Account connections styles */
+.account-connections {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f8f8;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.connection-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.connection-item:last-child {
+    border-bottom: none;
+}
+
+.connection-provider {
+    display: flex;
+    align-items: center;
+}
+
+.connection-provider img {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-connected {
+    background-color: #4caf50;
+}
+
+.status-disconnected {
+    background-color: #f44336;
+}
+
+.connection-action {
+    margin-left: 10px;
+}
+
+/* Game mode selector styles */
+.game-mode-selector {
+    margin: 20px auto;
+    max-width: 500px;
+}
+
+.game-mode-title {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #ecf0f1;
+}
+
+.game-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+}
+
+.game-mode-card {
+    background: rgba(41, 128, 185, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    width: 140px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.game-mode-card:hover {
+    background: rgba(41, 128, 185, 0.5);
+    transform: translateY(-3px);
+}
+
+.game-mode-card.selected {
+    border-color: #e67e22;
+    background: rgba(41, 128, 185, 0.6);
+}
+
+.game-mode-card h4 {
+    color: #ffd38c;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.game-mode-card p {
+    font-size: 12px;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+.game-mode-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+/* Admin panel styles */
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.user-table th.sort-asc::after {
+    content: "▲";
+}
+
+.user-table th.sort-desc::after {
+    content: "▼";
+}
+
+.user-table th::after {
+    content: "";
+    margin-left: 5px;
+}
+
+.status-banned {
+    color: #fff;
+    background-color: #f44336;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.status-clear {
+    color: #fff;
+    background-color: #4CAF50;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.btn-ban {
+    background-color: #f44336;
+}
+
+.btn-unban {
+    background-color: #4CAF50;
+}
+
+.modal-close:hover,
+.modal-close:focus {
+    color: #f1f1f1;
+    outline: none;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Game mode banner and badges */
+.game-mode-badge {
+    background-color: #e67e22;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.game-mode-badge.insane {
+    background-color: #e74c3c;
+}
+
+.game-mode-badge.beta {
+    background-color: #3498db;
+}
+
+.game-mode-description {
+    font-size: 0.85rem;
+    color: #bdc3c7;
+    flex-grow: 1;
+    margin: 0 15px;
+}
+
+/* Unit options and modifiers */
+.unit-option {
+    position: relative;
+}
+
+.unit-option .unit-modifier {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.unit-option .unit-ability {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #2ecc71;
+    border-radius: 8px;
+    padding: 2px 5px;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+/* Player ready status */
+.player-ready {
+    color: #2ecc71;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.player-not-ready {
+    color: #e74c3c;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+#ready-btn.active {
+    background-color: #2ecc71;
+}
+
+#ready-btn:not(.active) {
+    background-color: #e74c3c;
+}
+
+#start-game-btn.disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+}
+
+/* Game status styling */
+.game-status {
+    background-color: rgba(52, 152, 219, 0.9);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    margin: 15px 0;
+    animation: pulse 1.5s infinite;
+}
+
+.status-message {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.countdown {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Player name obfuscation */
+.player-name {
+    position: relative;
+    display: inline-block;
+}
+
+.player-name.obfuscated::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, #f0f0f0);
+}
+
+/* Player ELO display */
+.player-elo {
+    display: inline-block;
+    font-size: 0.9em;
+    color: #555;
+    background-color: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 5px;
+}
+
+/* Room actions styles */
+.room-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.room-actions button {
+    min-width: 100px;
+    padding: 10px 15px;
+}
+
+/* Player list styles */
+.player-list {
+    min-height: 100px;
+    margin: 20px 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.player-list ul {
+    min-height: 50px;
+}
+
+/* Make sure it appears when the list is empty */
+.player-list ul:empty::after {
+    content: "等待玩家加入...";
+    color: #888;
+    font-style: italic;
+    display: block;
+    padding: 10px 0;
+}
+
+/* Game results modal */
+.results-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.results-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.results-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.elo-change {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.elo-change.winner {
+    border-left: 4px solid #2ecc71;
+}
+
+.elo-change.loser {
+    border-left: 4px solid #e74c3c;
+}
+
+.player-name-result {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.elo-change-value {
+    font-weight: bold;
+}
+
+.elo-change-value.positive {
+    color: #2ecc71;
+}
+
+.elo-change-value.negative {
+    color: #e74c3c;
+}
+
+.close-results {
+    margin-top: 20px;
+    padding: 8px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.close-results:hover {
+    background-color: #2980b9;
+}
+
+#ready-btn.locked {
+    opacity: 0.8;
+    cursor: not-allowed;
+    background-color: #27ae60;
 }

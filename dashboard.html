@@ -5,62 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="user_profile">个人中心 - 天下太平</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .account-connections {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f8f8;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        
-        .connection-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .connection-item:last-child {
-            border-bottom: none;
-        }
-        
-        .connection-provider {
-            display: flex;
-            align-items: center;
-        }
-        
-        .connection-provider img {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-        }
-        
-        .connection-status {
-            display: flex;
-            align-items: center;
-        }
-        
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        
-        .status-connected {
-            background-color: #4caf50;
-        }
-        
-        .status-disconnected {
-            background-color: #f44336;
-        }
-        
-        .connection-action {
-            margin-left: 10px;
-        }
-    </style>
 </head>
 <body>
     <div id="language-selector"></div>
@@ -107,10 +51,10 @@
         
         <div class="dashboard-actions">
             <button id="home-btn" data-i18n="back_to_home">返回首页</button>
-            <button id="friends-btn">Friends</button>
+            <button id="friends-btn" class="action-button">Friends</button>
             <button id="pairing-btn">Find a Match</button>
-            <button class="logout" id="logout-btn" data-i18n="logout">退出登录</button>
-            <button id="admin-btn" style="display:none;">Admin Panel</button>
+            <button id="admin-btn" class="action-button hidden">Admin Panel</button>
+            <button id="logout-btn" class="action-button logout">Log Out</button>
         </div>
     </div>
 

@@ -6,153 +6,6 @@
     <title data-i18n="title">天下太平</title>
     <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
-    <style>
-        .game-mode-selector {
-            margin: 20px auto;
-            max-width: 500px;
-        }
-        
-        .game-mode-title {
-            text-align: center;
-            margin-bottom: 15px;
-            color: #ecf0f1;
-        }
-        
-        .game-modes {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-        }
-        
-        .game-mode-card {
-            background: rgba(41, 128, 185, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            width: 140px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-        
-        .game-mode-card:hover {
-            background: rgba(41, 128, 185, 0.5);
-            transform: translateY(-3px);
-        }
-        
-        .game-mode-card.selected {
-            border-color: #e67e22;
-            background: rgba(41, 128, 185, 0.6);
-        }
-        
-        .game-mode-card h4 {
-            color: #ffd38c;
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-        
-        .game-mode-card p {
-            font-size: 12px;
-            color: #ffffff;
-            margin-bottom: 10px;
-        }
-        
-        .game-mode-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        .room-type-button {
-            font-size: 16px;
-            padding: 12px 30px;
-            margin-top: 20px;
-            margin: 10px;
-        }
-        
-        /* Join room modal styles */
-        .join-room-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .join-room-modal.active {
-            display: flex;
-        }
-        
-        .join-room-content {
-            background-color: #34495e;
-            border-radius: 8px;
-            padding: 20px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .join-room-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-        }
-        
-        .join-room-header h3 {
-            margin: 0;
-            color: #ecf0f1;
-        }
-        
-        .join-room-close {
-            color: #bdc3c7;
-            font-size: 24px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: color 0.2s;
-        }
-        
-        .join-room-close:hover {
-            color: #e74c3c;
-        }
-        
-        .join-room-form {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .room-id-input {
-            padding: 12px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            border: 1px solid #555;
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            font-size: 16px;
-        }
-        
-        .join-button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.2s;
-        }
-        
-        .join-button:hover {
-            background-color: #2980b9;
-        }
-    </style>
 </head>
 <body>
     <div id="language-selector"></div>
@@ -208,7 +61,7 @@
             </div>
         </div>
         
-        <div id="error-message" class="message error" style="display: none; margin-top: 20px;">
+        <div id="error-message" class="message error hidden margin-top-20">
             请先登录后再创建房间
         </div>
         
@@ -342,7 +195,7 @@
                     
                     if (response.status === 401) {
                         // Show error message if not logged in
-                        errorMessage.style.display = 'block';
+                        errorMessage.classList.remove('hidden');
                         return;
                     }
                     
@@ -358,7 +211,7 @@
                     
                 } catch (error) {
                     console.error('Error creating room:', error);
-                    errorMessage.style.display = 'block';
+                    errorMessage.classList.remove('hidden');
                 }
             });
             

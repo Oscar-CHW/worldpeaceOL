@@ -5,107 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Friends - World Peace Online</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .section {
-            margin-bottom: 30px;
-            background-color: #f5f5f5;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .friend-list {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .friend-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin-bottom: 10px;
-            background-color: #fff;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .friend-request {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin-bottom: 10px;
-            background-color: #fff;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .friend-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-duel {
-            background-color: #ff9800;
-        }
-
-        .btn-remove {
-            background-color: #f44336;
-        }
-
-        .btn-accept {
-            background-color: #4CAF50;
-        }
-
-        .btn-reject {
-            background-color: #f44336;
-        }
-
-        .empty-list {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            font-style: italic;
-        }
-
-        .search-form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-form input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .error-message, .success-message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 4px;
-        }
-
-        .error-message {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-
-        .success-message {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container friends-container">
         <h1>Friends</h1>
         <div class="header">
         <a href="/" class="site-title">World Peace Online</a>
@@ -117,8 +19,8 @@
         </div>
     </div>
 
-        <div id="errorContainer" class="error-message" style="display: none;"></div>
-        <div id="successContainer" class="success-message" style="display: none;"></div>
+        <div id="errorContainer" class="error-message hidden"></div>
+        <div id="successContainer" class="success-message hidden"></div>
 
         <div class="section">
             <h2>Add Friend</h2>
@@ -365,11 +267,11 @@
         function showError(message) {
             const errorContainer = document.getElementById('errorContainer');
             errorContainer.textContent = message;
-            errorContainer.style.display = 'block';
+            errorContainer.classList.remove('hidden');
             
             // Hide after 5 seconds
             setTimeout(() => {
-                errorContainer.style.display = 'none';
+                errorContainer.classList.add('hidden');
             }, 5000);
         }
 
@@ -377,11 +279,11 @@
         function showSuccess(message) {
             const successContainer = document.getElementById('successContainer');
             successContainer.textContent = message;
-            successContainer.style.display = 'block';
+            successContainer.classList.remove('hidden');
             
             // Hide after 5 seconds
             setTimeout(() => {
-                successContainer.style.display = 'none';
+                successContainer.classList.add('hidden');
             }, 5000);
         }
     </script>

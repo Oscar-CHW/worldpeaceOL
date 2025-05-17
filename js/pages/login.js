@@ -68,5 +68,5 @@ function showMessage(text, type) {
     const messageEl = document.getElementById('message');
     messageEl.textContent = text;
     messageEl.className = `message ${type}`;
-    messageEl.style.display = 'block';
+    messageEl.classList.remove('hidden');
 } 

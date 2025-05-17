@@ -12,171 +12,6 @@
     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
     <!-- Apple touch icon for iOS devices -->
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
-    <style>
-        /* Game-inspired elements */
-        @keyframes glow {
-            0% { text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(74, 105, 189, 0.5); }
-            50% { text-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 30px rgba(74, 105, 189, 0.8); }
-            100% { text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(74, 105, 189, 0.5); }
-        }
-        
-        .title-glow {
-            animation: glow 3s infinite;
-        }
-        
-        .game-badge {
-            position: absolute;
-            top: -15px;
-            right: -15px;
-            background-color: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            padding: 8px 12px;
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            transform: rotate(15deg);
-        }
-        
-        .player-count {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-top: 10px;
-        }
-        
-        /* Quote from a famous game */
-        .game-quote {
-            font-style: italic;
-            color: #bdc3c7;
-            margin: 20px 0;
-            text-align: center;
-            font-size: 16px;
-        }
-        
-        /* Game mode selector */
-        .game-modes {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .game-mode {
-            padding: 8px 15px;
-            background-color: rgba(41, 128, 185, 0.7);
-            border-radius: 20px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .game-mode:hover,
-        .game-mode:focus {
-            background-color: rgba(41, 128, 185, 1);
-            transform: scale(1.05);
-        }
-        
-        .game-mode.active {
-            background-color: #e67e22;
-        }
-        
-        .game-mode-description {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            max-width: 600px;
-            text-align: center;
-            color: #ecf0f1;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        
-        /* Matchmaking options */
-        .matchmaking-options {
-            margin-top: 30px;
-            text-align: center;
-        }
-        
-        .matchmaking-title {
-            font-size: 1.2rem;
-            color: #ecf0f1;
-            margin-bottom: 15px;
-        }
-        
-        .matchmaking-methods {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        
-        .matchmaking-card {
-            background: rgba(41, 128, 185, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            width: 180px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .matchmaking-card:hover {
-            background: rgba(41, 128, 185, 0.5);
-            transform: translateY(-3px);
-        }
-        
-        .matchmaking-card h4 {
-            color: #242c57;
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-        
-        .matchmaking-card p {
-            font-size: 13px;
-            color: #242c57;
-        }
-        
-        .matchmaking-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        @media (prefers-reduced-motion: reduce) {
-            .title-glow {
-                animation: none;
-                text-shadow: 0 0 15px rgba(255,255,255,0.8), 0 0 25px rgba(74, 105, 189, 0.7);
-            }
-        }
-        
-        /* Responsive improvements */
-        @media (max-width: 480px) {
-            .title-container h1 {
-                font-size: 2.5rem;
-            }
-            
-            .room-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .room-button {
-                width: 80%;
-                margin-bottom: 10px;
-            }
-            
-            .matchmaking-methods {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .matchmaking-card {
-                width: 80%;
-            }
-        }
-    </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -215,13 +50,13 @@
         <!-- <div class="matchmaking-options">
                     <h3 class="matchmaking-title">Custom Game</h3>
 
-        <div class="room-buttons" id="room-buttons" style="display: none;">
+        <div class="room-buttons hidden" id="room-buttons">
 
             <button class="room-button create" id="create-btn" aria-label="Create a new game room">Create Room</button>
             <button class="room-button join" id="join-btn" aria-label="Join an existing game room">Join Room</button>
         </div>
         </div> -->
-        <div class="last-room-prompt" id="last-room-prompt" style="display: none;">
+        <div class="last-room-prompt hidden" id="last-room-prompt">
             <p>You have an active room:</p>
             <p id="last-room-id"></p>
             <button class="room-button rejoin" id="rejoin-btn" aria-label="Rejoin your previous game">Rejoin Room</button>
