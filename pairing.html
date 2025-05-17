@@ -640,10 +640,43 @@
             // Handle connection/reconnection
             socket.on('connect', function() {
                 console.log('Connected to server');
+                socket.emit('getPlayerCount');
             });
             
             socket.on('disconnect', function() {
                 console.log('Disconnected from server');
+            });
+
+            // Listen for match found event from server
+            socket.on('matchFound', function(data) {
+                console.log('Match found!', data);
+                
+                // Show success message
+                showSuccess('Match found! Joining game room...');
+                announceToScreenReader('Match found! You will be redirected to the game room with ' + data.opponent);
+                
+                // Stop all timers and polling
+                stopTimer();
+                stopAllSimulations();
+                
+                // Display match info
+                document.getElementById('queueStatusText').textContent = `Match found with ${data.opponent}!`;
+                
+                // Redirect to the game room
+                setTimeout(() => {
+                    window.location.href = `/game-room.html?roomId=${data.roomId}`;
+                }, 1500);
+            });
+            
+            socket.on('userCount', function(data) {
+                if (!data || typeof data.count !== 'number') return;
+                
+                currentUserCount = data.count;
+                
+                // Update the player count display if we're in the queue
+                if (document.getElementById('queueStatus').style.display === 'block') {
+                    updatePlayerCountDisplay(currentUserCount);
+                }
             });
         }
 

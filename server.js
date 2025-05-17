@@ -1807,9 +1807,9 @@ async function tryMatchmaking(userId) {
     // Store room in memory
     rooms.set(roomId, room);
     
-    log(`Match created: ${userQueue.user.username} (${userId}) vs ${match.user.username} (${match.userId})`, 'debug', 'MATCHMAKING');
-    
-    return {
+    // Find all socket connections for both users and notify them
+    // We need to find the sockets associated with these users to send them notifications
+    const matchResult = {
       roomId,
       player1: {
         id: userId,
@@ -1822,6 +1822,55 @@ async function tryMatchmaking(userId) {
         username: match.user.username
       }
     };
+    
+    // Update both users' lastRoom
+    await prisma.user.update({
+      where: { id: userId },
+      data: { lastRoom: roomId }
+    });
+    
+    await prisma.user.update({
+      where: { id: match.userId },
+      data: { lastRoom: roomId }
+    });
+    
+    // Find socket connections for both players
+    const player1Sockets = [];
+    const player2Sockets = [];
+    
+    // This is inefficient, but we need to search through all connected sockets
+    // In a production app, you'd maintain a mapping of userId -> socketIds
+    io.sockets.sockets.forEach(socket => {
+      if (socket.request?.session?.userId === userId) {
+        player1Sockets.push(socket.id);
+      } else if (socket.request?.session?.userId === match.userId) {
+        player2Sockets.push(socket.id);
+      }
+    });
+    
+    log(`Notifying matched players: ${player1Sockets.length} sockets for player1, ${player2Sockets.length} sockets for player2`, 'debug', 'MATCHMAKING');
+    
+    // Emit to all sockets for player 1
+    player1Sockets.forEach(socketId => {
+      io.to(socketId).emit('matchFound', {
+        roomId,
+        opponent: match.user.username,
+        isHost: true
+      });
+    });
+    
+    // Emit to all sockets for player 2
+    player2Sockets.forEach(socketId => {
+      io.to(socketId).emit('matchFound', {
+        roomId,
+        opponent: userQueue.user.username,
+        isHost: false
+      });
+    });
+    
+    log(`Match created: ${userQueue.user.username} (${userId}) vs ${match.user.username} (${match.userId})`, 'debug', 'MATCHMAKING');
+    
+    return matchResult;
   } catch (error) {
     log(`Error in matchmaking: ${error}`, 'error');
     return null;
@@ -2150,22 +2199,7 @@ function setupMatchmakingInterval() {
             serverStats.matchesMade++;
             log(`Match found for user ${user.userId}, updating room ${matchResult.roomId}`, 'success');
             
-            // Update both users' lastRoom (room already created in tryMatchmaking)
-            try {
-              await prisma.user.update({
-                where: { id: matchResult.player1.id },
-                data: { lastRoom: matchResult.roomId }
-              });
-              
-              await prisma.user.update({
-                where: { id: matchResult.player2.id },
-                data: { lastRoom: matchResult.roomId }
-              });
-              
-              log(`Updated lastRoom to ${matchResult.roomId} for players: ${matchResult.player1.username} vs ${matchResult.player2.username}`, 'success');
-            } catch (innerError) {
-              log(`Error updating lastRoom references: ${innerError}`, 'error');
-            }
+            // The socket notifications are now handled in the tryMatchmaking function
           }
         }
       } catch (error) {
