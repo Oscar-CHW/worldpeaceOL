@@ -19,6 +19,17 @@ require('dotenv').config();
 const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 const VERBOSE_LOGGING = process.env.VERBOSE_LOGGING === 'true';
 
+// Logging category toggles
+const logCategories = {
+    CONNECTIONS: true,      // User connections and disconnections
+    ROOM_EVENTS: true,      // Room creation, deletion, joining, leaving
+    MATCHMAKING: true,      // Matchmaking attempts and results
+    GAME_EVENTS: false,     // In-game actions (unit spawning, attacks, etc.)
+    PLAYER_READY: false,    // Player ready status changes
+    AUTH_EVENTS: false,     // Login, signup, auth events
+    ERRORS: true            // Always log errors (can't be disabled)
+};
+
 // Server statistics
 const serverStats = {
     startTime: new Date(),
@@ -34,9 +45,14 @@ const io = new Server(httpServer);
 const PORT = process.env.PORT || 3000;
 
 // Console logging utilities
-function log(message, type = 'info') {
+function log(message, type = 'info', category = null) {
     const timestamp = new Date().toISOString();
     let formattedMessage = '';
+    
+    // Skip category-specific logs if the category is disabled
+    if (category && category !== 'ERRORS' && !logCategories[category]) {
+        return;
+    }
     
     switch(type) {
         case 'info':
@@ -60,6 +76,11 @@ function log(message, type = 'info') {
             if (!VERBOSE_LOGGING) return; // Skip verbose logging unless enabled
             formattedMessage = `[${timestamp}] [VERBOSE] ${message}`;
             break;
+    }
+    
+    // Add category label if specified
+    if (category) {
+        formattedMessage = formattedMessage.replace('] [', `] [${category}] [`);
     }
     
     console.log(formattedMessage);
@@ -133,8 +154,21 @@ const commands = {
     },
     
     rooms: {
-        description: 'Lists active game rooms',
-        execute: () => {
+        description: 'Lists active game rooms or toggles room event logging',
+        execute: (args) => {
+            if (args.length > 0 && (args[0] === 'on' || args[0] === 'off' || args[0] === 'toggle')) {
+                if (args[0] === 'on') {
+                    logCategories.ROOM_EVENTS = true;
+                } else if (args[0] === 'off') {
+                    logCategories.ROOM_EVENTS = false;
+                } else {
+                    logCategories.ROOM_EVENTS = !logCategories.ROOM_EVENTS;
+                }
+                log(`Room event logging ${logCategories.ROOM_EVENTS ? 'enabled' : 'disabled'}`, 'success');
+                return true;
+            }
+            
+            // Default behavior - list rooms
             log(`Active rooms (${rooms.size}):`, 'success');
             let count = 0;
             rooms.forEach((room, roomId) => {
@@ -295,7 +329,76 @@ const commands = {
             process.exit(0);
             return true;
         }
-    }
+    },
+    
+    // Add new logging category commands
+    logs: {
+        description: 'Shows current log category status or toggles specific log categories',
+        execute: (args) => {
+            if (!args.length) {
+                // Show current status of all log categories
+                log('Current logging categories status:', 'success');
+                Object.entries(logCategories).forEach(([category, enabled]) => {
+                    console.log(`  ${category.padEnd(15)} - ${enabled ? 'ENABLED' : 'DISABLED'}`);
+                });
+                return true;
+            }
+            
+            const category = args[0].toUpperCase();
+            const action = args[1]?.toLowerCase();
+            
+            if (!logCategories.hasOwnProperty(category)) {
+                log(`Unknown log category: ${category}. Use 'logs' command without arguments to see available categories.`, 'error');
+                return false;
+            }
+            
+            if (category === 'ERRORS') {
+                log('ERROR logs cannot be disabled for safety reasons.', 'warn');
+                return false;
+            }
+            
+            if (action === 'on') {
+                logCategories[category] = true;
+                log(`Logging category ${category} enabled`, 'success');
+            } else if (action === 'off') {
+                logCategories[category] = false;
+                log(`Logging category ${category} disabled`, 'success');
+            } else {
+                // Toggle if no specific action
+                logCategories[category] = !logCategories[category];
+                log(`Logging category ${category} ${logCategories[category] ? 'enabled' : 'disabled'}`, 'success');
+            }
+            return true;
+        }
+    },
+    
+    // Add quick toggles for common log categories
+    connections: {
+        description: 'Toggles user connection/disconnection logs',
+        execute: () => {
+            logCategories.CONNECTIONS = !logCategories.CONNECTIONS;
+            log(`Connection logging ${logCategories.CONNECTIONS ? 'enabled' : 'disabled'}`, 'success');
+            return true;
+        }
+    },
+    
+    matchmaking: {
+        description: 'Toggles matchmaking logging',
+        execute: () => {
+            logCategories.MATCHMAKING = !logCategories.MATCHMAKING;
+            log(`Matchmaking logging ${logCategories.MATCHMAKING ? 'enabled' : 'disabled'}`, 'success');
+            return true;
+        }
+    },
+    
+    gameplay: {
+        description: 'Toggles game events logging',
+        execute: () => {
+            logCategories.GAME_EVENTS = !logCategories.GAME_EVENTS;
+            log(`Game events logging ${logCategories.GAME_EVENTS ? 'enabled' : 'disabled'}`, 'success');
+            return true;
+        }
+    },
 };
 
 // Handle commands from the console
@@ -303,996 +406,93 @@ rl.on('line', async (line) => {
     const args = line.trim().split(/\s+/);
     const cmd = args.shift().toLowerCase();
     
-    if (commands[cmd]) {
-        serverStats.commandsExecuted++;
-        try {
-            await commands[cmd].execute(args);
-        } catch (error) {
-            log(`Error executing command ${cmd}: ${error.message}`, 'error');
-        }
-    } else if (cmd) {
-        log(`Unknown command: ${cmd}. Type 'help' for a list of commands.`, 'warn');
-    }
-    
-    rl.prompt();
-});
 
-rl.on('close', () => {
-    log('Server is shutting down...', 'info');
-    process.exit(0);
-});
-
-// Ensure db directory exists
-const dbDir = path.join(__dirname, 'db');
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-}
-
-// Store room data globally
-const rooms = new Map();
-// Store which room each socket is in
-const userRooms = new Map();
-// Track connected users and their count
-const connectedUsers = new Set();
-let onlineUserCount = 0;
-
-// Game mode configurations
-const gameModes = {
-  classic: {
-    initialGold: 500,
-    miningRate: 50,
-    unitCosts: {
-      miner: 100,
-      soldier: 200,
-      barrier: 50
-    },
-    unitStats: {
-      miner: { health: 100, speed: 1 },
-      soldier: { health: 200, damage: 10, speed: 1 },
-      barrier: { health: 300 }
-    },
-    rpsGoldReward: 100, // Gold awarded for winning RPS
-    miningInterval: 1000 // 1 second mining tick
-  },
-  insane: {
-    initialGold: 1000,
-    miningRate: 100,
-    unitCosts: {
-      miner: 100,
-      soldier: 250,
-      barrier: 75,
-      berserker: 400  // Extra unit only in insane mode
-    },
-    unitStats: {
-      miner: { health: 80, speed: 1.5 },
-      soldier: { health: 250, damage: 20, speed: 1.3 },
-      barrier: { health: 500 },
-      berserker: { health: 180, damage: 40, speed: 1.8 }
-    },
-    rpsGoldReward: 200, // Double gold for insane mode
-    miningInterval: 800 // Faster mining tick (0.8 seconds)
-  },
-  beta: {
-    initialGold: 700,
-    miningRate: 65,
-    unitCosts: {
-      miner: 120,
-      soldier: 220,
-      barrier: 60,
-      scout: 150  // Extra unit only in beta mode
-    },
-    unitStats: {
-      miner: { health: 120, speed: 1, ability: "Find Bonus" },
-      soldier: { health: 180, damage: 15, speed: 1, ability: "Stun" },
-      barrier: { health: 350, ability: "Repair" },
-      scout: { health: 90, damage: 5, speed: 2, ability: "Stealth" }
-    },
-    rpsGoldReward: 150, // Moderate gold reward
-    miningInterval: 900, // Moderate mining tick (0.9 seconds)
-    specialRules: {
-      bonusChance: 0.2 // 20% chance for miners to find bonus gold
-    }
-  }
-};
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// Create session middleware
-const sessionMiddleware = session({
-    store: new SQLiteStore({ 
-        db: 'sessions.sqlite',
-        dir: dbDir,
-        table: 'sessions'
-    }),
-    secret: process.env.SESSION_SECRET || 'tianxia-taiping-secret-key',
-    resave: true,
-    saveUninitialized: true,
-    cookie: { 
-        secure: false, 
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-        httpOnly: true,
-        sameSite: 'lax'
-    }
-});
-
-// Apply session middleware to Express
-app.use(sessionMiddleware);
-
-// Initialize Passport and session support
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Configure Passport to use Google OAuth 2.0 strategy
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback',
-    scope: ['profile', 'email'],
-    passReqToCallback: true
-}, async (req, accessToken, refreshToken, profile, done) => {
-    try {
-        // Check if we are linking an existing account
-        if (req.session && req.session.linkGoogleToUserId) {
-            const userId = req.session.linkGoogleToUserId;
-            
-            // Check if this Google ID is already linked to another account
-            const existingGoogleUser = await prisma.user.findFirst({
-                where: { googleId: profile.id }
-            });
-            
-            if (existingGoogleUser && existingGoogleUser.id !== userId) {
-                // This Google account is already linked to another user
-                return done(null, false, { message: 'This Google account is already linked to another user' });
-            }
-            
-            // Update the existing user with Google info
-            const user = await prisma.user.update({
-                where: { id: userId },
-                data: {
-                    googleId: profile.id,
-                    email: profile.emails?.[0]?.value || null
-                }
-            });
-            
-            return done(null, user);
-        }
-        
-        // Regular authentication flow
-        // Check if user already exists with this Google ID
-        let user = await prisma.user.findFirst({
-            where: {
-                googleId: profile.id
-            }
-        });
-
-        if (!user) {
-            // If no user with this Google ID exists, create a new one
-            // Generate a unique username based on Google profile
-            const username = `${profile.displayName.replace(/\s+/g, '')}_${Math.floor(Math.random() * 1000)}`;
-            
-            user = await prisma.user.create({
-                data: {
-                    username: username,
-                    googleId: profile.id,
-                    email: profile.emails?.[0]?.value || null,
-                    password: await bcrypt.hash(Math.random().toString(36).slice(-10), 10), // Generate random password
-                    role: 'PLAYER',
-                    elo: 1200,
-                    banStatus: 'CLEAR'
-                }
-            });
-        }
-        
-        return done(null, user);
-    } catch (error) {
-        console.error("Error in Google authentication strategy:", error);
-        return done(error);
-    }
-}));
-
-// Serialize and deserialize user for sessions
-passport.serializeUser((user, done) => {
-    done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id }
-        });
-        done(null, user);
-    } catch (error) {
-        done(error);
-    }
-});
-
-// Share session with Socket.IO
-io.use((socket, next) => {
-    sessionMiddleware(socket.request, socket.request.res || {}, next);
-});
-
-// Serve static files from the current directory
-app.use(express.static(__dirname));
-
-// Authentication middleware
-const isAuthenticated = (req, res, next) => {
-  if (req.session.userId) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
-  }
-};
-
-// Admin middleware
-const isAdmin = async (req, res, next) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.session.userId }
-    });
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Check if the user has ADMIN role
-    if (user.role !== "ADMIN") {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-    
-    next();
-  } catch (error) {
-    console.error('Admin check error:', error);
-    res.status(500).json({ error: 'Server error checking admin status' });
-  }
-};
-
-// Check if user is banned middleware
-const checkBanStatus = async (req, res, next) => {
-  if (!req.session.userId) {
-    return next();
-  }
-  
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.session.userId }
-    });
-    
-    if (user && user.banStatus === "BANNED") {
-      // User is banned, destroy session and redirect
-      req.session.destroy(err => {
-        if (err) {
-          console.error('Error destroying session for banned user:', err);
-        }
-      });
-      
-      return res.status(403).json({ error: 'Your account has been banned' });
-    }
-    
-    next();
-  } catch (error) {
-    console.error('Ban check error:', error);
-    next();
-  }
-};
-
-// Apply ban check middleware to all requests
-app.use(checkBanStatus);
-
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-    log(`User connected: ${socket.id}`, 'verbose');
-    serverStats.totalConnections++;
-    
-    // Add user to connected users set
-    connectedUsers.add(socket.id);
-    onlineUserCount = connectedUsers.size;
-    
-    // Broadcast updated user count to all clients
-    io.emit('userCountUpdate', { count: onlineUserCount });
-
-    // Handle room check
-    socket.on('checkRoom', (data) => {
-        const { roomId } = data;
-        const roomExists = rooms.has(roomId);
-        
-        log(`Checking if room ${roomId} exists: ${roomExists}`, 'verbose');
-        
-        // Respond with existence status
-        socket.emit('roomCheckResult', { 
-            exists: roomExists,
-            roomId
-        });
-    });
-
-    // Handle room creation
-    socket.on('createRoom', async (data) => {
-        try {
-            // Check if user is already in a room
-            if (userRooms.has(socket.id)) {
-                const currentRoomId = userRooms.get(socket.id);
-                log(`User ${socket.id} is already in room ${currentRoomId}, leaving before creating new room`, 'debug');
-                
-                // Leave current room first
-                await leaveRoom(socket, currentRoomId);
-            }
-            
-            // Use provided room ID or generate a new one
-            const roomId = data.roomId || Math.random().toString(36).substring(2, 8).toUpperCase();
-            
-            // Check if room already exists
-            if (rooms.has(roomId)) {
-                socket.emit('error', { message: 'room_already_exists' });
-                return;
-            }
-            
-            // Create the room
-            socket.join(roomId);
-            
-            // Set game mode (default to classic if not specified)
-            const gameMode = data.gameMode || 'classic';
-            
-            // Initialize room data with username and game mode
-            const roomData = {
-              Started: false,
-              gameMode: gameMode,
-              players: [{
-                  socketId: socket.id,
-                  username: data.username || 'Player 1',
-                  isHost: true,
-                  userId: socket.request?.session?.userId
-              }]
-            };
-            rooms.set(roomId, roomData);
-            
-            // Associate this socket with the room
-            userRooms.set(socket.id, roomId);
-            
-            // Save the room ID to the user's database record if they're logged in
-            if (socket.request && socket.request.session && socket.request.session.userId) {
-                try {
-                    await prisma.user.update({
-                        where: { id: socket.request.session.userId },
-                        data: { lastRoom: roomId }
-                    });
-                    log(`Saved lastRoom=${roomId} for user ID ${socket.request.session.userId}`, 'debug');
-                } catch (dbError) {
-                    log(`Error saving lastRoom to database: ${dbError}`, 'error');
-                }
-            }
-            
-            // Notify the creator that the room was created
-            socket.emit('roomCreated', { roomId, gameMode });
-            
-            // Send initial player list to all clients in the room (including creator)
-            io.in(roomId).emit('playerList', {
-                players: roomData.players,
-                gameMode: roomData.gameMode
-            });
-            
-            log(`Room created: ${roomId} by user: ${data.username} (${socket.id}) with game mode: ${gameMode}`, 'info');
-        } catch (error) {
-            log(`Error creating room: ${error}`, 'error');
-            socket.emit('error', { message: 'Failed to create room' });
-        }
-    });
-
-    // Handle room joining
-    socket.on('joinRoom', (data) => {
-        const { roomId, username } = data;
-        log(`User ${username} (${socket.id}) attempting to join room ${roomId}`, 'debug');
-        
-        // Check if user is already in a room
-        if (userRooms.has(socket.id)) {
-            const currentRoomId = userRooms.get(socket.id);
-            log(`User ${socket.id} is already in room ${currentRoomId}, leaving before joining new room`, 'debug');
-            
-            // Leave current room first
-            leaveRoom(socket, currentRoomId)
-                .then(() => {
-                    // Continue with join after leaving
-                    processRoomJoin(socket, roomId, username);
-                })
-                .catch(error => {
-                    console.error('Error leaving current room:', error);
-                    socket.emit('error', { message: 'Failed to join room' });
-                });
-        } else {
-            // Not in any room, proceed with join
-            processRoomJoin(socket, roomId, username);
-        }
-    });
-
-    // Handle joining an existing room
-    function processRoomJoin(socket, roomId, username) {
-        if (!rooms.has(roomId)) {
-            socket.emit('error', { message: 'room_not_found' });
-            log(`Join room failed: Room ${roomId} not found for user ${username} (${socket.id})`, 'warn');
-            return;
-        }
-        
-        const room = rooms.get(roomId);
-        log(`User ${username} (${socket.id}) attempting to join room ${roomId}`, 'debug');
-        
-        // Check if the user is already in the player list by username or userId
-        const userId = socket.request?.session?.userId;
-        const existingPlayerIndex = room.players.findIndex(p => 
-            p.username === username || 
-            (userId && p.userId === userId)
-        );
-        
-        // If game already started, handle accordingly
-        if (room.Started) {
-            const isReconnect = existingPlayerIndex !== -1 || 
-                              (room.gameState && room.gameState.players.some(p => 
-                                  p.username === username));
-            
-            if (!isReconnect) {
-                socket.emit('error', { message: 'game_already_started' });
-                log(`Join room failed: Game already started in room ${roomId} for non-participant ${username}`, 'warn');
-                return;
-            }
-            
-            log(`Player ${username} is rejoining a started game in room ${roomId}`, 'debug');
-        } else {
-            // For games that haven't started yet
-            
-            // Check if room is full and user isn't already in it
-            if (room.players.length >= 2 && existingPlayerIndex === -1) {
-                socket.emit('error', { message: 'room_full' });
-                log(`Join room failed: Room ${roomId} is full for new user ${username}`, 'warn');
-                return;
-            }
-            
-            // If this is a new player, check if username is taken
-            if (existingPlayerIndex === -1 && room.players.some(p => p.username === username)) {
-                socket.emit('error', { message: 'username_taken' });
-                log(`Join room failed: Username ${username} already taken in room ${roomId}`, 'warn');
-                return;
-            }
-        }
-        
-        // Join the socket.io room
-        socket.join(roomId);
-        
-        // Update player data in the room
-        if (existingPlayerIndex !== -1) {
-            // Update existing player's socket ID
-            room.players[existingPlayerIndex].socketId = socket.id;
-            log(`Updated socket ID for player ${username} in room ${roomId}`, 'debug');
-        } else {
-            // Add new player to the room
-            room.players.push({ 
-                socketId: socket.id,
-                username, 
-                isHost: room.players.length === 0, // First player is host
-                userId: socket.request?.session?.userId
-            });
-            log(`Added new player ${username} to room ${roomId}`, 'debug');
-        }
-        
-        // If game already started, update the player's socket ID in the game state
-        if (room.Started && room.gameState) {
-            // Find player in game state and update their socket ID
-            const playerInGame = room.gameState.players.find(p => p.username === username);
-            if (playerInGame) {
-                playerInGame.id = socket.id;
-                log(`Updated socket ID in game state for player ${username} in room ${roomId}`, 'debug');
-            }
-            
-            // Send game state to the reconnected player
-            socket.emit('gameStarted', room.gameState);
-            log(`Sent game state to reconnected player ${username} in room ${roomId}`, 'debug');
-        }
-        
-        // Associate this socket with the room
-        userRooms.set(socket.id, roomId);
-        
-        // Save the room ID to the user's database record if they're logged in
-        if (socket.request && socket.request.session && socket.request.session.userId) {
-            try {
-                prisma.user.update({
-                    where: { id: socket.request.session.userId },
-                    data: { lastRoom: roomId }
-                }).then(() => {
-                    log(`Saved lastRoom=${roomId} for user ID ${socket.request.session.userId}`, 'verbose');
-                }).catch(dbError => {
-                    log(`Error saving lastRoom to database: ${dbError}`, 'error');
-                });
-            } catch (dbError) {
-                log(`Error in lastRoom update transaction: ${dbError}`, 'error');
-            }
-        }
-        
-        log(`User ${username} (${socket.id}) joined room ${roomId}`, 'info');
-        
-        // Send updated player list to all clients in the room
-        io.to(roomId).emit('playerList', { 
-            players: room.players,
-            gameMode: room.gameMode 
-        });
-        
-        // Send confirmation to the client that they've joined successfully
-        socket.emit('joinedRoom', { 
-            roomId,
-            players: room.players,
-            gameMode: room.gameMode
-        });
-    }
-
-    // Handle leaving room
-    socket.on('leaveRoom', () => {
-        try {
-            // Get the room from userRooms map
-            const roomId = userRooms.get(socket.id);
-            if (!roomId) {
-                socket.emit('error', { message: 'not_in_room' });
-                return;
-            }
-            
-            leaveRoom(socket, roomId);
-        } catch (error) {
-            console.error('Error leaving room:', error);
-        }
-    });
-
-    // Reusable function for leaving a room
-    async function leaveRoom(socket, roomId) {
-        const room = rooms.get(roomId);
-        
-        if (room) {
-            // Find the leaving player
-            const leavingPlayer = room.players.find(p => p.socketId === socket.id);
-            
-            // Remove player from room
-            room.players = room.players.filter(p => p.socketId !== socket.id);
-            
-            // Remove the socket from the user-room mapping
-            userRooms.delete(socket.id);
-            
-            // If room is empty, delete it
-            if (room.players.length === 0) {
-                rooms.delete(roomId);
-                log(`Room ${roomId} deleted because it's empty`, 'info');
-                
-                // If the user is logged in, clear their lastRoom since the room no longer exists
-                if (socket.request && socket.request.session && socket.request.session.userId) {
-                    try {
-                        await prisma.user.update({
-                            where: { id: socket.request.session.userId },
-                            data: { lastRoom: null }
-                        });
-                        log(`Cleared lastRoom for user ID ${socket.request.session.userId} as room was deleted`, 'info');
-                    } catch (dbError) {
-                        log(`Error clearing lastRoom in database: ${dbError}`, 'error');
-                    }
-                }
-            } else {
-                
-                // Update remaining players
-                io.to(roomId).emit('playerList', {
-                    players: room.players
-                });
-                
-                // Notify remaining players that someone left
-                io.to(roomId).emit('playerLeft', {
-                    username: leavingPlayer?.username,
-                    isHost: leavingPlayer?.isHost
-                });
-            }
-            
-            // Leave the socket room
-            socket.leave(roomId);
-            
-            log(`User ${socket.id} left room ${roomId}`, 'info');
-            
-            return true;
-        }
-        
-        return false;
-    }
-
-    socket.on('disconnect', () => {
-        log(`User disconnected: ${socket.id}`, 'verbose');
-        
-        // Remove from connected users set
-        connectedUsers.delete(socket.id);
-        onlineUserCount = connectedUsers.size;
-        
-        // Broadcast updated user count
-        io.emit('userCountUpdate', { count: onlineUserCount });
-        
-        // Check if user was in a room
-        if (userRooms.has(socket.id)) {
-            const roomId = userRooms.get(socket.id);
-            log(`Disconnected user ${socket.id} was in room ${roomId}, cleaning up`, 'info');
-            
-            leaveRoom(socket, roomId);
-        } else {
-            log(`Disconnected user ${socket.id} was not in any room`, 'info');
-        }
-    });
-
-    // Debug function to log the current user-room map
-    function logUserRoomMap() {
-    }
-
-    // Handle start game
-    socket.on('startGame', () => {
-        // Get the room from userRooms map
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) {
-            socket.emit('error', { message: 'not_in_room' });
-            return;
-        }
-        
-        const room = rooms.get(roomId);
-        if (!room) {
-            socket.emit('error', { message: 'room_not_found' });
-            return;
-        }
-        
-        // Check if sender is the host
-        const player = room.players.find(p => p.socketId === socket.id);
-        if (!player || !player.isHost) {
-            socket.emit('error', { message: 'only_host_can_start' });
-            return;
-        }
-        
-        // Check if there are exactly 2 players
-        if (room.players.length !== 2) {
-            socket.emit('error', { message: 'need_two_players' });
-            return;
-        }
-        
-        // Check if game already started
-        if (room.gameState && room.gameState.started) {
-            socket.emit('error', { message: 'game_already_started' });
-            return;
-        }
-        
-        log(`Starting game in room ${roomId} with mode ${room.gameMode || 'classic'}`, 'info');
-        
-        // Set the Started flag to true
-        room.Started = true;
-        
-        // Get game mode configuration
-        const gameMode = room.gameMode || 'classic';
-        const modeConfig = gameModes[gameMode] || gameModes.classic;
-        
-        // Initialize game state with game mode settings
-        // Place two minerals: one for each side (static positions for now)
-        room.gameState = {
-            started: true,
-            gameMode: gameMode,
-            players: room.players.map(p => ({
-                id: p.socketId,
-                username: p.username,
-                gold: modeConfig.initialGold,
-                hp: 100
-            })),
-            units: [],
-            minerals: [
-                { id: 1, x: 100, y: 300 }, // left mineral
-                { id: 2, x: 900, y: 300 }  // right mineral
-            ]
-        };
-        
-        // Send initial game state to all players
-        io.to(roomId).emit('gameStarted', room.gameState);
-
-        // Start mining interval for this room when the game starts
-        startMiningInterval(roomId);
-    });
-
-    // Handle mineral collection
-    socket.on('collectMineral', (data) => {
-        const { position, value } = data;
-        
-        // Get the room from userRooms map
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) {
-            socket.emit('error', { message: 'not_in_room' });
-            return;
-        }
-        
-        const room = rooms.get(roomId);
-        
-        // Only process if room exists, game has started, and game state is initialized
-        if (!room || !room.gameState || !room.gameState.started) return;
-        
-        const player = room.gameState.players.find(p => p.id === socket.id || p.socketId === socket.id);
-        if (!player) return;
-        
-        // Add gold to player (fixed value of 75)
-        player.gold += value || 75;
-        
-        // Get both players' gold amounts
-        const playersGold = room.gameState.players.map(p => ({
-            playerId: p.id || p.socketId,
-            gold: p.gold
-        }));
-        
-        // Notify all players with complete gold information
-        io.to(roomId).emit('goldSyncUpdate', {
-            players: playersGold
-        });
-    });
-
-    // Handle unit spawn
-    socket.on('spawnUnit', (data) => {
-        const { unitId, unitType, x, y, isLeftPlayer } = data;
-        
-        // Get the room from userRooms map
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) {
-            socket.emit('error', { message: 'not_in_room' });
-            return;
-        }
-        
-        const room = rooms.get(roomId);
-        
-        // Only process if room exists, game has started, and game state is initialized
-        if (!room || !room.gameState || !room.gameState.started) {
-            log(`Invalid unit spawn attempt: room exists=${!!room}, game started=${room?.gameState?.started}`);
-            return;
-        }
-        
-        // Find player by socket ID
-        let player = room.gameState.players.find(p => p.id === socket.id);
-        if (!player) {
-            // Try finding by socketId if not found by id
-            player = room.gameState.players.find(p => p.socketId === socket.id);
-            if (!player) {
-                log(`Player not found for socket ID: ${socket.id}`);
-                return;
-            }
-        }
-        
-        // Get game mode configuration for unit costs
-        const gameMode = room.gameMode || 'classic';
-        const modeConfig = gameModes[gameMode] || gameModes.classic;
-        
-        // Get unit cost from the game mode configuration
-        const cost = modeConfig.unitCosts[unitType] || 100; // Default to 100 if not specified
-        
-        if (player.gold < cost) {
-            log(`Not enough gold: player has ${player.gold}, needs ${cost}`);
-            socket.emit('error', { message: 'not_enough_gold' });
-            return;
-        }
-        
-        // Deduct gold
-        player.gold -= cost;
-        
-        // Get unit stats from the game mode configuration
-        const unitStats = modeConfig.unitStats[unitType] || {};
-        
-        log(`Player ${socket.id} spawned ${unitType} at (${x}, ${y}), isLeftPlayer: ${isLeftPlayer}`);
-        
-        // Broadcast unit spawn to all clients in the room
-        const unitData = {
-            id: unitId || Date.now(),
-            type: unitType,
-            x,
-            y,
-            isLeftPlayer,
-            playerId: socket.id, // Track owner
-            ...unitStats // Add the unit stats from the game mode configuration
-        };
-        
-        // Add to server-side unit list for this room
-        if (!room.gameState.units) room.gameState.units = [];
-        room.gameState.units.push(unitData);
-        
-        // Emit to all clients in the room
-        io.to(roomId).emit('unitSpawned', unitData);
-        
-        // Get both players' gold amounts
-        const playersGold = room.gameState.players.map(p => ({
-            playerId: p.id || p.socketId,
-            gold: p.gold
-        }));
-        
-        // Send gold update to all players
-        io.to(roomId).emit('goldSyncUpdate', {
-            players: playersGold
-        });
-    });
-
-    // --- Server-side mining tick ---
-    // Start mining interval for this room when the game starts
-    function startMiningInterval(roomId) {
-        const room = rooms.get(roomId);
-        if (!room) return;
-        if (room.miningInterval) return; // Already running
-        
-        // Get mining rate and interval based on game mode
-        const gameMode = room.gameMode || 'classic';
-        const modeConfig = gameModes[gameMode] || gameModes.classic;
-        const miningRate = modeConfig.miningRate;
-        const intervalTime = modeConfig.miningInterval || 1000; // Default to 1 second
-        
-        room.miningInterval = setInterval(() => {
-            if (!room.gameState || !room.gameState.units || !room.gameState.minerals) return;
-            // For each miner unit, check if it's close to a mineral
-            room.gameState.units.forEach(unit => {
-                if (unit.type !== 'miner') return;
-                // Use unit.x, unit.y (should be updated by client on move)
-                const isNearMineral = room.gameState.minerals.some(mineral => {
-                    const dx = (unit.x ?? 0) - mineral.x;
-                    const dy = (unit.y ?? 0) - mineral.y;
-                    return Math.sqrt(dx*dx + dy*dy) < 32;
-                });
-                if (isNearMineral) {
-                    // Find player
-                    let player = room.gameState.players.find(p => p.id === unit.playerId || p.socketId === unit.playerId);
-                    if (player) {
-                        // Apply basic mining rate
-                        player.gold += miningRate;
-                        
-                        // Check for bonus gold in beta mode
-                        if (gameMode === 'beta' && modeConfig.specialRules?.bonusChance) {
-                            if (Math.random() < modeConfig.specialRules.bonusChance) {
-                                const bonus = Math.floor(Math.random() * 30) + 20; // 20-50 bonus gold
-                                player.gold += bonus;
-                                
-                                // Notify player of bonus gold (if we had a way to send individual messages)
-                                io.to(roomId).emit('bonusGold', {
-                                    playerId: player.id || player.socketId,
-                                    amount: bonus,
-                                    unitId: unit.id
-                                });
-                            }
-                        }
-                    }
-                }
-            });
-            // Sync gold for both players
-            io.to(roomId).emit('goldSyncUpdate', {
-                players: room.gameState.players.map(p => ({ playerId: p.id || p.socketId, gold: p.gold }))
-            });
-        }, intervalTime);
-    }
-
-    // Mining: Only the owner of the mining unit gets the gold
-    socket.on('collectMineral', (data) => {
-        const { unitId, x, y } = data; // Expect miner's position from client
+    // Handle unit movement updates from clients
+    socket.on('unitMove', (data) => {
+        const { unitId, x, y } = data;
         const roomId = userRooms.get(socket.id);
         if (!roomId) return;
+        
         const room = rooms.get(roomId);
-        if (!room || !room.gameState || !room.gameState.units || !room.gameState.minerals) return;
-        const unit = room.gameState.units.find(u => u.id === unitId);
-        if (!unit || unit.type !== 'miner') return;
-        // Only the owner can collect
-        if (unit.playerId !== socket.id) return;
-        // Check if miner is close enough to any mineral
-        const isNearMineral = room.gameState.minerals.some(mineral => {
-            const dx = (x ?? unit.x) - mineral.x;
-            const dy = (y ?? unit.y) - mineral.y;
-            return Math.sqrt(dx*dx + dy*dy) < 32;
-        });
-        if (!isNearMineral) return;
-        // Find player
-        let player = room.gameState.players.find(p => p.id === socket.id || p.socketId === socket.id);
-        if (!player) return;
-        player.gold += 50;
-        // Sync gold for both players
-        io.to(roomId).emit('goldSyncUpdate', {
-            players: room.gameState.players.map(p => ({ playerId: p.id || p.socketId, gold: p.gold }))
-        });
-    });
-
-    // --- Rock Paper Scissors (RPS) Mini-game ---
-    socket.on('rpsPlay', (data) => {
-        const { move } = data; // move: 'rock', 'paper', or 'scissors' or null
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) {
-            socket.emit('error', { message: 'not_in_room' });
+        if (!room || !room.gameState) return;
+        
+        // Find the unit in server-side state
+        const unitIndex = room.serverGameState.units.findIndex(u => u.id === unitId);
+        if (unitIndex === -1) return;
+        
+        // Validate that this player owns the unit (anti-cheat)
+        const unit = room.serverGameState.units[unitIndex];
+        if (unit.playerId !== socket.id) {
+            log(`Rejected move - Player ${socket.id} tried to move unit owned by ${unit.playerId}`, 'warn');
             return;
-        }
-        const room = rooms.get(roomId);
-        if (!room) {
-            socket.emit('error', { message: 'room_not_found' });
-            return;
-        }
-        if (!room.rps) room.rps = {};
-        room.rps[socket.id] = move;
-        socket.emit('rpsMoveReceived', { move });
-        // Start timer if not already started
-        if (!room.rpsTimer) {
-            room.rpsTimer = setTimeout(() => {
-                finishRPSRound(roomId);
-            }, 10000);
-        }
-        // If both players have played, finish round early
-        if (Object.keys(room.rps).length === 2) {
-            clearTimeout(room.rpsTimer);
-            room.rpsTimer = null;
-            finishRPSRound(roomId);
-        }
-    });
-
-    function finishRPSRound(roomId) {
-        const room = rooms.get(roomId);
-        if (!room || !room.rps) return;
-        const [p1, p2] = room.players;
-        const move1 = room.rps[p1.socketId];
-        const move2 = room.rps[p2.socketId];
-        let winner = 'draw';
-        if (move1 && move2) {
-            if (move1 === move2) {
-                winner = 'draw';
-            } else if (
-                (move1 === 'rock' && move2 === 'scissors') ||
-                (move1 === 'scissors' && move2 === 'paper') ||
-                (move1 === 'paper' && move2 === 'rock')
-            ) {
-                winner = p1.username;
-            } else {
-                winner = p2.username;
-            }
-        } else if (move1 && !move2) {
-            winner = p1.username;
-        } else if (!move1 && move2) {
-            winner = p2.username;
         }
         
-        // Get game mode configuration for RPS gold reward
+        // Update position in server state
+        room.serverGameState.units[unitIndex].x = x;
+        room.serverGameState.units[unitIndex].y = y;
+        
+        // Also update in game state
+        const gameUnitIndex = room.gameState.units.findIndex(u => u.id === unitId);
+        if (gameUnitIndex !== -1) {
+            room.gameState.units[gameUnitIndex].x = x;
+            room.gameState.units[gameUnitIndex].y = y;
+        }
+        
+        // Broadcast move to all clients
+        io.to(roomId).emit('unitMoved', { unitId, x, y });
+    });
+
+    // Handle unit attack events
+    socket.on('unitAttack', (data) => {
+        const { attackerUnitId, targetUnitId, damage } = data;
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) return;
+        
+        const room = rooms.get(roomId);
+        if (!room || !room.gameState) return;
+        
+        // Find both units in server state
+        const attacker = room.serverGameState.units.find(u => u.id === attackerUnitId);
+        const target = room.serverGameState.units.find(u => u.id === targetUnitId);
+        
+        if (!attacker || !target) return;
+        
+        // Validate that this player owns the attacking unit
+        if (attacker.playerId !== socket.id) {
+            log(`Rejected attack - Player ${socket.id} tried to use unit owned by ${attacker.playerId}`, 'warn');
+            return;
+        }
+        
+        // Server-side damage calculation based on unit stats
         const gameMode = room.gameMode || 'classic';
         const modeConfig = gameModes[gameMode] || gameModes.classic;
-        const goldReward = modeConfig.rpsGoldReward || 100; // Default to 100 if not specified
+        const unitStats = modeConfig.unitStats[attacker.type] || {};
         
-        // Award gold to winner based on game mode
-        if (winner !== 'draw') {
-            const player = room.gameState.players.find(p => p.username === winner);
-            if (player) player.gold += goldReward;
+        // Use server-side damage value instead of client value
+        const serverDamage = unitStats.damage || 10;
+        
+        // Apply damage to target unit
+        target.health -= serverDamage;
+        
+        // Check if unit is destroyed
+        if (target.health <= 0) {
+            // Remove unit from server state
+            room.serverGameState.units = room.serverGameState.units.filter(u => u.id !== targetUnitId);
+            // Also remove from game state
+            room.gameState.units = room.gameState.units.filter(u => u.id !== targetUnitId);
+            
+            // Broadcast unit destruction
+            io.to(roomId).emit('unitDestroyed', { unitId: targetUnitId });
+            log(`Unit ${targetUnitId} destroyed by ${attackerUnitId}`, 'debug');
+        } else {
+            // Broadcast damage
+            io.to(roomId).emit('unitDamaged', { 
+                unitId: targetUnitId, 
+                health: target.health,
+                damageAmount: serverDamage,
+                attackerId: attackerUnitId
+            });
         }
-        // Broadcast result
-        io.to(roomId).emit('rpsResult', {
-            player1: { username: p1.username, move: move1 },
-            player2: { username: p2.username, move: move2 },
-            winner,
-            goldReward // Include the gold reward in the response
-        });
-        // Sync gold
-        io.to(roomId).emit('goldSyncUpdate', {
-            players: room.gameState.players.map(p => ({ playerId: p.id || p.socketId, gold: p.gold }))
-        });
-        room.rps = {};
-        // DO NOT auto-restart or auto-reset here. Wait for explicit rpsReset from clients.
-    }
-
-    socket.on('rpsReset', () => {
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) return;
-        const room = rooms.get(roomId);
-        if (!room) return;
-        room.rps = {};
-        io.to(roomId).emit('rpsReset');
-    });
-
-    // --- Game Over ---
-    socket.on('gameOver', (data) => {
-        const roomId = userRooms.get(socket.id);
-        if (!roomId) return;
-        const room = rooms.get(roomId);
-        if (!room) return;
-        if (room.gameState && room.gameState.ended) return; // Prevent duplicate
-        room.gameState.ended = true;
-        // Clean up intervals
-        if (room.miningInterval) {
-            clearInterval(room.miningInterval);
-            room.miningInterval = null;
-        }
-        // Broadcast to all players
-        io.to(roomId).emit('gameOver', { winner: data.winner });
     });
 
     // Add handler for setting game mode
@@ -1331,7 +531,75 @@ io.on('connection', (socket) => {
         
         log(`Game mode changed to ${newMode} in room ${roomId}`, 'info');
     });
+
+    // Add a new handler for player ready status
+    socket.on('toggleReady', () => {
+        const roomId = userRooms.get(socket.id);
+        if (!roomId) {
+            socket.emit('error', { message: 'not_in_room' });
+            return;
+        }
+        
+        const room = rooms.get(roomId);
+        if (!room) {
+            socket.emit('error', { message: 'room_not_found' });
+            return;
+        }
+        
+        // Find player in the room
+        const player = room.players.find(p => p.socketId === socket.id);
+        if (!player) {
+            socket.emit('error', { message: 'player_not_found' });
+            return;
+        }
+        
+        // Toggle ready status
+        player.ready = !player.ready;
+        log(`Player ${player.username} set ready status to ${player.ready} in room ${roomId}`, 'debug');
+        
+        // Notify all players of the updated status
+        io.to(roomId).emit('playerList', {
+            players: room.players.filter(p => !p.disconnected),
+            gameMode: room.gameMode
+        });
+        
+        // Check if all players are ready
+        const allReady = room.players.length >= 2 && room.players.every(p => p.ready);
+        io.to(roomId).emit('allPlayersReady', { ready: allReady });
+    });
 });
+
+// ===== Middleware Functions =====
+
+// Authentication middleware
+const isAuthenticated = (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  next();
+};
+
+// Admin authorization middleware
+const isAdmin = async (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.session.userId }
+    });
+    
+    if (!user || user.role !== "ADMIN") {
+      return res.status(403).json({ error: 'Admin permission required' });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
 
 // ===== API Routes =====
 
@@ -1993,130 +1261,43 @@ app.post('/api/pairing/join', isAuthenticated, async (req, res) => {
     // Try to find a match immediately
     const matchResult = await tryMatchmaking(userId);
     
-    // If match found, create room and update user records
+    // If match found, no need to create a room as it's already done in tryMatchmaking
     if (matchResult) {
-      log(`Match found for user ${userId}, creating room ${matchResult.roomId}`, 'success');
+      log(`Match found for user ${userId}, room ${matchResult.roomId} created`, 'success');
+      serverStats.matchesMade++;
       
-      // Create a room for the match
-      const roomId = matchResult.roomId;
-      
-      // Update both users' lastRoom
+      // Room is already created in tryMatchmaking, just update users' lastRoom
       await prisma.user.update({
         where: { id: matchResult.player1.id },
-        data: { lastRoom: roomId }
+        data: { lastRoom: matchResult.roomId }
       });
       
       await prisma.user.update({
         where: { id: matchResult.player2.id },
-        data: { lastRoom: roomId }
+        data: { lastRoom: matchResult.roomId }
       });
       
-      // Create the room in memory
-      const room = {
-        Started: false,
-        gameMode: 'classic', // Default game mode
-        players: [
-          {
-            socketId: null, // Will be set when they join the room
-            username: matchResult.player1.username || `Player1`,
-            isHost: true,
-            userId: matchResult.player1.id
-          },
-          {
-            socketId: null, // Will be set when they join the room
-            username: matchResult.player2.username || `Player2`,
-            isHost: false,
-            userId: matchResult.player2.id
-          }
-        ]
-      };
+      log(`Created room ${matchResult.roomId} for matched players: ${matchResult.player1.username} vs ${matchResult.player2.username}`, 'success');
       
-      // Store the room
-      rooms.set(roomId, room);
+      // Start matchmaking interval if not already running
+      setupMatchmakingInterval();
       
-      log(`Created room ${roomId} for matched players: ${matchResult.player1.username} vs ${matchResult.player2.username}`, 'success');
+      return res.status(201).json({ 
+        message: 'Match found! Redirecting to game room...',
+        matched: true,
+        roomId: matchResult.roomId
+      });
     } else {
       log(`No immediate match found for user ${userId}, added to queue`, 'info');
       
-      // Schedule continuous matchmaking attempts
-      // We'll try every 5 seconds to find matches for users in queue
-      if (!global.matchmakingInterval) {
-        log('Starting global matchmaking interval', 'info');
-        global.matchmakingInterval = setInterval(async () => {
-          try {
-            // Get all users in queue
-            const queuedUsers = await prisma.pairingQueue.findMany({
-              select: { userId: true }
-            });
-            
-            log(`Processing matchmaking for ${queuedUsers.length} users in queue`, 'info');
-            
-            // Try matchmaking for each user
-            for (const user of queuedUsers) {
-              const matchResult = await tryMatchmaking(user.userId);
-              
-              if (matchResult) {
-                log(`Match found for user ${user.userId}, creating room ${matchResult.roomId}`, 'success');
-                
-                // Create a room for the match
-                const roomId = matchResult.roomId;
-                
-                // Fetch usernames for both players
-                const player1 = await prisma.user.findUnique({
-                  where: { id: matchResult.player1.id },
-                  select: { username: true }
-                });
-                
-                const player2 = await prisma.user.findUnique({
-                  where: { id: matchResult.player2.id },
-                  select: { username: true }
-                });
-                
-                // Update both users' lastRoom
-                await prisma.user.update({
-                  where: { id: matchResult.player1.id },
-                  data: { lastRoom: roomId }
-                });
-                
-                await prisma.user.update({
-                  where: { id: matchResult.player2.id },
-                  data: { lastRoom: roomId }
-                });
-                
-                // Create the room in memory
-                const room = {
-                  Started: false,
-                  gameMode: 'classic', // Default game mode
-                  players: [
-                    {
-                      socketId: null, // Will be set when they join the room
-                      username: player1.username || `Player1`,
-                      isHost: true,
-                      userId: matchResult.player1.id
-                    },
-                    {
-                      socketId: null, // Will be set when they join the room
-                      username: player2.username || `Player2`,
-                      isHost: false,
-                      userId: matchResult.player2.id
-                    }
-                  ]
-                };
-                
-                // Store the room
-                rooms.set(roomId, room);
-                
-                log(`Created room ${roomId} for matched players: ${player1.username} vs ${player2.username}`, 'success');
-              }
-            }
-          } catch (error) {
-            log(`Error in matchmaking interval: ${error}`, 'error');
-          }
-        }, 5000);
-      }
+      // Schedule continuous matchmaking attempts if not already running
+      setupMatchmakingInterval();
+      
+      return res.status(201).json({ 
+        message: 'Joined matchmaking queue',
+        matched: false
+      });
     }
-    
-    res.status(201).json({ message: 'Joined matchmaking queue' });
   } catch (error) {
     log(`Error joining matchmaking queue: ${error}`, 'error');
     res.status(500).json({ error: 'Failed to join matchmaking queue' });
@@ -2215,6 +1396,10 @@ async function tryMatchmaking(userId) {
     // Create a game room
     const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     
+    // Get default game mode configuration
+    const gameMode = 'classic'; // Default game mode for matchmaking
+    const modeConfig = gameModes[gameMode];
+    
     // Create match record
     await prisma.match.create({
       data: {
@@ -2230,6 +1415,42 @@ async function tryMatchmaking(userId) {
         userId: { in: [userId, match.userId] }
       }
     });
+    
+    // Properly initialize room data structure
+    const room = {
+      roomId: roomId,
+      Started: false,
+      gameMode: gameMode,
+      players: [
+        {
+          socketId: null, // Will be set when they join the room
+          username: userQueue.user.username,
+          isHost: true,
+          userId: userId,
+          disconnected: false
+        },
+        {
+          socketId: null, // Will be set when they join the room
+          username: match.user.username,
+          isHost: false,
+          userId: match.userId,
+          disconnected: false
+        }
+      ],
+      // Initialize server-side game state structure
+      serverGameState: {
+        started: false,
+        gold: {},
+        units: [],
+        hp: {},
+        lastUpdateTime: Date.now()
+      }
+    };
+    
+    // Store room in memory
+    rooms.set(roomId, room);
+    
+    log(`Match created: ${userQueue.user.username} (${userId}) vs ${match.user.username} (${match.userId})`, 'debug');
     
     return {
       roomId,
@@ -2317,57 +1538,119 @@ app.post('/api/admin/users/:id/unban', isAdmin, async (req, res) => {
 });
 
 // Google OAuth routes
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/login.html?error=google-login-failed' }),
-  (req, res) => {
-    // On successful authentication, set session
-    if (req.user) {
-      req.session.userId = req.user.id;
+app.get('/auth/google', (req, res, next) => {
+    // Save the original referrer for returning to the correct page
+    if (req.headers.referer) {
+        req.session.returnTo = req.headers.referer;
     }
-    // Redirect to dashboard on success
-    res.redirect('/dashboard.html');
-  }
-);
+    
+    // Log authentication attempt
+    log(`Google auth initiated from: ${req.headers.referer || 'unknown'}`, 'info');
+    
+    // Proceed with Google authentication
+    passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        prompt: 'select_account' // Always show account selector
+    })(req, res, next);
+});
+
+app.get('/auth/google/callback', (req, res, next) => {
+    log(`Google auth callback received with query: ${JSON.stringify(req.query)}`, 'debug');
+    
+    // Handle the callback with error handling
+    passport.authenticate('google', { 
+        failureRedirect: '/login.html?error=google-login-failed',
+        failWithError: true
+    }, (err, user, info) => {
+        // Handle errors
+        if (err) {
+            log(`Google auth error: ${err.message}`, 'error');
+            return res.redirect('/login.html?error=google-login-error');
+        }
+        
+        if (!user) {
+            const errorMsg = info?.message || 'Unknown authentication failure';
+            log(`Google auth failed: ${errorMsg}`, 'warn');
+            return res.redirect(`/login.html?error=${encodeURIComponent(errorMsg)}`);
+        }
+        
+        // Log in the user by setting the session
+        req.login(user, (loginErr) => {
+            if (loginErr) {
+                log(`Login error after Google auth: ${loginErr.message}`, 'error');
+                return res.redirect('/login.html?error=session-error');
+            }
+            
+            // Set session userId
+            req.session.userId = user.id;
+            log(`Google auth successful for user ID: ${user.id}`, 'info');
+            
+            // Check if there's a return path in the session
+            if (req.session.returnTo) {
+                const returnUrl = req.session.returnTo;
+                delete req.session.returnTo;
+                return res.redirect(returnUrl);
+            }
+            
+            // Default redirect to dashboard
+            res.redirect('/dashboard.html');
+        });
+    })(req, res, next);
+});
 
 // Route for linking existing account with Google
 app.get('/auth/google/link', isAuthenticated, (req, res) => {
-  // Store the user ID in the session to connect after Google auth
-  req.session.linkGoogleToUserId = req.session.userId;
-  // Redirect to Google auth with a special 'link' parameter
-  passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    state: 'linking-account'
-  })(req, res);
-});
-
-// Callback for account linking - use the same callback URL
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/dashboard.html?error=google-link-failed' }),
-  (req, res) => {
-    // Check if this is a linking attempt
-    if (req.session.linkGoogleToUserId) {
-      // Clear the linking session var
-      delete req.session.linkGoogleToUserId;
-      
-      // Make sure the user ID is in the session
-      if (req.user) {
-        req.session.userId = req.user.id;
-      }
-      
-      // Redirect to dashboard with success message
-      return res.redirect('/dashboard.html?success=google-linked');
+    // Store the user ID in the session to connect after Google auth
+    req.session.linkGoogleToUserId = req.session.userId;
+    
+    // Store return path
+    if (req.headers.referer) {
+        req.session.returnTo = req.headers.referer;
     }
     
-    // Normal login flow
-    if (req.user) {
-      req.session.userId = req.user.id;
-    }
-    // Redirect to dashboard on success
-    res.redirect('/dashboard.html');
-  }
-);
+    log(`Google account linking initiated for user ID: ${req.session.userId}`, 'info');
+    
+    // Redirect to Google auth with a special 'link' parameter
+    passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        prompt: 'select_account', // Always show account selector
+        state: 'linking-account'
+    })(req, res);
+});
+
+// Separate callback handler for account linking
+app.get('/auth/google/link/callback', (req, res, next) => {
+    passport.authenticate('google', { 
+        failureRedirect: '/dashboard.html?error=google-link-failed',
+        failWithError: true
+    }, (err, user, info) => {
+        // Handle errors
+        if (err) {
+            log(`Google link error: ${err.message}`, 'error');
+            return res.redirect('/dashboard.html?error=google-link-error');
+        }
+        
+        if (!user) {
+            const errorMsg = info?.message || 'Unknown linking failure';
+            log(`Google link failed: ${errorMsg}`, 'warn');
+            return res.redirect(`/dashboard.html?error=${encodeURIComponent(errorMsg)}`);
+        }
+        
+        // Make sure the user ID is in the session
+        req.session.userId = user.id;
+        log(`Google account linked successfully for user ID: ${user.id}`, 'info');
+        
+        // Check if there's a return path
+        if (req.session.returnTo) {
+            const returnUrl = req.session.returnTo;
+            delete req.session.returnTo;
+            return res.redirect(`${returnUrl}?success=google-linked`);
+        }
+        
+        // Default redirect to dashboard with success message
+        res.redirect('/dashboard.html?success=google-linked');
+    })(req, res, next);
+});
 
 // Check Google authentication status
 app.get('/api/auth/google/status', (req, res) => {
@@ -2482,6 +1765,75 @@ app.post('/api/pairing/check-matches', isAuthenticated, async (req, res) => {
     }
 });
 
+// Helper function to set up the global matchmaking interval
+function setupMatchmakingInterval() {
+  // Only create interval if it doesn't already exist
+  if (!global.matchmakingInterval) {
+    log('Starting global matchmaking interval', 'info');
+    global.matchmakingInterval = setInterval(async () => {
+      try {
+        // Get all users in queue
+        const queuedUsers = await prisma.pairingQueue.findMany({
+          select: { userId: true }
+        });
+        
+        // Only log if there are users in queue or if verbose mode is enabled
+        if (queuedUsers.length > 0) {
+          log(`Processing matchmaking for ${queuedUsers.length} users in queue`, 'info');
+        } else {
+          log(`Processing matchmaking for ${queuedUsers.length} users in queue`, 'verbose');
+          return; // Skip processing if no users in queue
+        }
+        
+        // Try matchmaking for each user
+        for (const user of queuedUsers) {
+          const matchResult = await tryMatchmaking(user.userId);
+          
+          if (matchResult) {
+            serverStats.matchesMade++;
+            log(`Match found for user ${user.userId}, updating room ${matchResult.roomId}`, 'success');
+            
+            // Update both users' lastRoom (room already created in tryMatchmaking)
+            try {
+              await prisma.user.update({
+                where: { id: matchResult.player1.id },
+                data: { lastRoom: matchResult.roomId }
+              });
+              
+              await prisma.user.update({
+                where: { id: matchResult.player2.id },
+                data: { lastRoom: matchResult.roomId }
+              });
+              
+              log(`Updated lastRoom to ${matchResult.roomId} for players: ${matchResult.player1.username} vs ${matchResult.player2.username}`, 'success');
+            } catch (innerError) {
+              log(`Error updating lastRoom references: ${innerError}`, 'error');
+            }
+          }
+        }
+      } catch (error) {
+        log(`Error in matchmaking interval: ${error}`, 'error');
+      }
+    }, 5000); // Check every 5 seconds
+    
+    // Stop the interval if no users are in queue for 5 minutes
+    global.matchmakingCheckInterval = setInterval(async () => {
+      try {
+        if (global.matchmakingInterval) {
+          const queueCount = await prisma.pairingQueue.count();
+          if (queueCount === 0) {
+            log('No users in queue, stopping matchmaking interval', 'info');
+            clearInterval(global.matchmakingInterval);
+            global.matchmakingInterval = null;
+          }
+        }
+      } catch (error) {
+        log(`Error checking queue status: ${error}`, 'error');
+      }
+    }, 300000); // Check every 5 minutes
+  }
+}
+
 // Initialize database and start server
 async function startServer() {
   try {
@@ -2498,13 +1850,19 @@ async function startServer() {
             select: { userId: true }
           });
           
-          log(`Processing matchmaking for ${queuedUsers.length} users in queue`, 'info');
+          // Only log if there are users in queue or if verbose mode is enabled
+          if (queuedUsers.length > 0) {
+            log(`Processing matchmaking for ${queuedUsers.length} users in queue`, 'info');
+          } else {
+            log(`Processing matchmaking for ${queuedUsers.length} users in queue`, 'verbose');
+          }
           
           // Try matchmaking for each user
           for (const user of queuedUsers) {
             const matchResult = await tryMatchmaking(user.userId);
             
             if (matchResult) {
+              serverStats.matchesMade++;
               log(`Match found for user ${user.userId}, creating room ${matchResult.roomId}`, 'success');
               
               // Create a room for the match
@@ -2550,7 +1908,16 @@ async function startServer() {
                       isHost: false,
                       userId: matchResult.player2.id
                     }
-                  ]
+                  ],
+                  // Add server-side game state
+                  serverGameState: {
+                    started: false,
+                    gold: {
+                      [socket.id]: modeConfig.initialGold
+                    },
+                    units: [],
+                    lastUpdateTime: Date.now()
+                  }
                 };
                 
                 // Store the room
