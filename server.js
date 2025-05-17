@@ -44,6 +44,36 @@ const httpServer = createServer(app);
 const io = new Server(httpServer);
 const PORT = process.env.PORT || 3000;
 
+// Express middleware for parsing requests
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Serve static files
+app.use(express.static(path.join(__dirname)));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+// Ensure the db directory exists for sessions
+const dbDir = path.join(__dirname, 'db');
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+    log('Created db directory for sessions', 'info');
+}
+
+// Session configuration with SQLite storage
+app.use(session({
+    store: new SQLiteStore({
+        db: 'db/sessions.sqlite'
+    }),
+    secret: process.env.SESSION_SECRET || 'tianxia-taiping-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
 // Console logging utilities
 function log(message, type = 'info', category = null) {
     const timestamp = new Date().toISOString();
