@@ -1,78 +1,113 @@
+/**
+ * Environment Setup Script
+ * Creates .env file with proper configuration for development
+ */
 const fs = require('fs');
 const path = require('path');
 
-console.log('\n=== Google OAuth Environment Setup ===\n');
+// ANSI color codes for prettier console output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  cyan: '\x1b[36m'
+};
 
-// Find client secret file
-const files = fs.readdirSync(__dirname);
-const clientSecretFile = files.find(file => file.startsWith('client_secret') && file.endsWith('.json'));
+console.log('\n' + colors.bright + colors.cyan + '=================================' + colors.reset);
+console.log(colors.bright + colors.cyan + '    World Peace Online Setup' + colors.reset);
+console.log(colors.bright + colors.cyan + '=================================' + colors.reset + '\n');
 
-if (!clientSecretFile) {
-    console.error('Error: No client_secret file found in the current directory.');
-    console.log('Please download your OAuth client credentials JSON file from the Google Cloud Console.');
-    process.exit(1);
+// Check for .env file
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  console.log(colors.yellow + '.env file already exists.' + colors.reset);
+  console.log('Do you want to overwrite it? (y/n)');
+  
+  // Simple synchronous input for basic script
+  const readline = require('readline');
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  
+  rl.question('> ', (answer) => {
+    if (answer.toLowerCase() !== 'y' && answer.toLowerCase() !== 'yes') {
+      console.log(colors.yellow + 'Setup canceled. Existing .env file preserved.' + colors.reset);
+      rl.close();
+      return;
+    }
+    
+    createEnvFile();
+    rl.close();
+  });
+} else {
+  createEnvFile();
 }
 
-console.log(`Found client secret file: ${clientSecretFile}`);
-
-try {
-    // Read and parse the client secret file
-    const clientSecretContent = fs.readFileSync(path.join(__dirname, clientSecretFile), 'utf8');
-    const clientSecret = JSON.parse(clientSecretContent);
+function createEnvFile() {
+  console.log(colors.yellow + 'Creating .env file...' + colors.reset);
+  
+  // Check for Google client credentials file
+  const files = fs.readdirSync(__dirname);
+  const clientSecretFile = files.find(file => file.startsWith('client_secret') && file.endsWith('.json'));
+  
+  let googleClientId = '';
+  let googleClientSecret = '';
+  let googleCallbackUrl = 'http://localhost:3000/api/auth/google/callback';
+  
+  // If client secret file exists, use its values
+  if (clientSecretFile) {
+    console.log(colors.green + `Found client secret file: ${clientSecretFile}` + colors.reset);
     
-    // Check if it has web configuration
-    if (!clientSecret.web) {
-        console.error('Error: Invalid client secret file format. Missing "web" configuration.');
-        process.exit(1);
+    try {
+      const clientSecretContent = fs.readFileSync(path.join(__dirname, clientSecretFile), 'utf8');
+      const clientSecret = JSON.parse(clientSecretContent);
+      
+      googleClientId = clientSecret.web.client_id;
+      googleClientSecret = clientSecret.web.client_secret;
+      
+      console.log(colors.green + '✓ Extracted Google credentials' + colors.reset);
+    } catch (error) {
+      console.error(colors.red + `Error reading client secret file: ${error.message}` + colors.reset);
     }
-    
-    // Create or update .env file
-    const envPath = path.join(__dirname, '.env');
-    let envContent = '';
-    
-    // Check if .env already exists
-    if (fs.existsSync(envPath)) {
-        console.log('Existing .env file found. Updating OAuth settings...');
-        envContent = fs.readFileSync(envPath, 'utf8');
-        
-        // Replace or add Google OAuth settings
-        envContent = envContent.replace(/GOOGLE_CLIENT_ID=.*\n/, '');
-        envContent = envContent.replace(/GOOGLE_CLIENT_SECRET=.*\n/, '');
-        envContent = envContent.replace(/GOOGLE_CALLBACK_URL=.*\n/, '');
-        
-        // Add a newline if needed
-        if (!envContent.endsWith('\n')) {
-            envContent += '\n';
-        }
-    } else {
-        console.log('Creating new .env file with default settings...');
-        envContent = `SESSION_SECRET=tianxia-taiping-secret-key
-DEBUG_MODE=false
-VERBOSE_LOGGING=false
+  } else {
+    console.log(colors.yellow + 'No Google client secret file found. Using placeholder values.' + colors.reset);
+  }
+  
+  // Generate session secret
+  const crypto = require('crypto');
+  const sessionSecret = crypto.randomBytes(64).toString('hex');
+  
+  // Create .env content
+  const envContent = `# Server configuration
+NODE_ENV=development
 PORT=3000
+DEBUG_MODE=true
+VERBOSE_LOGGING=true
+SESSION_SECRET=${sessionSecret}
 
-`;
-    }
-    
-    // Add Google OAuth settings
-    envContent += `# Google OAuth settings
-GOOGLE_CLIENT_ID=${clientSecret.web.client_id}
-GOOGLE_CLIENT_SECRET=${clientSecret.web.client_secret}
-GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
-`;
-    
-    // Write updated .env file
-    fs.writeFileSync(envPath, envContent);
-    
-    console.log('\nGoogle OAuth settings have been successfully added to .env file.');
-    console.log('\nIMPORTANT: Make sure you have configured the following Authorized Redirect URIs in Google Cloud Console:');
-    console.log('1. http://localhost:3000/auth/google/callback');
-    console.log('2. http://localhost:3000/auth/google/link/callback');
-    console.log('3. https://worldpeaceol.oscarchw.com/auth/google/callback');
-    console.log('4. https://worldpeaceol.oscarchw.com/auth/google/link/callback');
-    console.log('\nIf not configured, please add them in the Google Cloud Console > APIs & Services > Credentials');
-    
-} catch (error) {
-    console.error(`Error processing client secret file: ${error.message}`);
-    process.exit(1);
+# Google OAuth configuration
+GOOGLE_CLIENT_ID=${googleClientId}
+GOOGLE_CLIENT_SECRET=${googleClientSecret}
+GOOGLE_CALLBACK_URL=${googleCallbackUrl}`;
+  
+  // Write the file
+  fs.writeFileSync(envPath, envContent);
+  console.log(colors.green + '✓ .env file created successfully' + colors.reset);
+  
+  // Create db directory if it doesn't exist
+  const dbDir = path.join(__dirname, 'db');
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+    console.log(colors.green + '✓ Created db directory for sessions' + colors.reset);
+  }
+  
+  console.log('\n' + colors.bright + 'Setup complete!' + colors.reset);
+  console.log('To start the development server:');
+  console.log(colors.cyan + '  npm run setup' + colors.reset + ' (first time only)');
+  console.log(colors.cyan + '  npm run dev' + colors.reset);
+  console.log('\n' + colors.dim + 'For production deployment, set NODE_ENV=production in .env' + colors.reset + '\n');
 } 
