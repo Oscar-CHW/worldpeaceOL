@@ -41,49 +41,49 @@ document.addEventListener('DOMContentLoaded', async function() {
     createLanguageSelector('language-selector');
     
     // Check authentication first
-    async function checkAuth() {
-        try {
-            const response = await fetch('/api/user/me');
-            if (response.status === 401) {
-                window.location.href = '/login.html';
-                return false;
-            }
-            currentUser = await response.json();
+    // async function checkAuth() {
+    //     try {
+    //         const response = await fetch('/api/user/me');
+    //         if (response.status === 401) {
+    //             window.location.href = '/login.html';
+    //             return false;
+    //         }
+    //         currentUser = await response.json();
             
-            // Update auth links immediately after successful authentication
-            const authLinks = document.getElementById('auth-links');
-            authLinks.innerHTML = `
-                <a href="/dashboard.html" id="welcome-user" data-i18n="user_profile"></a>
-                <a href="#" id="logout-link" data-i18n="logout"></a>
-            `;
+    //         // Update auth links immediately after successful authentication
+    //         const authLinks = document.getElementById('auth-links');
+    //         authLinks.innerHTML = `
+    //             <a href="/dashboard.html" id="welcome-user" data-i18n="user_profile"></a>
+    //             <a href="#" id="logout-link" data-i18n="logout"></a>
+    //         `;
             
-            // Update welcome text
-            document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${currentUser.username}`;
+    //         // Update welcome text
+    //         document.getElementById('welcome-user').textContent = `${i18n.translate('welcome')}, ${currentUser.username}`;
             
-            // Apply translations to newly created elements
-            i18n.applyTranslations();
+    //         // Apply translations to newly created elements
+    //         i18n.applyTranslations();
             
-            // Add logout functionality
-            document.getElementById('logout-link').addEventListener('click', async (e) => {
-                e.preventDefault();
+    //         // Add logout functionality
+    //         document.getElementById('logout-link').addEventListener('click', async (e) => {
+    //             e.preventDefault();
                 
-                try {
-                    await fetch('/api/logout', {
-                        method: 'POST'
-                    });
-                    window.location.href = '/';
-                } catch (error) {
-                    console.error('Logout failed', error);
-                }
-            });
+    //             try {
+    //                 await fetch('/api/logout', {
+    //                     method: 'POST'
+    //                 });
+    //                 window.location.href = '/';
+    //             } catch (error) {
+    //                 console.error('Logout failed', error);
+    //             }
+    //         });
             
-            return true;
-        } catch (error) {
-            console.error('Error checking auth status:', error);
-            window.location.href = '/login.html';
-            return false;
-        }
-    }
+    //         return true;
+    //     } catch (error) {
+    //         console.error('Error checking auth status:', error);
+    //         window.location.href = '/login.html';
+    //         return false;
+    //     }
+    // }
     
     // Check authentication and proceed if authenticated
     if (await checkAuth()) {

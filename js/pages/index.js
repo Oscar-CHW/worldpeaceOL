@@ -1,22 +1,17 @@
 import i18n from '../i18n.js';
-import { createLanguageSelector } from '../language-selector.js';
 
 // Initialize the i18n system
 document.addEventListener('DOMContentLoaded', async () => {
-    // Initialize language system
-    i18n.init();
-    
-    // Create language selector
-    createLanguageSelector('language-selector');
-    
-    // Connect to Socket.IO
     const socket = io();
+
     
     // Get real-time user count updates
     socket.on('userCountUpdate', (data) => {
         document.getElementById('player-count').textContent = data.count.toLocaleString();
     });
-    
+    checkLastRoom();
+
+
     // Initial user count
     fetchUserCount();
     
@@ -31,11 +26,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rejoinRoomBtn = document.getElementById('rejoin-btn');
     
     // Check if user is logged in
-    checkAuth();
     
     // Initialize UI interactions
     initUI();
-    
+    UIStuff();
+
     // Set up game mode tabs
     setupGameModeTabs();
     
@@ -64,59 +59,127 @@ async function fetchUserCount() {
     }
 }
 
-async function checkAuth() {
-    try {
-        const response = await fetch('/api/user/me');
-        
-        if (response.status !== 401) {
-            // User is logged in, update the auth links
-            const data = await response.json();
-            const authLinks = document.getElementById('auth-links');
-            if (authLinks) {
-                authLinks.innerHTML = `
-                    <a href="/dashboard.html" id="welcome-user" data-i18n="user_profile"></a>
-                    <a href="#" id="logout-link" data-i18n="logout"></a>
-                `;
-                
-                // Update welcome text
-                const welcomeUser = document.getElementById('welcome-user');
-                if (welcomeUser) {
-                    welcomeUser.textContent = `${i18n.translate('welcome')}, ${data.username}`;
-                }
-                
-                // Apply translations to newly created elements
-                i18n.applyTranslations();
-                
-                // Add logout functionality
-                const logoutLink = document.getElementById('logout-link');
-                if (logoutLink) {
-                    logoutLink.addEventListener('click', async (e) => {
-                        e.preventDefault();
-                        
-                        try {
-                            await fetch('/api/logout', {
-                                method: 'POST'
-                            });
-                            window.location.reload();
-                        } catch (error) {
-                            console.error('Logout failed', error);
-                        }
-                    });
-                }
-
-                // Show room buttons if they exist
-                const roomButtons = document.getElementById('room-buttons');
-                if (roomButtons) {
-                    roomButtons.style.display = 'flex';
-                }
-
-                // Check for last room
-                checkLastRoom();
-            }
-        }
-    } catch (error) {
-        console.error('Error checking auth status', error);
+async function UIStuff()
+{
+    setTimeout(() => document.body.classList.remove('loading'), 100);
+    
+    // Mobile navigation toggle
+    const navToggle = document.getElementById('nav-toggle');
+    const mobileNav = document.getElementById('mobile-nav');
+    
+    if (navToggle && mobileNav) {
+        navToggle.addEventListener('click', function() {
+            mobileNav.classList.toggle('active');
+        });
     }
+    
+    // Header scroll behavior
+    let lastScrollTop = 0;
+    const header = document.querySelector('.header');
+    
+    window.addEventListener('scroll', function() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            // Scrolling down & past threshold
+            header.classList.add('collapsed');
+            header.classList.remove('visible');
+        } else {
+            // Scrolling up
+            header.classList.remove('collapsed');
+            header.classList.add('visible');
+        }
+        
+        lastScrollTop = scrollTop;
+    });
+    
+    // Auth status check and display
+    function checkAuthStatus() {
+        // This will be set by the auth-status.js script
+        if (window.isLoggedIn) {
+            // Hide login/signup buttons
+            document.getElementById('auth-buttons').classList.add('hidden');
+            document.getElementById('mobile-auth-buttons').classList.add('hidden');
+            
+            // Show user welcome
+            document.getElementById('user-welcome').classList.remove('hidden');
+            document.getElementById('mobile-user-welcome').classList.remove('hidden');
+            
+            // Set username
+            if (window.currentUser) {
+                const displayName = window.currentUser.username || 'User';
+                const firstLetter = displayName.charAt(0).toUpperCase();
+                
+                document.getElementById('username-display').textContent = displayName;
+                document.getElementById('mobile-username-display').textContent = displayName;
+                document.getElementById('user-avatar').textContent = firstLetter;
+                document.getElementById('mobile-user-avatar').textContent = firstLetter;
+            }
+        } else {
+            // Show login/signup buttons
+            document.getElementById('auth-buttons').classList.remove('hidden');
+            document.getElementById('mobile-auth-buttons').classList.remove('hidden');
+            
+            // Hide user welcome
+            document.getElementById('user-welcome').classList.add('hidden');
+            document.getElementById('mobile-user-welcome').classList.add('hidden');
+        }
+    }
+    
+    // Check auth status when the window loads and when auth status changes
+    window.addEventListener('load', checkAuthStatus);
+    document.addEventListener('auth-status-changed', checkAuthStatus);
+    
+    // Offline detection
+    window.addEventListener('online', function() {
+        document.querySelectorAll('.offline-notification').forEach(el => {
+            el.classList.add('hidden');
+        });
+    });
+    
+    window.addEventListener('offline', function() {
+        document.querySelectorAll('.offline-notification').forEach(el => {
+            el.classList.remove('hidden');
+        });
+    });
+    
+    // Check initial state
+    if (!navigator.onLine) {
+        document.querySelectorAll('.offline-notification').forEach(el => {
+            el.classList.remove('hidden');
+        });
+    }
+    
+    // Connect buttons to their functions
+    document.getElementById('quick-match').addEventListener('click', function() {
+        window.location.href = '/pairing.html';
+    });
+    
+    document.getElementById('friend-battle').addEventListener('click', function() {
+        window.location.href = '/friends.html';
+    });
+    
+    document.getElementById('custom-room').addEventListener('click', function() {
+        window.location.href = '/create-room.html';
+    });
+    
+    // Connect NES theme buttons
+    document.getElementById('quick-match-nes').addEventListener('click', function() {
+        window.location.href = '/pairing.html';
+    });
+    
+    document.getElementById('friend-battle-nes').addEventListener('click', function() {
+        window.location.href = '/friends.html';
+    });
+    
+    document.getElementById('custom-room-nes').addEventListener('click', function() {
+        window.location.href = '/create-room.html';
+    });
+    
+    // Sync player counts
+    document.getElementById('player-count').textContent = 
+        document.getElementById('player-count-nes').textContent = 
+        document.getElementById('player-count').textContent || '7';
 }
 
 async function checkLastRoom() {
@@ -144,6 +207,7 @@ async function checkLastRoom() {
                         window.location.href = `/game-room.html?roomId=${lastRoom}`;
                     });
                 }
+
             }
         }
     } catch (error) {
@@ -156,7 +220,6 @@ function initUI() {
     const joinRoomBtn = document.getElementById('join-room-btn');
     const joinModal = document.getElementById('join-room-modal');
     const closeBtn = document.querySelector('.join-room-close');
-    
     // Create Room button - check login status first
     if (createRoomBtn) {
         createRoomBtn.addEventListener('click', async () => {

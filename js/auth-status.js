@@ -74,5 +74,33 @@ function showLoggedOutUI() {
 // Check auth status when the page loads
 document.addEventListener('DOMContentLoaded', checkAuthStatus);
 
+// Mobile navigation toggle for all pages
+(function() {
+    const navToggle = document.getElementById('nav-toggle');
+    const mobileNav = document.getElementById('mobile-nav');
+    if (navToggle && mobileNav) {
+        navToggle.addEventListener('click', function() {
+            mobileNav.classList.toggle('active');
+        });
+    }
+})();
+
+// Highlight active nav link based on current page
+(function() {
+    const path = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-links a');
+    navLinks.forEach(link => {
+        // Remove any existing active classes
+        link.classList.remove('active', 'is-primary');
+        // Mark as active if href matches current path
+        if (link.pathname === path) {
+            link.classList.add('active');
+            if (link.classList.contains('nes-btn')) {
+                link.classList.add('is-primary');
+            }
+        }
+    });
+})();
+
 // Export functions for use in other modules
-export { checkAuthStatus, showLoggedInUI, showLoggedOutUI }; 
+export { checkAuthStatus, showLoggedInUI, showLoggedOutUI };

@@ -13,17 +13,62 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div id="language-selector" class="glass"></div>
     
-    <div class="header glass">
-        <a href="/" class="site-title" data-i18n="title">天下太平</a>
-        <div class="room-info">
-            <span data-i18n="room">房间</span>: <span id="room-id-display">...</span>
-            <button id="copy-room-id" class="icon-button" aria-label="Copy room ID">📋</button>
+    <header class="header">
+        <div class="container">
+            <div class="flex justify-between items-center">
+                <div class="site-title-wrapper">
+                    <a href="/" class="site-title" data-i18n="title">天下太平</a>
+                </div>
+                <button class="nav-toggle show-for-small-only" id="nav-toggle">☰</button>
+                <div class="nav-links hide-for-small-only">
+                    <a href="/" class="home-btn standard-only">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/" class="home-btn nes-btn nes-only">
+                        <i class="nes-icon is-small star"></i> Home
+                    </a>
+                    <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+                    <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
+                    <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+                    <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+                    <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
+                    <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+                </div>
+                <div class="auth-links hide-for-small-only">
+                    <div class="user-welcome" id="user-welcome">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <a href="#" id="logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
+                        <a href="#" id="logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="auth-links">
-            <a href="/dashboard.html" data-i18n="dashboard">控制台</a>
-            <button id="leave-room-btn" class="danger-button" data-i18n="leave_room">离开房间</button>
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav" id="mobile-nav">
+            <div class="nav-links">
+                <a href="/" class="home-btn standard-only">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="/" class="home-btn nes-btn nes-only">
+                    <i class="nes-icon is-small star"></i> Home
+                </a>
+                <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+                <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
+                <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+                <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+                <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
+                <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+            </div>
+            <div class="auth-links">
+                <div class="user-welcome" id="mobile-user-welcome">
+                    <div class="user-avatar" id="mobile-user-avatar">U</div>
+                    <span class="username" id="mobile-username-display">Username</span>
+                    <a href="#" id="mobile-logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
+                    <a href="#" id="mobile-logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </header>
     
     <div class="container full-height" id="main-content">
         <div class="game-container">
@@ -118,7 +163,7 @@
     </div>
     
     <script src="/socket.io/socket.io.js"></script>
-    <script src="js/common.js"></script>
+    <script type="module" src="js/common.js"></script>
     <script type="module" src="js/pages/game-room.js"></script>
     <script src="js/ui-enhancement.js"></script>
     <script>

@@ -871,7 +871,14 @@ body.friends-page .header {
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: var(--shadow-md);
 }
+.language-label {
+  font-size: 0.875rem;
+  color: var(--text);
+  margin-right: 0.5rem;
+}
 
+  
+  
 /* Improved language buttons for all pages */
 .language-btn {
   padding: 0.25rem 0.5rem;
@@ -1056,6 +1063,33 @@ body.friends-page .header {
 .nes-theme .game-mode-card p {
   font-size: 0.65rem;
   line-height: 1.6;
+}
+
+/* User avatar styling for all pages */
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-right: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  color: #f1f5fa;
+  font-weight: bold;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+@media (max-width: 600px) {
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+    margin-right: 0.75rem;
+  }
 }
 
 /* Utility classes */
@@ -1464,641 +1498,218 @@ body.loaded {
   padding: 1.5rem 1rem;
 }
 
-/* Utility classes for NES theme */
-.nes-theme .text-center {
-  text-align: center;
+/* Friends Page Improvements */
+.friends-container {
+  background: rgba(30,41,59,0.92);
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  padding: 2rem 1.5rem;
+  margin: 2rem 0;
+  max-width: 700px;
+  width: 100%;
 }
 
-.nes-theme .text-muted {
-  color: rgba(255, 255, 255, 0.7);
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.6rem;
+.add-friend-section {
+  background: rgba(59,130,246,0.08);
+  border-radius: 0.75rem;
+  padding: 1.5rem 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.07);
 }
 
-.nes-theme .font-bold {
-  font-weight: normal; /* Regular weight for pixel fonts */
-  color: var(--nes-text);
-}
-
-/* NES specific list styling */
-.nes-theme ul.nes-list {
-  list-style-type: none;
-  padding-left: 0;
-}
-
-.nes-theme ul.nes-list li {
-  position: relative;
-  padding-left: 1.5rem;
-  margin-bottom: 0.75rem;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.65rem;
-  line-height: 1.6;
-}
-
-.nes-theme ul.nes-list li::before {
-  content: "►";
-  color: var(--nes-text);
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-/* NES specific form elements */
-.nes-theme .form-input {
-  background-color: #000;
-  border: 2px solid white;
-  border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="5" height="5" xmlns="http://www.w3.org/2000/svg"><path d="M2 1 h1 v1 h-1 z M1 2 h1 v1 h-1 z M3 2 h1 v1 h-1 z M2 3 h1 v1 h-1 z" fill="rgb(33,37,41)" /></svg>');
-  border-image-repeat: stretch;
-  border-image-width: 2;
-  border-image-slice: 2;
-  border-image-outset: 2;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.7rem;
-  line-height: 1.5;
-  padding: 0.5rem;
-  color: white;
-  image-rendering: pixelated;
-}
-
-.nes-theme .form-label {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.7rem;
-  margin-bottom: 0.5rem;
-  color: white;
-}
-
-/* Header collapse and visibility functionality */
-.header.collapsed {
-  transform: translateY(-100%);
-}
-
-.header.visible {
-  transform: translateY(0);
-}
-
-/* Auth links section */
-.auth-links {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-/* Navigation links styling */
-.nav-links a {
-  padding: 0.5rem 0.75rem;
+.add-friend-form input[type="text"],
+#friend-username,
+#friend-username-standard {
+  background: rgba(255,255,255,0.95);
+  border: 1px solid #b6c2d1;
   border-radius: 0.375rem;
-  background-color: rgba(30, 41, 59, 0.7);
-  color: var(--text);
-  transition: all var(--transition-fast);
-  text-decoration: none;
-  font-weight: 500; /* Slightly bolder for better visibility */
-  min-width: 80px; /* Ensure minimum width for buttons */
-  text-align: center; /* Ensure text is centered */
-}
-
-.nav-links a:hover {
-  background-color: var(--card);
-  color: white;
-  text-decoration: none;
-  transform: translateY(-2px); /* Subtle lift effect */
-  box-shadow: var(--shadow-sm); /* Add shadow on hover */
-}
-
-.nav-links a.active {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 500;
-  box-shadow: var(--shadow-md); /* Add shadow for active state */
-}
-
-.nav-links a.active:hover {
-  background-color: var(--primary-dark);
-  text-decoration: none;
-}
-
-/* Improved NES nav styling */
-.nes-theme .nav-links .nes-btn {
-  min-width: 100px;
-  margin: 0 0.25rem;
-  image-rendering: pixelated;
-  font-size: 0.6rem;
-  border-image-repeat: stretch !important;
-  padding: 0.5rem 0.75rem;
-  text-align: center;
-  background-color: var(--nes-bg) !important;
-  color: white !important;
-}
-
-.nes-theme .nav-links .nes-btn.is-primary {
-  background-color: var(--nes-text) !important;
-  color: white !important;
-}
-
-/* Logout button specific styling */
-.user-welcome .logout-btn {
-  background-color: rgba(239, 68, 68, 0.8);
-  color: white;
-  padding: 0.35rem 0.75rem;
-  border-radius: 0.25rem;
-  font-weight: 500;
-  transition: all var(--transition-fast);
-}
-
-.user-welcome .logout-btn:hover {
-  background-color: rgba(239, 68, 68, 1);
-  transform: translateY(-1px);
-}
-
-/* Fix for user welcome on small screens */
-@media (max-width: 1100px) {
-  .all-pages-nav {
-    position: static;
-    transform: none;
-    margin: 0 auto;
-  }
-  
-  .header .container {
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-  
-  .site-title-wrapper {
-    flex: 1;
-    min-width: 120px;
-  }
-  
-  .auth-links {
-    flex: 1;
-    justify-content: flex-end;
-    min-width: 120px;
-  }
-}
-
-/* Remove beta badge as requested */
-.game-badge {
-  display: none;
-}
-
-/* NES theme navigation improvements */
-.nes-theme .nav-links .nes-btn {
-  min-width: 100px;
-  margin: 0 0.25rem;
-  image-rendering: pixelated;
-  font-size: 0.6rem;
-  border-image-repeat: stretch !important;
-  padding: 0.5rem 0.75rem;
-  text-align: center;
-  background-color: var(--nes-bg) !important;
-  color: white !important;
-}
-
-.nes-theme .nav-links .nes-btn.is-primary {
-  background-color: var(--nes-text) !important;
-  color: white !important;
-}
-
-.nes-theme .user-welcome {
-  background-color: var(--nes-bg);
-  border: 2px solid var(--nes-text);
-  padding: 0.25rem 0.5rem;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  color: #222;
   margin-right: 0.5rem;
-  border-image-source: none !important;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.nes-theme .theme-toggle {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.6rem;
-  padding: 0.4rem 0.75rem;
+.add-friend-form button,
+#add-friend-form-standard button {
+  background: var(--primary, #4a69bd);
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(74,105,189,0.08);
 }
 
-.nes-theme .theme-toggle.active {
-  background-color: #209CEE;
+.add-friend-form button:hover,
+#add-friend-form-standard button:hover {
+  background: #35518a;
 }
 
-/* Mobile Navigation Adjustments */
-@media (max-width: 768px) {
-  .header {
-    padding: 0.5rem;
-  }
-
-  .all-pages-nav {
-    display: none;
-  }
-  
-  .nav-toggle {
-    display: block;
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: color var(--transition-fast);
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  
-  .nav-toggle:hover {
-    color: var(--primary);
-  }
-
-  .mobile-nav {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background-color: rgba(8, 10, 30, 0.97);
-    padding: 1rem;
-    z-index: 45;
-  }
-  
-  .mobile-nav .nav-links {
-    flex-direction: column;
-    width: 100%;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  
-  .mobile-nav .nav-links a {
-    width: 90%;
-    margin: 0.25rem auto;
-    justify-content: center;
-    text-align: center;
-  }
-  
-  .mobile-nav.active {
-    display: block;
-  }
-  
-  .theme-switcher {
-    position: fixed;
-    bottom: 1rem;
-    right: 1rem;
-    top: auto;
-    transform: none;
-    z-index: 50;
-  }
-  
-  .mobile-nav .auth-links {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    margin-top: 1rem;
-  }
-  
-  .mobile-nav .user-welcome {
-    width: 90%;
-    justify-content: center;
-    flex-direction: column;
-    padding: 1rem;
-    gap: 0.5rem;
-  }
-  
-  /* Home button for mobile */
-  .mobile-nav .nav-links .home-btn {
-    width: 90%;
-    margin: 0.25rem auto;
-    justify-content: center;
-  }
-  
-  .nes-theme .mobile-nav .nav-links .home-btn.nes-btn {
-    width: 90%;
-    margin: 0.25rem auto;
-  }
-  
-  /* Fixed auth links */
-  .auth-links {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .nav-links a {
-    padding: 0.5rem 1rem;
-    color: var(--text);
-    text-decoration: none;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.375rem;
-    background-color: rgba(30, 41, 59, 0.7);
-    transition: all var(--transition-fast);
-    min-width: 80px;
-    text-align: center;
-  }
-  
-  .nav-links a:hover {
-    background-color: var(--card);
-    color: white;
-    text-decoration: none;
-    transform: translateY(-1px);
-  }
-  
-  .nav-links a.active {
-    background-color: var(--primary);
-    color: white;
-    font-weight: 500;
-  }
-  
-  .nes-theme .nav-links .nes-btn {
-    margin: 0 0.25rem;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.6rem;
-    min-width: 0;
-  }
-  
-  /* Ensure logout buttons are properly aligned */
-  .user-welcome .logout-btn {
-    padding: 0.25rem 0.5rem;
-    background-color: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    transition: all var(--transition-fast);
-    border: none;
-    cursor: pointer;
-    display: inline-block;
-  }
-  
-  .user-welcome .logout-btn:hover {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: #f87171;
-    transform: translateY(-1px);
-  }
+.tabs-container {
+  background: rgba(30,41,59,0.85);
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+  padding: 1.2rem 1rem 0.5rem 1rem;
 }
 
-/* Breakpoint for tablets and smaller screens */
-@media (max-width: 1100px) {
-  .all-pages-nav {
-    position: static;
-    transform: none;
-    margin: 0 auto;
-  }
-  
-  .header .container {
-    flex-direction: column;
-    height: auto;
-  }
-  
-  .site-title-wrapper {
-    margin-bottom: 0.5rem;
-  }
-  
-  .auth-links {
-    margin-top: 0.5rem;
-  }
+.tabs-title a {
+  color: var(--primary, #4a69bd);
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+.tabs-title.is-active a {
+  color: #222;
+  border-bottom: 2.5px solid var(--primary, #4a69bd);
+  background: none;
+}
+.tabs-title a:hover {
+  color: #35518a;
 }
 
-/* Add a consistent home button to all pages */
-.nav-links {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
+.tabs-content {
+  margin-top: 1.5rem;
 }
 
-.nav-links .home-btn {
-  background-color: var(--primary);
-  color: white;
+.tabs-panel {
+  padding: 0.5rem 0;
+}
+
+.friend-filter {
+  margin-bottom: 1.2rem;
+}
+
+.search-container input[type="text"],
+#friend-search,
+#friend-search-standard {
+  background: rgba(255,255,255,0.95);
+  border: 1px solid #b6c2d1;
   border-radius: 0.375rem;
   padding: 0.5rem 1rem;
-  font-weight: 500;
-  text-decoration: none;
+  font-size: 1rem;
+  color: #222;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-label {
+  font-size: 1rem;
+  color: var(--primary, #4a69bd);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-right: 0.5rem;
 }
 
-.nav-links .home-btn:hover {
-  background-color: var(--primary-dark);
-  color: white;
-  text-decoration: none;
-  transform: translateY(-2px);
+.friends-list, .requests-list {
+  background: rgba(255,255,255,0.97);
+  border-radius: 0.5rem;
+  padding: 1rem 0.5rem;
+  min-height: 120px;
+  box-shadow: 0 1px 4px rgba(30,41,59,0.06);
 }
 
-.nav-links .home-btn i {
+.loading-indicator {
+  color: var(--primary, #4a69bd);
+  font-size: 1.1rem;
+  padding: 1.5rem 0;
+}
+
+.message {
+  margin-top: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.375rem;
   font-size: 1rem;
+  background: #eaf6ff;
+  color: #1a3a5d;
+  border: 1px solid #b6c2d1;
+  box-shadow: 0 1px 4px rgba(30,41,59,0.04);
 }
 
-/* NES theme home button */
-.nes-theme .nav-links .home-btn.nes-btn {
-  background-color: var(--nes-text) !important;
-  color: white !important;
-  padding: 0.25rem 0.5rem;
-  margin-right: 0.5rem;
-  margin-bottom: 0;
-  font-size: 0.6rem;
+/* Modal improvements */
+.reveal {
+  background: rgba(30,41,59,0.85);
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(30,41,59,0.18);
+  padding: 2rem 1.5rem;
 }
 
-.nes-theme .nav-links .home-btn.nes-btn:hover {
-  transform: translateY(-2px);
-}
-
-/* Fix theme toggles */
-.theme-toggle {
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
+.close-button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
   cursor: pointer;
-  transition: all var(--transition-normal);
-  color: var(--text);
-  font-size: 0.875rem;
+  transition: color 0.2s;
+}
+.close-button:hover {
+  color: #222;
 }
 
-.theme-toggle.active {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 500;
+.friend-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #eaf6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-right: 1rem;
+  box-shadow: 0 1px 4px rgba(30,41,59,0.08);
 }
 
-.nes-theme .theme-toggle {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.6rem;
-  padding: 0.5rem;
+.friend-details h4 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.1rem;
+  color: var(--primary, #4a69bd);
 }
 
-.nes-theme .theme-toggle.active {
-  background-color: var(--nes-text);
+.friend-status {
+  font-size: 0.95rem;
+  color: #666;
 }
 
-/* Mobile navigation adjustments */
-@media (max-width: 768px) {
-  .header {
-    padding: 0.5rem;
-  }
-
-  .all-pages-nav {
-    display: none;
-  }
-  
-  .nav-toggle {
-    display: block;
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: color var(--transition-fast);
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  
-  .nav-toggle:hover {
-    color: var(--primary);
-  }
-
-  .mobile-nav {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background-color: rgba(8, 10, 30, 0.97);
-    padding: 1rem;
-    z-index: 45;
-  }
-  
-  .mobile-nav .nav-links {
-    flex-direction: column;
-    width: 100%;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  
-  .mobile-nav .nav-links a {
-    width: 90%;
-    margin: 0.25rem auto;
-    justify-content: center;
-    text-align: center;
-  }
-  
-  .mobile-nav.active {
-    display: block;
-  }
-  
-  .theme-switcher {
-    position: fixed;
-    bottom: 1rem;
-    right: 1rem;
-    top: auto;
-    transform: none;
-    z-index: 50;
-  }
-  
-  .mobile-nav .auth-links {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    margin-top: 1rem;
-  }
-  
-  .mobile-nav .user-welcome {
-    width: 90%;
-    justify-content: center;
-    flex-direction: column;
-    padding: 1rem;
-    gap: 0.5rem;
-  }
-  
-  /* Home button for mobile */
-  .mobile-nav .nav-links .home-btn {
-    width: 90%;
-    margin: 0.25rem auto;
-    justify-content: center;
-  }
-  
-  .nes-theme .mobile-nav .nav-links .home-btn.nes-btn {
-    width: 90%;
-    margin: 0.25rem auto;
-  }
-  
-  /* Fixed auth links */
-  .auth-links {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .nav-links a {
-    padding: 0.5rem 1rem;
-    color: var(--text);
-    text-decoration: none;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.375rem;
-    background-color: rgba(30, 41, 59, 0.7);
-    transition: all var(--transition-fast);
-    min-width: 80px;
-    text-align: center;
-  }
-  
-  .nav-links a:hover {
-    background-color: var(--card);
-    color: white;
-    text-decoration: none;
-    transform: translateY(-1px);
-  }
-  
-  .nav-links a.active {
-    background-color: var(--primary);
-    color: white;
-    font-weight: 500;
-  }
-  
-  .nes-theme .nav-links .nes-btn {
-    margin: 0 0.25rem;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.6rem;
-    min-width: 0;
-  }
-  
-  /* Ensure logout buttons are properly aligned */
-  .user-welcome .logout-btn {
-    padding: 0.25rem 0.5rem;
-    background-color: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    transition: all var(--transition-fast);
-    border: none;
-    cursor: pointer;
-    display: inline-block;
-  }
-  
-  .user-welcome .logout-btn:hover {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: #f87171;
-    transform: translateY(-1px);
-  }
+.friend-actions button {
+  margin: 0.5rem 0;
+  width: 100%;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--primary, #4a69bd);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 0;
+  transition: background 0.2s;
+}
+.friend-actions button:hover {
+  background: #35518a;
 }
 
-/* Breakpoint for tablets and smaller screens */
-@media (max-width: 1100px) {
-  .all-pages-nav {
-    position: static;
-    transform: none;
-    margin: 0 auto;
+@media (max-width: 600px) {
+  .friends-container, .add-friend-section, .tabs-container, .reveal {
+    padding: 1rem 0.5rem;
+    margin: 1rem 0;
   }
-  
-  .header .container {
-    flex-direction: column;
-    height: auto;
+  .friend-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
   }
-  
-  .site-title-wrapper {
-    margin-bottom: 0.5rem;
+  .friend-details h4 {
+    font-size: 1rem;
   }
-  
-  .auth-links {
-    margin-top: 0.5rem;
+  .friend-actions button {
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
   }
 }

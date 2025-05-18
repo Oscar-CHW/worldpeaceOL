@@ -24,90 +24,75 @@
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
     <!-- Add theme color for browser UI -->
     <meta name="theme-color" content="#0f172a">
+    <style>
+  .nes-only { display: none !important; }
+</style>
 </head>
 <body class="loading">
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
     <!-- Theme Switcher -->
-    <div class="theme-switcher">
+    <!-- <div class="theme-switcher">
         <div class="theme-toggle standard-theme active" id="standard-theme">Modern</div>
         <div class="theme-toggle nes-theme" id="nes-theme">Retro</div>
-    </div>
+    </div> -->
 
     <header class="header">
-        <div class="container">
-            <div class="flex justify-between items-center">
-                <div class="site-title-wrapper">
-                    <a href="/" class="site-title">World Peace Online</a>
-                </div>
-                <button class="nav-toggle show-for-small-only" id="nav-toggle">☰</button>
-                <div class="nav-links hide-for-small-only">
-                    <a href="/" class="home-btn active standard-only">
-                        <i class="fas fa-home"></i> Home
-                    </a>
-                    <a href="/" class="home-btn nes-btn is-primary nes-only">
-                        <i class="nes-icon is-small star"></i> Home
-                    </a>
-                    <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
-                    <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
-                    <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
-                    
-                    <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
-                    <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
-                    <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
-                </div>
-                <div class="auth-links hide-for-small-only" id="auth-buttons">
-                    <a href="/login.html" class="btn standard-only">Log in</a>
-                    <a href="/signup.html" class="btn btn-outline standard-only">Sign up</a>
-                    
-                    <a href="/login.html" class="nes-btn is-primary nes-only">Log in</a>
-                    <a href="/signup.html" class="nes-btn nes-only">Sign up</a>
-                </div>
-                
-                <!-- User Welcome - Will be shown when logged in (hidden by default) -->
-                <div class="user-welcome hide-for-small-only hidden" id="user-welcome">
-                    <div class="user-avatar" id="user-avatar">U</div>
-                    <span class="username" id="username-display">Username</span>
-                    <a href="#" id="logout-btn" class="btn standard-only">Logout</a>
-                    <a href="#" id="logout-btn-nes" class="nes-btn is-error nes-only">Logout</a>
-                </div>
+    <div class="container">
+        <div class="flex justify-between items-center">
+            <div class="site-title-wrapper">
+                <a href="/" class="site-title" data-i18n="title">天下太平</a>
             </div>
-        </div>
-        <!-- Mobile Navigation -->
-        <div class="mobile-nav" id="mobile-nav">
-            <div class="nav-links">
-                <a href="/" class="home-btn active standard-only">
+            <button class="nav-toggle show-for-small-only" id="nav-toggle">☰</button>
+            <div class="nav-links hide-for-small-only">
+                <a href="/" class="home-btn standard-only">
                     <i class="fas fa-home"></i> Home
                 </a>
-                <a href="/" class="home-btn nes-btn is-primary nes-only">
+                <a href="/" class="home-btn nes-btn nes-only">
                     <i class="nes-icon is-small star"></i> Home
                 </a>
                 <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
                 <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
                 <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
-                
                 <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
                 <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
                 <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
             </div>
-            
-            <div class="auth-links" id="mobile-auth-buttons">
-                <a href="/login.html" class="btn standard-only">Log in</a>
-                <a href="/signup.html" class="btn btn-outline standard-only">Sign up</a>
-                
-                <a href="/login.html" class="nes-btn is-primary nes-only">Log in</a>
-                <a href="/signup.html" class="nes-btn nes-only">Sign up</a>
-            </div>
-            
-            <!-- Mobile User Welcome - Will be shown when logged in (hidden by default) -->
-            <div class="user-welcome hidden" id="mobile-user-welcome">
-                <div class="user-avatar" id="mobile-user-avatar">U</div>
-                <span class="username" id="mobile-username-display">Username</span>
-                <a href="#" id="mobile-logout-btn" class="btn standard-only">Logout</a>
-                <a href="#" id="mobile-logout-btn-nes" class="nes-btn is-error nes-only">Logout</a>
+            <div class="auth-links hide-for-small-only">
+                <div class="user-welcome" id="user-welcome">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <a href="#" id="logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
+                    <a href="#" id="logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
+                </div>
             </div>
         </div>
-    </header>
+    </div>
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobile-nav">
+        <div class="nav-links">
+            <a href="/" class="home-btn standard-only">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="/" class="home-btn nes-btn nes-only">
+                <i class="nes-icon is-small star"></i> Home
+            </a>
+            <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+            <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
+            <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+            <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+            <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
+            <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+        </div>
+        <div class="auth-links">
+            <div class="user-welcome" id="mobile-user-welcome">
+                <div class="user-avatar" id="mobile-user-avatar">U</div>
+                <span class="username" id="mobile-username-display">Username</span>
+                <a href="#" id="mobile-logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
+                <a href="#" id="mobile-logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
+            </div>
+        </div>
+    </div>
+</header>
 
     <main class="main-content" id="main-content">
         <div class="container">
@@ -212,8 +197,7 @@
     </main>
 
     <!-- Language selector -->
-    <div id="language-selector" class="nes-container is-rounded nes-only"></div>
-    <div id="language-selector-standard" class="card standard-only"></div>
+    <div id="language-selector" class="language-selector"></div>
     
     <!-- Join Room Modal -->
     <div id="join-room-modal" class="reveal" data-reveal aria-labelledby="join-room-title" aria-hidden="true">
@@ -261,9 +245,7 @@
     <script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/js/foundation.min.js"></script>
     <script>$(document).foundation();</script>
     <script type="module" src="js/pages/index.js"></script>
-    <script type="module" src="js/auth-status.js"></script>
-    <script src="js/common.js"></script>
-    <script src="js/theme-switcher.js"></script>
+    <script type="module" src="js/common.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -390,4 +372,4 @@
         });
     </script>
 </body>
-</html> 
+</html>

@@ -11,13 +11,57 @@
 </head>
 <body class="loading">
     <div id="language-selector" class="glass"></div>
-    <div class="header glass">
-        <a href="/" class="site-title" data-i18n="title">天下太平</a>
-        <div class="auth-links" id="auth-links">
-            <a href="/login.html" data-i18n="login">登录</a>
-            <a href="/signup.html" data-i18n="signup">注册</a>
+    <header class="header">
+        <div class="container">
+            <div class="flex justify-between items-center">
+                <div class="site-title-wrapper">
+                    <a href="/" class="site-title" data-i18n="title">天下太平</a>
+                </div>
+                <button class="nav-toggle show-for-small-only" id="nav-toggle">☰</button>
+                <div class="nav-links hide-for-small-only">
+                    <a href="/" class="home-btn standard-only">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/" class="home-btn nes-btn nes-only">
+                        <i class="nes-icon is-small star"></i> Home
+                    </a>
+                    <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+                    <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
+                    <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+                    <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+                    <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
+                    <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+                </div>
+                <div class="auth-links hide-for-small-only" id="auth-links">
+                    <a href="/login.html" data-i18n="login">登录</a>
+                    <a href="/signup.html" data-i18n="signup">注册</a>
+                </div>
+            </div>
         </div>
-    </div>
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav" id="mobile-nav">
+            <div class="nav-links">
+                <a href="/" class="home-btn standard-only">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="/" class="home-btn nes-btn nes-only">
+                    <i class="nes-icon is-small star"></i> Home
+                </a>
+                <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+                <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
+                <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+                <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+                <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
+                <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+            </div>
+            <div class="auth-links">
+                <a href="/login.html" class="btn standard-only" data-i18n="login">登录</a>
+                <a href="/signup.html" class="btn standard-only" data-i18n="signup">注册</a>
+                <a href="/login.html" class="nes-btn nes-only" data-i18n="login">登录</a>
+                <a href="/signup.html" class="nes-btn nes-only" data-i18n="signup">注册</a>
+            </div>
+        </div>
+    </header>
     
     <div class="container content-narrow">
         <div class="auth-form card">
@@ -64,7 +108,7 @@
         </div>
     </div>
 
-    <script src="js/common.js"></script>
+    <script type="module" src="js/common.js"></script>
     <script type="module" src="js/pages/signup.js"></script>
     <script type="module" src="js/auth-status.js"></script>
     <script src="js/ui-enhancement.js"></script>
@@ -86,4 +130,4 @@
         });
     </script>
 </body>
-</html> 
+</html>

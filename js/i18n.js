@@ -139,7 +139,7 @@ const translations = {
     'login': 'Login',
     'signup': 'Sign Up',
     'logout': 'Logout',
-    'welcome': 'Welcome to Peace Under Heaven',
+    'welcome': 'Welcome to World Peace Online',
     'username': 'Username',
     'password': 'Password',
     'confirm_password': 'Confirm Password',

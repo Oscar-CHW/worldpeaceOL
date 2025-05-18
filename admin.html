@@ -8,21 +8,70 @@
     <meta name="theme-color" content="#4a69bd">
     <!-- Preload critical assets -->
     <link rel="preload" href="js/ui-enhancement.js" as="script">
+    <style>
+        .nes-only { display: none !important; }
+    </style>
 </head>
 <body class="loading admin-page">
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div id="language-selector" class="glass"></div>
     
-    <div class="header glass">
-        <a href="/" class="site-title" data-i18n="title">天下太平</a>
-        <div class="nav-links">
-            <a href="/dashboard.html" data-i18n="dashboard">控制台</a>
-            <a href="/admin.html" data-i18n="admin_panel" class="active">管理员面板</a>
+    <header class="header">
+        <div class="container">
+            <div class="flex justify-between items-center">
+                <div class="site-title-wrapper">
+                    <a href="/" class="site-title" data-i18n="title">天下太平</a>
+                </div>
+                <button class="nav-toggle show-for-small-only" id="nav-toggle">☰</button>
+                <div class="nav-links hide-for-small-only">
+                    <a href="/" class="home-btn standard-only">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/" class="home-btn nes-btn nes-only">
+                        <i class="nes-icon is-small star"></i> Home
+                    </a>
+                    <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+                    <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
+                    <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+                    <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+                    <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
+                    <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+                </div>
+                <div class="auth-links hide-for-small-only">
+                    <div class="user-welcome" id="user-welcome">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <a href="#" id="logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
+                        <a href="#" id="logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="auth-links">
-            <a href="#" id="logout-btn" data-i18n="logout">登出</a>
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav" id="mobile-nav">
+            <div class="nav-links">
+                <a href="/" class="home-btn standard-only">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="/" class="home-btn nes-btn nes-only">
+                    <i class="nes-icon is-small star"></i> Home
+                </a>
+                <a href="/dashboard.html" data-i18n="dashboard" class="standard-only">控制台</a>
+                <a href="/friends.html" data-i18n="friends" class="standard-only">好友</a>
+                <a href="/pairing.html" data-i18n="matchmaking" class="standard-only">匹配</a>
+                <a href="/dashboard.html" data-i18n="dashboard" class="nes-btn nes-only">控制台</a>
+                <a href="/friends.html" data-i18n="friends" class="nes-btn nes-only">好友</a>
+                <a href="/pairing.html" data-i18n="matchmaking" class="nes-btn nes-only">匹配</a>
+            </div>
+            <div class="auth-links">
+                <div class="user-welcome" id="mobile-user-welcome">
+                    <div class="user-avatar" id="mobile-user-avatar">U</div>
+                    <span class="username" id="mobile-username-display">Username</span>
+                    <a href="#" id="mobile-logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
+                    <a href="#" id="mobile-logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </header>
     
     <div class="container content-wide" id="main-content">
         <div class="admin-container card">
@@ -238,7 +287,7 @@
         </div>
     </div>
     
-    <script src="js/common.js"></script>
+    <script type="module" src="js/common.js"></script>
     <script type="module" src="js/pages/admin.js"></script>
     <script src="js/ui-enhancement.js"></script>
     <script>
@@ -319,4 +368,4 @@
         });
     </script>
 </body>
-</html> 
+</html>

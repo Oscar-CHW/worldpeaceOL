@@ -20,21 +20,142 @@
     <link rel="preload" href="js/ui-enhancement.js" as="script">
     <!-- Favicon -->
     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <style>
+        /* Dashboard page style fix for dark blue background */
+        body, .dashboard-container {
+            background: #1e293b !important;
+            color: #f1f5fa;
+        }
+        .nes-only { display: none !important; }
+        .dashboard-container {
+            border-radius: 1rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+            padding: 2rem 1.5rem;
+            margin: 2rem 0;
+            max-width: 700px;
+            width: 100%;
+            background: rgba(30,41,59,0.98) !important;
+        }
+        .stat-card {
+            background: #22304a !important;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+            padding: 1.2rem 0.8rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #f1f5fa;
+        }
+        .stat-title {
+            font-size: 0.95rem;
+            color: #60a5fa;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+        .account-connections, .matchmaking-section, .match-history {
+            background: #22304a !important;
+            border-radius: 0.75rem;
+            padding: 1.5rem 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            color: #f1f5fa;
+        }
+        .connection-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #334155;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }
+        .connection-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+        .connection-status {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+        }
+        .connection-action button, .quick-actions button {
+            background: #334155 !important;
+            color: #f1f5fa !important;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.6rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+        }
+        .connection-action button:hover, .quick-actions button:hover {
+            background: #60a5fa !important;
+            color: #1e293b !important;
+        }
+        .match-list-empty {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+        .player-info {
+            font-size: 1.1rem;
+            color: #60a5fa;
+            margin-bottom: 1.2rem;
+        }
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-right: 1rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+            color: #fbbf24;
+        }
+        @media (max-width: 600px) {
+            .dashboard-container, .account-connections, .matchmaking-section, .match-history {
+                padding: 1rem 0.5rem;
+                margin: 1rem 0;
+            }
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 1.3rem;
+            }
+            .stat-card {
+                padding: 0.7rem 0.4rem;
+            }
+            .stat-title {
+                font-size: 0.9rem;
+            }
+            .stat-value {
+                font-size: 1.1rem;
+            }
+            .quick-actions button {
+                font-size: 0.95rem;
+                padding: 0.5rem 0.7rem;
+            }
+        }
+    </style>
 </head>
 <body class="loading dashboard-page">
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
     <!-- Theme Switcher -->
-    <div class="theme-switcher">
+    <!-- <div class="theme-switcher">
         <div class="theme-toggle standard-theme active" id="standard-theme">Modern</div>
         <div class="theme-toggle nes-theme" id="nes-theme">Retro</div>
-    </div>
+    </div> -->
 
     <!-- Language Selector -->
-    <div class="language-selector">
-        <button class="language-btn active" data-lang="zh">中文</button>
-        <button class="language-btn" data-lang="en">EN</button>
-    </div>
     
     <header class="header">
         <div class="container">
@@ -61,7 +182,6 @@
                 <div class="auth-links hide-for-small-only">
                     <div class="user-welcome" id="user-welcome">
                         <div class="user-avatar" id="user-avatar">U</div>
-                        <span class="username" id="username-display">Username</span>
                         <a href="#" id="logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
                         <a href="#" id="logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
                     </div>
@@ -88,7 +208,6 @@
             <div class="auth-links">
                 <div class="user-welcome" id="mobile-user-welcome">
                     <div class="user-avatar" id="mobile-user-avatar">U</div>
-                    <span class="username" id="mobile-username-display">Username</span>
                     <a href="#" id="mobile-logout-btn" class="btn standard-only" data-i18n="logout">登出</a>
                     <a href="#" id="mobile-logout-btn-nes" class="nes-btn is-error nes-only" data-i18n="logout">登出</a>
                 </div>
@@ -322,17 +441,17 @@
                 </div>
             </form>
         </div>
+
     </div>
+    <div id="language-selector" class="language-selector"></div>
 
     <!-- Foundation JS -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/js/foundation.min.js"></script>
     <script>$(document).foundation();</script>
-    <script src="js/common.js"></script>
+    <script type="module" src="js/common.js"></script>
     <script type="module" src="js/pages/dashboard.js"></script>
     <script src="js/ui-enhancement.js"></script>
-    <!-- Add theme switcher -->
-    <script src="js/theme-switcher.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Foundation
@@ -362,7 +481,6 @@
             
             // Sync button actions
             document.getElementById('logout-btn').addEventListener('click', logout);
-            document.getElementById('logout-btn-standard').addEventListener('click', logout);
             document.getElementById('mobile-logout-btn').addEventListener('click', logout);
             document.getElementById('mobile-logout-btn-standard').addEventListener('click', logout);
             
@@ -395,4 +513,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
